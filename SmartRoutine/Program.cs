@@ -26,10 +26,10 @@ namespace SmartRoutine
             Application.SetCompatibleTextRenderingDefault(false);
 
             // DataRepository
-            IDataRepository data = new DataRepository();
+            IRoutineRepository data = new RoutineRepository();
 
             // BusinessLogic
-            IBusinessLogic logic = new BusinessLogic(data);
+            IRoutineService logic = new RoutineService(data);
 
             // UI
             Application.Run(new MainForm(logic));

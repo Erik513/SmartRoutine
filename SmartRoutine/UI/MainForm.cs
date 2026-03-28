@@ -1,4 +1,8 @@
-﻿using System;
+﻿using SmartRoutine.Data.Models;
+using SmartRoutine.Logic.Interfaces;
+using SmartRoutine.UI.Controls;
+using SmartRoutine.UI.Helpers;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -7,48 +11,39 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SmartRoutine.Logic.Interfaces;
-using SmartRoutine.UI.Helpers;
 
 namespace SmartRoutine.UI
 {
     public partial class MainForm : BorderlessResizableForm
     {
-        private readonly IBusinessLogic _logic;
 
         // ========== FIELDS ==========
-        private readonly string _programName = "SmartRoutine";
-
-        // UI Elements
-        private Label lblTitle;
-        private Button btnMinimize;
-        private Button btnMaximize;
-        private Button btnClose;
-        private FormDragHandle formDragHandle;
+        private readonly IRoutineService _routineService;
+        private RoutinesViewControl _routinesView;
+        private RoutineEditorViewControl _editorView;
+        private Routine _currentRoutine;
 
         // Constants
-        private const int TOP_BAR_HEIGHT = 30;
-        private static readonly Size BUTTON_SIZE = new Size(30, 30);
         private static readonly Size DEFAULT_WINDOW_SIZE = new Size(1024, 768);
-        private static readonly Size MINIMUM_WINDOW_SIZE = new Size(640, 360);
+        private static readonly Size MINIMUM_WINDOW_SIZE = new Size(800, 600);
 
         // ========== CONSTRUCTOR ==========
-        public MainForm(IBusinessLogic logic)
+        public MainForm(IRoutineService routineService)
         {
-            _logic = logic ?? throw new ArgumentNullException(nameof(logic));
+            _routineService = routineService ?? throw new ArgumentNullException(nameof(routineService));
 
-            InitializeComponent();
             ConfigureForm();
             CreateIntegratedUI();
+            ShowRoutinesView();
 
-            // Events
             this.Resize += MainForm_Resize;
             this.Load += MainForm_Load;
         }
         // ========== CONFIGURATION ==========
         private void ConfigureForm()
         {
-            this.BackColor = UIStyles.Colors.Black;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.BackColor = UIStyles.Colors.BackgroundBlack;
             this.MinimumSize = MINIMUM_WINDOW_SIZE;
             this.Size = DEFAULT_WINDOW_SIZE;
             this.CenterToScreen();
@@ -59,148 +54,126 @@ namespace SmartRoutine.UI
         private void CreateIntegratedUI()
         {
             this.Controls.Clear();
-            CreateTitleBar();
-        }
 
-        private void CreateTitleBar()
-        {
-            lblTitle = UIStyles.Labels.CreateTitle($"{_programName}");
-            lblTitle.Location = new Point(0, 0);
-            lblTitle.Size = new Size(this.ClientSize.Width, TOP_BAR_HEIGHT);
-            lblTitle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            lblTitle.Padding = new Padding(10, 0, 0, 0);
-            lblTitle.TextAlign = ContentAlignment.MiddleCenter;
+            // TitleBar
+            var titleBar = new TitleBarControl("SmartRoutine");
+            this.Controls.Add(titleBar);
 
-            formDragHandle = new FormDragHandle(lblTitle);
-            this.Controls.Add(lblTitle);
-
-            CreateWindowButtons();
-        }
-        private void CreateWindowButtons()
-        {
-            if (lblTitle == null) return;
-
-            // Buttons in der richtigen Reihenfolge (von rechts: Close, Maximize, Minimize)
-            int rightMargin = 0;
-
-            btnClose = CreateWindowButton("✕", "Close window", rightMargin);
-            rightMargin += BUTTON_SIZE.Width;
-
-            btnMaximize = CreateWindowButton("🗖", "Maximize window", rightMargin);
-            rightMargin += BUTTON_SIZE.Width;
-
-            btnMinimize = CreateWindowButton("🗕", "Minimize window", rightMargin);
-
-            // Events zuweisen
-            btnClose.Click += (s, e) => this.Close();
-            btnMaximize.Click += ToggleMaximize;
-            btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
-
-            // Tooltips erstellen
-            CreateToolTips();
-
-            btnClose.BringToFront();
-            btnMaximize.BringToFront();
-            btnMinimize.BringToFront();
-        }
-
-        private Button CreateWindowButton(string text, string tooltip, int offsetFromRight)
-        {
-            if (lblTitle == null) throw new InvalidOperationException("Title bar not initialized");
-
-            var button = UIStyles.Buttons.CreateStandard(text, tooltip, BUTTON_SIZE);
-            button.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            button.Location = new Point(lblTitle.Width - BUTTON_SIZE.Width - offsetFromRight, 0);
-            button.TabIndex = 0; // Für Tastaturnavigation
-            lblTitle.Controls.Add(button);
-            return button;
-        }
-
-        private void CreateToolTips()
-        {
-            var toolTip = UIStyles.ToolTips.CreateToolTip();
-
-            if (btnMinimize != null) toolTip.SetToolTip(btnMinimize, "Minimize window");
-            if (btnMaximize != null) toolTip.SetToolTip(btnMaximize, "Maximize window");
-            if (btnClose != null) toolTip.SetToolTip(btnClose, "Close window");
-        }
-
-        private void UpdateWindowButtonsPosition()
-        {
-            if (lblTitle == null) return;
-
-            lblTitle.SuspendLayout();
-
-            try
+            // Content Panel - mit Anchor statt Dock
+            var contentPanel = new Panel
             {
-                int rightMargin = 0;
-                if (btnClose != null)
-                {
-                    btnClose.Location = new Point(lblTitle.Width - BUTTON_SIZE.Width - rightMargin, 0);
-                    rightMargin += BUTTON_SIZE.Width;
-                }
-                if (btnMaximize != null)
-                {
-                    btnMaximize.Location = new Point(lblTitle.Width - BUTTON_SIZE.Width - rightMargin, 0);
-                    rightMargin += BUTTON_SIZE.Width;
-                }
-                if (btnMinimize != null)
-                {
-                    btnMinimize.Location = new Point(lblTitle.Width - BUTTON_SIZE.Width - rightMargin, 0);
-                }
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                BackColor = Color.Red, // Testfarbe
+                Location = new Point(0, titleBar.Height),
+                Size = new Size(this.ClientSize.Width, this.ClientSize.Height - titleBar.Height)
+            };
+            this.Controls.Add(contentPanel);
 
-                btnClose?.Invalidate();
-                btnMaximize?.Invalidate();
-                btnMinimize?.Invalidate();
-            }
-            finally
+            // UserControls
+            _routinesView = new RoutinesViewControl(_routineService);
+            _routinesView.Dock = DockStyle.Fill;
+            _routinesView.NewRoutineClicked += (s, e) => ShowEditorView(null);
+            _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine);
+            _routinesView.DeleteRoutineClicked += (s, routine) => DeleteRoutine(routine);
+            _routinesView.StartRoutineClicked += (s, routine) => StartRoutine(routine);
+            contentPanel.Controls.Add(_routinesView);
+
+            _editorView = new RoutineEditorViewControl(_routineService);
+            _editorView.Dock = DockStyle.Fill;
+            _editorView.BackToRoutinesClicked += (s, e) => ShowRoutinesView();
+            contentPanel.Controls.Add(_editorView);
+
+            // Resize-Event für manuelle Positionierung
+            this.Resize += (s, e) => UpdateContentPanelPosition(contentPanel, titleBar);
+        }
+
+        private void UpdateContentPanelPosition(Panel contentPanel, TitleBarControl titleBar)
+        {
+            if (contentPanel != null && titleBar != null)
             {
-                lblTitle.ResumeLayout(false);
+                contentPanel.Location = new Point(0, titleBar.Height);
+                contentPanel.Size = new Size(this.ClientSize.Width, this.ClientSize.Height - titleBar.Height);
             }
         }
 
-        // ========== EVENT HANDLERS ==========
+
+        // =======================================================================================================================================
+
+        private void ShowRoutinesView()
+        {
+            _routinesView.Visible = true;
+            _editorView.Visible = false;
+            _routinesView.LoadRoutines();
+        }
+
+        private void ShowEditorView(Routine routine)
+        {
+            _currentRoutine = routine;
+            _routinesView.Visible = false;
+            _editorView.Visible = true;
+            //_editorView.LoadRoutine(routine);
+        }
+
+        private void DeleteRoutine(Routine routine)
+        {
+            if (routine == null) return;
+
+            if (MessageBox.Show($"Routine '{routine.Name}' wirklich löschen?", "Bestätigen",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                _routineService.DeleteRoutine(routine.Id);
+                _routinesView.LoadRoutines();
+            }
+        }
+
+        private void StartRoutine(Routine routine)
+        {
+            MessageBox.Show("Start-Funktion wird später implementiert.", "Info",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void ToggleMaximize()
+        {
+            this.WindowState = this.WindowState == FormWindowState.Maximized
+                ? FormWindowState.Normal
+                : FormWindowState.Maximized;
+
+            if (this.Controls[0] is TitleBarControl titleBar)
+            {
+                titleBar.UpdateMaximizeButton(this.WindowState == FormWindowState.Maximized);
+            }
+        }
+
+        // ========== EVENT HANDLER ==========
         private void MainForm_Load(object sender, EventArgs e)
         {
             try
             {
-                _logic.Initialize();
-                // Hier weitere Initialisierungen
+                // Initialisierung
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Fehler beim Laden: {ex.Message}", "Initialisierungsfehler",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                this.Close();
             }
-        }
-        private void MainForm_Resize(object sender, EventArgs e)
-        {
-            UpdateWindowButtonsPosition();
-            if (btnMaximize != null)
-            {
-                btnMaximize.Text = this.WindowState == FormWindowState.Maximized ? "❐" : "🗖";
-                btnMaximize.Refresh();
-            }
-        }
-        private void ToggleMaximize(object sender, EventArgs e)
-        {
-            this.WindowState = this.WindowState == FormWindowState.Maximized
-                ? FormWindowState.Normal
-                : FormWindowState.Maximized;
         }
 
-        // ========== 9. DISPOSE ==========
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            if (this.Controls[0] is TitleBarControl titleBar)
+            {
+                titleBar.UpdateMaximizeButton(this.WindowState == FormWindowState.Maximized);
+            }
+        }
+
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
             {
-                _logic.Cleanup();
                 SleepPreventer.AllowSleep();
             }
             catch (Exception ex)
             {
-                // Loggen falls möglich
                 Console.WriteLine($"Fehler beim Cleanup: {ex.Message}");
             }
             finally

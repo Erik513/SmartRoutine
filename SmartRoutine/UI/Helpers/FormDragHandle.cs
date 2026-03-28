@@ -121,10 +121,6 @@ namespace SmartRoutine.UI.Helpers
         {
             // Beim Beginn des Resizings: Buttons ausblenden für flüssigeres Resizing
             var form = DragHandle.FindForm();
-            if (form != null)
-            {
-                HideWindowButtons(form, true);
-            }
         }
 
         private void OnFormResizeEnd(object sender, EventArgs e)
@@ -133,8 +129,6 @@ namespace SmartRoutine.UI.Helpers
             var form = DragHandle.FindForm();
             if (form != null)
             {
-                HideWindowButtons(form, false);
-
                 // Verzögertes Refreshen für alle Controls
                 form.BeginInvoke(new Action(() => RefreshFormControls(form)));
 
@@ -148,28 +142,6 @@ namespace SmartRoutine.UI.Helpers
                     _refreshTimer?.Dispose();
                 };
                 _refreshTimer.Start();
-            }
-        }
-
-        private void HideWindowButtons(Form form, bool hide)
-        {
-            // Durchsucht die Form nach Fenster-Buttons und blendet sie ein/aus
-            foreach (Control control in GetAllControls(form))
-            {
-                // Erkenne Buttons an typischen Eigenschaften
-                if (control is Button button &&
-                    (button.Text == "✕" || button.Text == "🗖" || button.Text == "🗕" ||
-                     button.Text == "❐" || button.Text == "🗗" || button.Text == "🗙"))
-                {
-                    button.Visible = !hide;
-
-                    // Wenn eingeblendet wird, Position aktualisieren und neu zeichnen
-                    if (!hide)
-                    {
-                        button.Invalidate();
-                        button.Update();
-                    }
-                }
             }
         }
 
