@@ -95,6 +95,9 @@
       <DependentUpon>RoutinesViewControl.cs</DependentUpon>
     </Compile>
     <Compile Include="SleepPreventer.cs" />
+    <Compile Include="UI\Controls\StyledListBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\Controls\TitleBarControl.cs">
       <SubType>Component</SubType>
     </Compile>

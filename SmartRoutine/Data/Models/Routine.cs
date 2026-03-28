@@ -13,6 +13,11 @@ namespace SmartRoutine.Data.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         public List<RoutineStep> Steps { get; set; } = new List<RoutineStep>();
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 
     public class RoutineStep

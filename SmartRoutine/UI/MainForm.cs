@@ -132,24 +132,13 @@ namespace SmartRoutine.UI
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void ToggleMaximize()
-        {
-            this.WindowState = this.WindowState == FormWindowState.Maximized
-                ? FormWindowState.Normal
-                : FormWindowState.Maximized;
-
-            if (this.Controls[0] is TitleBarControl titleBar)
-            {
-                titleBar.UpdateMaximizeButton(this.WindowState == FormWindowState.Maximized);
-            }
-        }
 
         // ========== EVENT HANDLER ==========
         private void MainForm_Load(object sender, EventArgs e)
         {
             try
             {
-                // Initialisierung
+                // Keine Testdaten mehr nötig, da sie direkt in RoutinesViewControl erstellt werden
             }
             catch (Exception ex)
             {

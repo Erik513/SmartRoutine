@@ -1,10 +1,11 @@
-﻿using System;
+﻿using SmartRoutine.Data.Models;
+using SmartRoutine.Logic.Interfaces;
+using SmartRoutine.UI.Helpers;
+using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using SmartRoutine.Data.Models;
-using SmartRoutine.Logic.Interfaces;
-using SmartRoutine.UI.Helpers;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -18,8 +19,10 @@ namespace SmartRoutine.UI.Controls
 
         private readonly IRoutineService _routineService;
         private Routine _selectedRoutine;
+        private List<Routine> _testRoutines;
 
-        private ListBox lstRoutines;
+        //private ListBox lstRoutines;
+        private StyledListBox lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
         private Label lblNoRoutines;
 
@@ -32,8 +35,89 @@ namespace SmartRoutine.UI.Controls
             this.Padding = new Padding(20);
             this.BackColor = Color.Black;
 
+            CreateTestData();
             InitializeControl();
             LoadRoutines();
+
+            lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
+        }
+        private void CreateTestData()
+        {
+            _testRoutines = new List<Routine>();
+
+            // Routine 1: Morgens
+            var morningRoutine = new Routine
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Morgenroutine",
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 0, Type = StepType.OpenUrl, Value = "https://www.wetter.de", Description = "Wetter checken" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 1, Type = StepType.OpenUrl, Value = "https://www.spiegel.de", Description = "Nachrichten lesen" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 2, Type = StepType.OpenUrl, Value = "https://mail.google.com", Description = "E-Mails prüfen" }
+                }
+            };
+            _testRoutines.Add(morningRoutine);
+
+            // Routine 2: Arbeit
+            var workRoutine = new Routine
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Arbeitsstart",
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 0, Type = StepType.OpenUrl, Value = "https://trello.com", Description = "Trello öffnen" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 1, Type = StepType.OpenUrl, Value = "https://github.com", Description = "GitHub öffnen" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 2, Type = StepType.OpenUrl, Value = "https://slack.com", Description = "Slack öffnen" }
+                }
+            };
+            _testRoutines.Add(workRoutine);
+
+            // Routine 3: Feierabend
+            var eveningRoutine = new Routine
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Feierabend",
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 0, Type = StepType.OpenUrl, Value = "https://www.netflix.com", Description = "Netflix öffnen" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 1, Type = StepType.OpenUrl, Value = "https://www.spotify.com", Description = "Spotify öffnen" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 2, Type = StepType.OpenUrl, Value = "https://www.youtube.com", Description = "YouTube öffnen" }
+                }
+            };
+            _testRoutines.Add(eveningRoutine);
+
+            // Routine 4: Wochenende
+            var weekendRoutine = new Routine
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Wochenende",
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 0, Type = StepType.OpenUrl, Value = "https://www.eventim.de", Description = "Events checken" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 1, Type = StepType.OpenUrl, Value = "https://www.booking.com", Description = "Reise planen" }
+                }
+            };
+            _testRoutines.Add(weekendRoutine);
+
+            // Routine 5: Entwickeln
+            var devRoutine = new Routine
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Entwicklungsstart",
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 0, Type = StepType.OpenUrl, Value = "https://stackoverflow.com", Description = "Stack Overflow" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 1, Type = StepType.OpenUrl, Value = "https://docs.microsoft.com", Description = "Microsoft Docs" },
+                    new RoutineStep { Id = Guid.NewGuid().ToString(), Order = 2, Type = StepType.OpenUrl, Value = "https://github.com", Description = "GitHub" }
+                }
+            };
+            _testRoutines.Add(devRoutine);
         }
 
         private void InitializeControl()
@@ -60,14 +144,11 @@ namespace SmartRoutine.UI.Controls
             lblHeader.Font = new Font("Segoe UI", 18, FontStyle.Bold);
             lblHeader.TextAlign = ContentAlignment.MiddleCenter;
 
-            lstRoutines = new ListBox
+            lstRoutines = new StyledListBox
             {
                 Location = new Point(0, 50),
                 Size = new Size(400, 300),
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = UIStyles.Fonts.Normal
+                ItemHeightCustom = 35
             };
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
 
@@ -114,9 +195,16 @@ namespace SmartRoutine.UI.Controls
         public void LoadRoutines()
         {
             lstRoutines.Items.Clear();
-            var routines = _routineService.GetAllRoutines();
 
-            foreach (var routine in routines)
+            // Service aktivieren (JSON-Speicherung)
+            //var routines = _routineService.GetAllRoutines();
+            //foreach (var routine in routines)
+            //{
+            //    lstRoutines.Items.Add(routine);
+            //}
+
+            // Testdaten verwenden
+            foreach (var routine in _testRoutines)
             {
                 lstRoutines.Items.Add(routine);
             }
@@ -124,9 +212,9 @@ namespace SmartRoutine.UI.Controls
             bool hasRoutines = lstRoutines.Items.Count > 0;
             lstRoutines.Visible = hasRoutines;
             lblNoRoutines.Visible = !hasRoutines;
-            btnEditRoutine.Enabled = hasRoutines;
-            btnDeleteRoutine.Enabled = hasRoutines;
-            btnStartRoutine.Enabled = hasRoutines;
+
+            // SelectedIndexChanged manuell aufrufen, um Buttons zu aktualisieren
+            LstRoutines_SelectedIndexChanged(this, EventArgs.Empty);
         }
 
         public void SelectRoutine(Routine routine)
@@ -147,13 +235,40 @@ namespace SmartRoutine.UI.Controls
         private void LstRoutines_SelectedIndexChanged(object sender, EventArgs e)
         {
             _selectedRoutine = lstRoutines.SelectedItem as Routine;
-            btnEditRoutine.Enabled = _selectedRoutine != null;
-            btnDeleteRoutine.Enabled = _selectedRoutine != null;
-            btnStartRoutine.Enabled = _selectedRoutine != null;
 
-            if (_selectedRoutine != null)
+            bool hasSelection = _selectedRoutine != null;
+            btnEditRoutine.Enabled = hasSelection;
+            btnDeleteRoutine.Enabled = hasSelection;
+            btnStartRoutine.Enabled = hasSelection;
+
+            if (hasSelection)
             {
                 RoutineSelected?.Invoke(this, _selectedRoutine);
+            }
+        }
+        private void LstRoutines_ItemsReordered(object sender, EventArgs e)
+        {
+            // Hier die neue Reihenfolge speichern
+            // z.B. die _testRoutines Liste aktualisieren oder Service aufrufen
+
+            // Beispiel: _testRoutines Liste aktualisieren
+            var newOrder = new List<Routine>();
+            foreach (var item in lstRoutines.Items)
+            {
+                if (item is Routine routine)
+                {
+                    newOrder.Add(routine);
+                }
+            }
+            _testRoutines = newOrder;
+
+            // Optional: Orders aktualisieren
+            for (int i = 0; i < _testRoutines.Count; i++)
+            {
+                foreach (var step in _testRoutines[i].Steps)
+                {
+                    step.Order = step.Order; // Behält die Schritt-Reihenfolge
+                }
             }
         }
     }
