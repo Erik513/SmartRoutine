@@ -88,7 +88,7 @@ namespace SmartRoutine.UI.Controls
         {
             int index = IndexFromPoint(e.Location);
 
-            if (index != -1 && e.X < DRAG_HANDLE_WIDTH)
+            if (index != -1 && e.X > this.Width - DRAG_HANDLE_WIDTH)
             {
                 _dragIndex = index;
                 _dragStartPoint = e.Location;
@@ -248,7 +248,7 @@ namespace SmartRoutine.UI.Controls
             Color textColor = ((e.State & DrawItemState.Selected) != 0 && !_isDragging) ? _selectedForeColor : _itemForeColor;
 
             // Drag-Handle
-            Rectangle dragRect = new Rectangle(rect.X + 8, rect.Y, DRAG_HANDLE_WIDTH - 8, rect.Height);
+            Rectangle dragRect = new Rectangle(rect.Right - DRAG_HANDLE_WIDTH, rect.Y, DRAG_HANDLE_WIDTH - 8, rect.Height);
             DrawDragHandle(e.Graphics, dragRect);
 
             // Text
@@ -257,7 +257,7 @@ namespace SmartRoutine.UI.Controls
 
             using (var textBrush = new SolidBrush(textColor))
             {
-                var textRect = new Rectangle(rect.X + DRAG_HANDLE_WIDTH + 4, rect.Y, rect.Width - DRAG_HANDLE_WIDTH - 12, rect.Height);
+                var textRect = new Rectangle(rect.X + 8, rect.Y, rect.Width - DRAG_HANDLE_WIDTH - 12, rect.Height);
                 var format = new StringFormat
                 {
                     Alignment = StringAlignment.Near,
@@ -324,7 +324,7 @@ namespace SmartRoutine.UI.Controls
                 int centerY = rect.Y + rect.Height / 2;
                 int x = rect.X + 5;
                 int lineHeight = 3;
-                int spacing = 4;
+                int spacing = 1;
 
                 for (int i = 0; i < 3; i++)
                 {
