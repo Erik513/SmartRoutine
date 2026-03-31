@@ -27,7 +27,7 @@ namespace SmartRoutine.UI.Controls
         {
             this.Height = TITLE_BAR_HEIGHT;
             this.Dock = DockStyle.Top;
-            this.BackColor = UIStyles.Colors.BackgroundDark;
+            this.BackColor = UIStyles.Colors.BackgroundBlack;
             this.Visible = true;
 
             // Title Label
@@ -35,7 +35,7 @@ namespace SmartRoutine.UI.Controls
             {
                 Text = "SmartRoutine",
                 Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundDark,
+                BackColor = UIStyles.Colors.BackgroundBlack,
                 ForeColor = UIStyles.Colors.TextPrimary,
                 Font = UIStyles.Fonts.Title,
                 TextAlign = ContentAlignment.MiddleCenter,

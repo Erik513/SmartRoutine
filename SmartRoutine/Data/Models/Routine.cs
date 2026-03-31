@@ -23,10 +23,11 @@ namespace SmartRoutine.Data.Models
     public class RoutineStep
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Description { get; set; } = string.Empty;
+
         public int Order { get; set; }
         public StepType Type { get; set; }
         public string Value { get; set; } = string.Empty; // URL oder Pfad
-        public string Description { get; set; } = string.Empty;
     }
 
     public enum StepType

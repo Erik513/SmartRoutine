@@ -43,11 +43,10 @@ namespace SmartRoutine.UI
         private void ConfigureForm()
         {
             this.FormBorderStyle = FormBorderStyle.None;
-            this.BackColor = UIStyles.Colors.BackgroundBlack;
+            this.BackColor = UIStyles.Colors.BackgroundDark;
             this.MinimumSize = MINIMUM_WINDOW_SIZE;
             this.Size = DEFAULT_WINDOW_SIZE;
             this.CenterToScreen();
-            this.DoubleBuffered = true;
         }
 
         // ========== UI CREATION METHODS ==========
@@ -59,19 +58,16 @@ namespace SmartRoutine.UI
             var titleBar = new TitleBarControl("SmartRoutine");
             this.Controls.Add(titleBar);
 
-            // Content Panel - mit Anchor statt Dock
+            // Content Panel
             var contentPanel = new Panel
             {
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                BackColor = Color.Red, // Testfarbe
-                Location = new Point(0, titleBar.Height),
-                Size = new Size(this.ClientSize.Width, this.ClientSize.Height - titleBar.Height)
+                Dock = DockStyle.Fill,
+                Padding = new Padding(5, 5 + titleBar.Height, 5, 5)
             };
             this.Controls.Add(contentPanel);
 
             // UserControls
             _routinesView = new RoutinesViewControl(_routineService);
-            _routinesView.Dock = DockStyle.Fill;
             _routinesView.NewRoutineClicked += (s, e) => ShowEditorView(null);
             _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine);
             _routinesView.DeleteRoutineClicked += (s, routine) => DeleteRoutine(routine);
@@ -79,23 +75,50 @@ namespace SmartRoutine.UI
             contentPanel.Controls.Add(_routinesView);
 
             _editorView = new RoutineEditorViewControl(_routineService);
-            _editorView.Dock = DockStyle.Fill;
             _editorView.BackToRoutinesClicked += (s, e) => ShowRoutinesView();
+            _editorView.SaveChanges += (s, routine) => SaveRoutine(routine);
             contentPanel.Controls.Add(_editorView);
-
-            // Resize-Event für manuelle Positionierung
-            this.Resize += (s, e) => UpdateContentPanelPosition(contentPanel, titleBar);
         }
 
-        private void UpdateContentPanelPosition(Panel contentPanel, TitleBarControl titleBar)
+        private void SaveRoutine(Routine routine)
         {
-            if (contentPanel != null && titleBar != null)
-            {
-                contentPanel.Location = new Point(0, titleBar.Height);
-                contentPanel.Size = new Size(this.ClientSize.Width, this.ClientSize.Height - titleBar.Height);
-            }
-        }
+            if (routine == null) return;
 
+            // Prüfen ob neue oder bestehende Routine
+            var existing = _routineService.GetRoutine(routine.Id);
+            if (existing == null)
+            {
+                // Neue Routine
+                _routineService.CreateRoutine(routine.Name);
+                var newRoutine = _routineService.GetAllRoutines().LastOrDefault();
+                if (newRoutine != null)
+                {
+                    // Schritte hinzufügen
+                    foreach (var step in routine.Steps)
+                    {
+                        _routineService.AddStep(newRoutine.Id, step.Type, step.Value, step.Description);
+                    }
+                }
+            }
+            else
+            {
+                // Bestehende Routine aktualisieren
+                existing.Name = routine.Name;
+                _routineService.UpdateRoutine(existing);
+
+                // Schritte aktualisieren (vereinfacht: alte löschen, neue hinzufügen)
+                foreach (var step in existing.Steps.ToList())
+                {
+                    _routineService.RemoveStep(existing.Id, step.Id);
+                }
+                foreach (var step in routine.Steps.OrderBy(s => s.Order))
+                {
+                    _routineService.AddStep(existing.Id, step.Type, step.Value, step.Description);
+                }
+            }
+
+            _routinesView.LoadRoutines();
+        }
 
         // =======================================================================================================================================
 
@@ -111,7 +134,7 @@ namespace SmartRoutine.UI
             _currentRoutine = routine;
             _routinesView.Visible = false;
             _editorView.Visible = true;
-            //_editorView.LoadRoutine(routine);
+            _editorView.LoadRoutine(routine);
         }
 
         private void DeleteRoutine(Routine routine)
@@ -149,9 +172,18 @@ namespace SmartRoutine.UI
 
         private void MainForm_Resize(object sender, EventArgs e)
         {
-            if (this.Controls[0] is TitleBarControl titleBar)
+            this.SuspendLayout();
+            try
             {
-                titleBar.UpdateMaximizeButton(this.WindowState == FormWindowState.Maximized);
+                if (this.Controls[0] is TitleBarControl titleBar)
+                {
+                    titleBar.UpdateMaximizeButton(this.WindowState == FormWindowState.Maximized);
+                }
+            }
+            finally
+            {
+                this.ResumeLayout(false);
+                this.PerformLayout();
             }
         }
 

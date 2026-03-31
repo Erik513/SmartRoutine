@@ -22,6 +22,8 @@ namespace SmartRoutine.UI.Helpers
         private const int HTBOTTOMRIGHT = 17;
         private const int RESIZE_BORDER = 6; // Size of "resizable" Area
 
+        private bool _isResizing = false;
+
         protected override void WndProc(ref Message m)
         {
             const int WM_NCHITTEST = 0x84;
@@ -54,6 +56,18 @@ namespace SmartRoutine.UI.Helpers
                     m.Result = (IntPtr)HTBOTTOM;
             }
         }
+        protected override void OnResize(EventArgs e)
+        {
+            if (!_isResizing)
+            {
+                base.OnResize(e);
+            }
+            else
+            {
+                // Während des Resizings nur das Nötigste machen
+                this.Invalidate();
+            }
+        }
         /// <summary>
         /// Erstellt ein fensterloses Formular ohne Standard-Titelleiste, 
         /// das dennoch in der Größe verändert werden kann.
@@ -66,9 +80,12 @@ namespace SmartRoutine.UI.Helpers
         public BorderlessResizableForm()
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.None; // No Standard-bar
+            this.FormBorderStyle = FormBorderStyle.None;
             this.DoubleBuffered = true;
-            this.Padding = new Padding(1,1,1,1);
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
+                         ControlStyles.AllPaintingInWmPaint |
+                         ControlStyles.ResizeRedraw, true);
+            this.Padding = new Padding(2);
         }
     }
 }

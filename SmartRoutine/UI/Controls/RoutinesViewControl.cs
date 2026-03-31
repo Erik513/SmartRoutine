@@ -21,19 +21,20 @@ namespace SmartRoutine.UI.Controls
         private Routine _selectedRoutine;
         private List<Routine> _testRoutines;
 
-        //private ListBox lstRoutines;
-        private StyledListBox lstRoutines;
+        private StyledListBoxWithHeader lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
-        private Label lblNoRoutines;
 
         public RoutinesViewControl(IRoutineService routineService)
         {
             _routineService = routineService;
 
-            // Wichtig: Diese Einstellungen müssen hier sein
             this.Dock = DockStyle.Fill;
-            this.Padding = new Padding(20);
-            this.BackColor = Color.Black;
+            this.BackColor = UIStyles.Colors.BackgroundLight;
+
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
+              ControlStyles.AllPaintingInWmPaint |
+              ControlStyles.ResizeRedraw, true);
+            this.UpdateStyles();
 
             CreateTestData();
             InitializeControl();
@@ -122,73 +123,101 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeControl()
         {
-            // Inneres Panel für den Inhalt (weißer/heller Hintergrund)
-            var innerPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMediumElevated
-            };
-
-            this.Controls.Add(innerPanel);
-
-            // Zentrierter Container
-            var centerContainer = new Panel
+            // Haupt-TableLayoutPanel (zentriert, 60% der Breite)
+            var mainLayout = new TableLayoutPanel
             {
                 Anchor = AnchorStyles.None,
-                Size = new Size(400, 500)
+                Size = new Size((int)(this.Width * 0.6), (int)(this.Height * 0.6)),
+                BackColor = Color.Transparent,
+                ColumnCount = 1,
+                RowCount = 2
             };
 
-            var lblHeader = UIStyles.Labels.CreateTitle("Meine Routinen");
-            lblHeader.Location = new Point(0, 0);
-            lblHeader.Size = new Size(400, 40);
-            lblHeader.Font = new Font("Segoe UI", 18, FontStyle.Bold);
-            lblHeader.TextAlign = ContentAlignment.MiddleCenter;
+            // RowStyles: ListBox (90%) + Buttons (10%)
+            mainLayout.RowStyles.Clear();
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
+            mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            lstRoutines = new StyledListBox
+            // ========== OBERE ZEILE: StyledListBoxWithHeader ==========
+            lstRoutines = new StyledListBoxWithHeader("Meine Routinen", ContentAlignment.MiddleCenter)
             {
-                Location = new Point(0, 50),
-                Size = new Size(400, 300),
-                ItemHeightCustom = 35
+                Dock = DockStyle.Fill,
+                ItemHeightCustom = 35, 
+                Height = 200
             };
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
+            mainLayout.Controls.Add(lstRoutines, 0, 0);
 
-            lblNoRoutines = UIStyles.Labels.CreateMuted("Keine Routinen vorhanden.\nKlicke auf 'Neue Routine' um eine zu erstellen.");
-            lblNoRoutines.Location = new Point(0, 50);
-            lblNoRoutines.Size = new Size(400, 80);
-            lblNoRoutines.TextAlign = ContentAlignment.MiddleCenter;
-            lblNoRoutines.Visible = false;
+            // ========== UNTERE ZEILE: Button Panel (4x1 Layout) ==========
+            var buttonPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                ColumnCount = 4,
+                RowCount = 1,
+                AutoSize = true,           // Automatische Größenanpassung
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
+            };
 
-            btnNewRoutine = UIStyles.Buttons.CreatePrimary("+ Neue Routine", "", new Size(190, 40));
-            btnNewRoutine.Location = new Point(0, 360);
+            // Spalten gleichmäßig verteilen
+            buttonPanel.ColumnStyles.Clear();
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+
+            // Zeilen gleichmäßig verteilen
+            buttonPanel.RowStyles.Clear();
+            buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            // Buttons
+            btnNewRoutine = UIStyles.Buttons.CreatePrimary("+ Neue Routine", "", new Size(0, 0));
+            btnNewRoutine.Dock = DockStyle.Fill;
+            btnNewRoutine.Margin = new Padding(5, 5, 5, 5);
             btnNewRoutine.Click += (s, e) => NewRoutineClicked?.Invoke(s, EventArgs.Empty);
 
-            btnEditRoutine = UIStyles.Buttons.CreateStandard("✎ Bearbeiten", "", new Size(190, 40));
-            btnEditRoutine.Location = new Point(210, 360);
+            btnEditRoutine = UIStyles.Buttons.CreatePrimary("✎ Bearbeiten", "", new Size(0, 0));
+            btnEditRoutine.Dock = DockStyle.Fill;
+            btnEditRoutine.Margin = new Padding(5, 5, 5, 5);
             btnEditRoutine.Click += (s, e) => EditRoutineClicked?.Invoke(s, _selectedRoutine);
 
-            btnDeleteRoutine = UIStyles.Buttons.CreateStandard("🗑 Löschen", "", new Size(190, 40));
-            btnDeleteRoutine.Location = new Point(0, 410);
+            btnDeleteRoutine = UIStyles.Buttons.CreateDanger("🗑 Löschen", "", new Size(0, 0));
+            btnDeleteRoutine.Dock = DockStyle.Fill;
+            btnDeleteRoutine.Margin = new Padding(5, 5, 5, 5);
             btnDeleteRoutine.Click += (s, e) => DeleteRoutineClicked?.Invoke(s, _selectedRoutine);
 
-            btnStartRoutine = UIStyles.Buttons.CreatePrimary("▶ Starten", "", new Size(190, 40));
-            btnStartRoutine.Location = new Point(210, 410);
-            btnStartRoutine.Enabled = false;
+            btnStartRoutine = UIStyles.Buttons.CreateGreen("▶ Starten", "", new Size(0, 0));
+            btnStartRoutine.Dock = DockStyle.Fill;
+            btnStartRoutine.Margin = new Padding(5, 5, 5, 5);
+            btnStartRoutine.Enabled = true;
             btnStartRoutine.Click += (s, e) => StartRoutineClicked?.Invoke(s, _selectedRoutine);
 
-            centerContainer.Controls.AddRange(new Control[] {
-                lblHeader, lstRoutines, lblNoRoutines,
-                btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine
-            });
 
-            innerPanel.Controls.Add(centerContainer);
-            this.Resize += (s, e) => CenterContainer(centerContainer);
+            // Buttons im 2x2 Layout platzieren
+            buttonPanel.Controls.Add(btnNewRoutine, 0, 0);
+            buttonPanel.Controls.Add(btnEditRoutine, 1, 0);
+            buttonPanel.Controls.Add(btnDeleteRoutine, 2, 0);
+            buttonPanel.Controls.Add(btnStartRoutine, 3, 0);
+
+            mainLayout.Controls.Add(buttonPanel, 0, 1);
+
+            // Zentrieren des Haupt-Layouts
+            this.Controls.Add(mainLayout);
+
+            // Resize-Event für Zentrierung
+            this.Resize += (s, e) => CenterControls(mainLayout);
         }
 
-        private void CenterContainer(Panel container)
+        private void CenterControls(TableLayoutPanel mainLayout)
         {
-            container.Location = new Point(
-                (this.ClientSize.Width - container.Width) / 2,
-                (this.ClientSize.Height - container.Height) / 2
+            int newWidth = (int)(this.Width * 0.6);
+            int newHeight = (int)(this.Height * 0.6);
+
+            mainLayout.Size = new Size(newWidth, newHeight);
+            mainLayout.Location = new Point(
+                (this.Width - mainLayout.Width) / 2,
+                (this.Height - mainLayout.Height) / 2
             );
         }
 
@@ -211,7 +240,9 @@ namespace SmartRoutine.UI.Controls
 
             bool hasRoutines = lstRoutines.Items.Count > 0;
             lstRoutines.Visible = hasRoutines;
-            lblNoRoutines.Visible = !hasRoutines;
+
+            _selectedRoutine = null;
+            lstRoutines.SelectedIndex = -1;
 
             // SelectedIndexChanged manuell aufrufen, um Buttons zu aktualisieren
             LstRoutines_SelectedIndexChanged(this, EventArgs.Empty);
