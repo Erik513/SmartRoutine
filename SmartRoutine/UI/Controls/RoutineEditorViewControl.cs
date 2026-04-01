@@ -1,5 +1,6 @@
 ﻿using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
+using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
@@ -15,9 +16,11 @@ namespace SmartRoutine.UI.Controls
         public event EventHandler<Routine> SaveChanges;
 
         private readonly IRoutineService _routineService;
+        private readonly IUrlValidationService _urlValidationService;
         private Routine _originalRoutine;
         private Routine _currentRoutine;
         private RoutineStep _editingStep;
+        private ToolTip _errorToolTip = UIStyles.ToolTips.CreateToolTip();
 
         // UI Controls
         private TableLayoutPanel mainTlp;
@@ -60,15 +63,23 @@ namespace SmartRoutine.UI.Controls
         // Footer
         private Button btnBack;
 
-        public RoutineEditorViewControl(IRoutineService routineService)
+        public RoutineEditorViewControl(IRoutineService routineService, IUrlValidationService urlValidationService)
         {
             _routineService = routineService;
+            _urlValidationService = urlValidationService;
             _originalRoutine = null;
             _currentRoutine = null;
             _editingStep = null;
 
             this.Dock = DockStyle.Fill;
             this.BackColor = Color.Black;
+
+            this.Load += (s, e) =>
+            {
+                lstSteps.Visible = true;
+                lstSteps.Invalidate();
+                lstSteps.Update();
+            };
 
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
               ControlStyles.AllPaintingInWmPaint |
@@ -123,7 +134,7 @@ namespace SmartRoutine.UI.Controls
             {
                 Dock = DockStyle.Fill,
                 ItemHeightCustom = 35,
-                Visible = true
+                Visible = true,
             };
             lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
             lstSteps.ItemsReordered += LstSteps_ItemsReordered;
@@ -213,6 +224,24 @@ namespace SmartRoutine.UI.Controls
 
             txtUrl = UIStyles.TextBoxes.CreateStandard();
             txtUrl.Dock = DockStyle.Fill;
+            txtUrl.TextChanged += TxtUrl_TextChanged;  // Für Live-Validierung
+            txtUrl.LostFocus += TxtUrl_LostFocus;       // Für finale Validierung
+
+            // Drag & Drop für txtUrl aktivieren
+            DragDropHelper.EnableTextDragDrop(txtUrl, (droppedText) =>
+            {
+                // Optional: Bereinige den gedroppten Text
+                string cleanedText = droppedText.Trim();
+
+                // Setze den Text in die TextBox
+                txtUrl.Text = cleanedText;
+
+                // Führe die Validierung aus
+                TxtUrl_TextChanged(txtUrl, EventArgs.Empty);
+
+                // Setze den Cursor ans Ende
+                txtUrl.SelectionStart = txtUrl.Text.Length;
+            });
 
             // ==================================================================================================================
 
@@ -277,20 +306,76 @@ namespace SmartRoutine.UI.Controls
                 _originalRoutine = DeepCopy(routine);
                 _currentRoutine = DeepCopy(routine);
                 txtRoutineName.Text = _currentRoutine.Name;
-
                 RefreshStepsList();
             }
             else
             {
                 _originalRoutine = null;
-                _currentRoutine = new Routine { Name = "", Steps = new System.Collections.Generic.List<RoutineStep>() };
+                _currentRoutine = new Routine { Name = "", Steps = new List<RoutineStep>() };
                 txtRoutineName.Text = "";
+                RefreshStepsList();
             }
 
             ClearEditor();
             btnDeleteStep.Enabled = false;
         }
+        private void TxtUrl_TextChanged(object sender, EventArgs e)
+        {
+            string url = txtUrl.Text.Trim();
 
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                // Leeres Feld - normale Farbe
+                txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
+                _errorToolTip.SetToolTip(txtUrl, "");
+                return;
+            }
+
+            // Live-Validierung während der Eingabe
+            var result = _urlValidationService.ValidateAndRepairUrl(url, false);
+
+            if (result.IsValid)
+            {
+                // Gültige URL - normale Farbe
+                txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
+                _errorToolTip.SetToolTip(txtUrl, "");
+
+                // Wenn die URL repariert wurde, im Hintergrund merken (aber nicht überschreiben während der Eingabe)
+                if (result.RepairedUrl != url && result.RepairedUrl != txtUrl.Tag as string)
+                {
+                    txtUrl.Tag = result.RepairedUrl; // Reparierte URL als Tag speichern
+                }
+            }
+            else
+            {
+                // Ungültige URL - rote Farbe und Fehlermeldung im ToolTip
+                txtUrl.ForeColor = UIStyles.Colors.Red;
+                _errorToolTip.SetToolTip(txtUrl, result.ErrorMessage);
+            }
+        }
+        private void TxtUrl_LostFocus(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtUrl.Text))
+                return;
+
+            var result = _urlValidationService.ValidateAndRepairUrl(txtUrl.Text, false);
+
+            if (result.IsValid)
+            {
+                // Verwende die reparierte URL wenn vorhanden
+                if (result.RepairedUrl != txtUrl.Text)
+                {
+                    txtUrl.Text = result.RepairedUrl;
+                }
+                txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
+                _errorToolTip.SetToolTip(txtUrl, "");
+            }
+            else
+            {
+                txtUrl.ForeColor = UIStyles.Colors.Red;
+                _errorToolTip.SetToolTip(txtUrl, result.ErrorMessage);
+            }
+        }
         private Routine DeepCopy(Routine original)
         {
             if (original == null) return null;
@@ -307,7 +392,8 @@ namespace SmartRoutine.UI.Controls
                     Order = s.Order,
                     Type = s.Type,
                     Value = s.Value,
-                    Description = s.Description
+                    Description = s.Description,
+                    UserDescription = s.UserDescription
                 }).ToList()
             };
         }
@@ -333,7 +419,8 @@ namespace SmartRoutine.UI.Controls
                 if (orig.Order != curr.Order ||
                     orig.Type != curr.Type ||
                     orig.Value != curr.Value ||
-                    orig.Description != curr.Description)
+                    orig.Description != curr.Description ||
+                    orig.UserDescription != curr.UserDescription)
                     return true;
             }
 
@@ -352,10 +439,9 @@ namespace SmartRoutine.UI.Controls
             {
                 lstSteps.Items.Add(step);
             }
+            lstSteps.Visible = true;
 
             bool hasSteps = lstSteps.Items.Count > 0;
-            lstSteps.Visible = hasSteps;
-
             SetStepButtonsEnabled(hasSteps);
         }
 
@@ -510,13 +596,20 @@ namespace SmartRoutine.UI.Controls
             if (selectedType == StepType.OpenUrl)
             {
                 stepUrl = txtUrl.Text.Trim();
-                if (string.IsNullOrWhiteSpace(stepUrl))
+
+                // Validiere mit Service
+                var validationResult = _urlValidationService.ValidateAndRepairUrl(stepUrl, false);
+
+                if (!validationResult.IsValid)
                 {
-                    MessageBox.Show("Bitte gib eine URL ein.", "Hinweis",
+                    MessageBox.Show(validationResult.ErrorMessage, "Ungültige URL",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     txtUrl.Focus();
                     return;
                 }
+
+                // Verwende die reparierte URL
+                stepUrl = validationResult.RepairedUrl;
             }
 
             // Schritt speichern oder aktualisieren

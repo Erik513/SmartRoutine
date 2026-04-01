@@ -79,10 +79,12 @@
     <Compile Include="Data\RoutineRepository.cs" />
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
+    <Compile Include="UI\Helpers\DragDropHelper.cs" />
+    <Compile Include="Logic\Interfaces\IUrlValidationService.cs" />
+    <Compile Include="Logic\Services\UrlValidationService.cs" />
     <Compile Include="UI\Helpers\StepTypeHelper.cs" />
-    <Compile Include="Logic\RoutineService.cs" />
+    <Compile Include="Logic\Services\RoutineService.cs" />
     <Compile Include="Logic\Interfaces\IRoutineService.cs" />
-    <Compile Include="Logic\ValidationHelper.cs" />
     <Compile Include="UI\Controls\RoutineEditorViewControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -116,7 +118,6 @@
     </Compile>
     <Compile Include="UI\Helpers\FormDragHandle.cs" />
     <Compile Include="UI\Helpers\UIStyles.cs" />
-    <Compile Include="UI\Helpers\UrlValidator.cs" />
     <Compile Include="UI\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

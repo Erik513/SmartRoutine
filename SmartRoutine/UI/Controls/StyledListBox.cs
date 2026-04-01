@@ -222,7 +222,7 @@ namespace SmartRoutine.UI.Controls
 
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
-            if (e.Index < 0 || Items.Count == 0) return;
+            if (e.Index < 0) return;
 
             Rectangle rect = new Rectangle(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height);
 

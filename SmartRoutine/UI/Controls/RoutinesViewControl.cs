@@ -226,20 +226,19 @@ namespace SmartRoutine.UI.Controls
             lstRoutines.Items.Clear();
 
             // Service aktivieren (JSON-Speicherung)
-            //var routines = _routineService.GetAllRoutines();
-            //foreach (var routine in routines)
-            //{
-            //    lstRoutines.Items.Add(routine);
-            //}
-
-            // Testdaten verwenden
-            foreach (var routine in _testRoutines)
+            var routines = _routineService.GetAllRoutines();
+            foreach (var routine in routines)
             {
                 lstRoutines.Items.Add(routine);
             }
 
-            bool hasRoutines = lstRoutines.Items.Count > 0;
-            lstRoutines.Visible = hasRoutines;
+            // Testdaten verwenden
+            //foreach (var routine in _testRoutines)
+            //{
+            //    lstRoutines.Items.Add(routine);
+            //}
+
+            lstRoutines.Visible = true;
 
             _selectedRoutine = null;
             lstRoutines.SelectedIndex = -1;

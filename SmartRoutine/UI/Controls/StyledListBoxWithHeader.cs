@@ -80,7 +80,8 @@ namespace SmartRoutine.UI.Controls
             // ListBox
             listBox = new StyledListBox
             {
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
+                MinimumSize = new Size(0, 50)
             };
 
             // Events weiterleiten

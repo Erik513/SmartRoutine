@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using SmartRoutine.Data;
 using SmartRoutine.Data.Interfaces;
-using SmartRoutine.Logic;
+using SmartRoutine.Logic.Services;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.UI;
 

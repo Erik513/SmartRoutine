@@ -1,5 +1,6 @@
 ﻿using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
+using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
 using SmartRoutine.UI.Helpers;
 using System;
@@ -74,7 +75,8 @@ namespace SmartRoutine.UI
             _routinesView.StartRoutineClicked += (s, routine) => StartRoutine(routine);
             contentPanel.Controls.Add(_routinesView);
 
-            _editorView = new RoutineEditorViewControl(_routineService);
+            var urlValidationService = new UrlValidationService();
+            _editorView = new RoutineEditorViewControl(_routineService, urlValidationService);
             _editorView.BackToRoutinesClicked += (s, e) => ShowRoutinesView();
             _editorView.SaveChanges += (s, routine) => SaveRoutine(routine);
             contentPanel.Controls.Add(_editorView);
@@ -96,7 +98,7 @@ namespace SmartRoutine.UI
                     // Schritte hinzufügen
                     foreach (var step in routine.Steps)
                     {
-                        _routineService.AddStep(newRoutine.Id, step.Type, step.Value, step.Description);
+                        _routineService.AddStep(newRoutine.Id, step.Type, step.Value, step.Description, step.UserDescription);
                     }
                 }
             }
@@ -113,7 +115,7 @@ namespace SmartRoutine.UI
                 }
                 foreach (var step in routine.Steps.OrderBy(s => s.Order))
                 {
-                    _routineService.AddStep(existing.Id, step.Type, step.Value, step.Description);
+                    _routineService.AddStep(existing.Id, step.Type, step.Value, step.Description, step.UserDescription);
                 }
             }
 

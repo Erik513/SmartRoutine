@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SmartRoutine.Logic.Interfaces;
+using System;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 
-namespace SmartRoutine.UI.Helpers
+namespace SmartRoutine.Logic.Services
 {
-    public static class UrlValidator
+    public class UrlValidationService : IUrlValidationService
     {
-        // Unterstützte Protokolle (allgemein)
+        // Unterstützte Protokolle
         private static readonly string[] SupportedSchemes =
         {
             "http",
@@ -20,6 +19,7 @@ namespace SmartRoutine.UI.Helpers
             "file",
             "data"
         };
+
         // Bekannte Domain-Erweiterungen für automatische Erkennung
         private static readonly string[] CommonTlds =
         {
@@ -27,8 +27,88 @@ namespace SmartRoutine.UI.Helpers
             ".edu", ".gov", ".mil", ".io", ".co", ".tv", ".live", ".stream",
             ".info", ".biz", ".mobi", ".name", ".pro", ".museum", ".aero", ".to"
         };
-        // Versucht eine URL zu reparieren/zu vervollständigen
-        public static string TryRepairUrl(string input)
+
+        public (bool IsValid, string RepairedUrl, string ErrorMessage) ValidateAndRepairUrl(string url, bool allowEmpty = false)
+        {
+            // DEBUG: Zeige den genauen Inhalt der URL
+            System.Diagnostics.Debug.WriteLine($"URLValidator received: '{url}'");
+            System.Diagnostics.Debug.WriteLine($"URL length: {url?.Length ?? 0}");
+
+            if (url != null)
+            {
+                // Debug Infos
+                //System.Diagnostics.Debug.WriteLine($"URL char codes: {string.Join(", ", url.Select(c => (int)c))}");
+            }
+
+            // Leere URLs sind optional erlaubt
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                if (allowEmpty)
+                    return (true, url, null);
+                else
+                    return (false, url, "URL cannot be empty.");
+            }
+
+            string trimmed = url.Trim();
+
+            // 1. Direkte Validierung
+            if (IsValidUrl(trimmed))
+                return (true, trimmed, null);
+
+            // 2. Versuche zu reparieren
+            string repairedUrl = TryRepairUrl(trimmed);
+
+            // 3. Validiere die reparierte URL
+            if (IsValidUrl(repairedUrl))
+            {
+                return (true, repairedUrl, null);
+            }
+
+            // 4. URL ist ungültig und konnte nicht repariert werden
+            string error = BuildErrorMessage(trimmed);
+            return (false, url, error);
+        }
+
+        public bool IsValidUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return false;
+
+            string trimmed = url.Trim();
+
+            // Schnelle Präfix-Checks
+            foreach (string scheme in SupportedSchemes)
+            {
+                if (trimmed.StartsWith($"{scheme}://", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            // Auch mailto: ohne // ist gültig
+            if (trimmed.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // URI-Parsing für genaue Validierung
+            try
+            {
+                if (Uri.TryCreate(trimmed, UriKind.Absolute, out Uri uri))
+                {
+                    foreach (string scheme in SupportedSchemes)
+                    {
+                        if (uri.Scheme.Equals(scheme, StringComparison.OrdinalIgnoreCase))
+                            return true;
+                    }
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            return false;
+        }
+
+        public string TryRepairUrl(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
                 return input;
@@ -52,7 +132,6 @@ namespace SmartRoutine.UI.Helpers
                 // 4a. Prüfe ob es wie eine Domain aussieht
                 if (LooksLikeDomain(trimmed))
                 {
-                    // Füge https:// voran (Standard für Web)
                     return $"https://{trimmed}";
                 }
 
@@ -72,7 +151,6 @@ namespace SmartRoutine.UI.Helpers
             // 5. Prüfe ob Protokoll korrigiert werden muss
             if (HasMalformedProtocol(trimmed))
             {
-                // Korrigiere häufige Tippfehler
                 trimmed = CorrectProtocolTypos(trimmed);
             }
 
@@ -84,93 +162,11 @@ namespace SmartRoutine.UI.Helpers
 
             return trimmed;
         }
-        // Validiert ob eine URL gültig ist
-        public static bool IsValidUrl(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-                return false;
 
-            string trimmed = url.Trim();
+        // ========== HILFSMETHODEN ==========
 
-            // Schnelle Präfix-Checks
-            foreach (string scheme in SupportedSchemes)
-            {
-                if (trimmed.StartsWith($"{scheme}://", StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            // Auch mailto: ohne // ist gültig
-            if (trimmed.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            // URI-Parsing für genaue Validierung
-            try
-            {
-                if (Uri.TryCreate(trimmed, UriKind.Absolute, out Uri uri))
-                {
-                    // Überprüfe das Schema
-                    foreach (string scheme in SupportedSchemes)
-                    {
-                        if (uri.Scheme.Equals(scheme, StringComparison.OrdinalIgnoreCase))
-                            return true;
-                    }
-
-                    // Auch andere absolute URIs sind okay
-                    return true;
-                }
-            }
-            catch
-            {
-                return false;
-            }
-
-            return false;
-        }
-
-        // Validiert und repariert URL wenn nötig
-        public static (bool IsValid, string RepairedUrl, string ErrorMessage) ValidateAndRepairUrl(string url, bool allowEmpty = false)
-        {
-            // DEBUG: Zeige den genauen Inhalt der URL
-            Console.WriteLine($"URLValidator received: '{url}'");
-            Console.WriteLine($"URL length: {url?.Length ?? 0}");
-            if (url != null)
-            {
-                Console.WriteLine($"URL char codes: {string.Join(", ", url.Select(c => (int)c))}");
-            }
-            // Leere URLs sind optional erlaubt
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                if (allowEmpty)
-                    return (true, url, null);  // Erlaubt - KEINE Fehlermeldung!
-                else
-                    return (false, url, "URL cannot be empty.");  // Nur hier Fehlermeldung
-            }
-
-            string trimmed = url.Trim();
-
-            // 1. Direkte Validierung
-            if (IsValidUrl(trimmed))
-                return (true, trimmed, null);
-
-            // 2. Versuche zu reparieren
-            string repairedUrl = TryRepairUrl(trimmed);
-
-            // 3. Validiere die reparierte URL
-            if (IsValidUrl(repairedUrl))
-            {
-                // Erfolgreich repariert - keine Meldung nötig
-                return (true, repairedUrl, null);
-            }
-
-            // 4. URL ist ungültig und konnte nicht repariert werden
-            string error = BuildErrorMessage(trimmed);
-            return (false, url, error);
-        }
-
-        // Erstellt eine hilfreiche Fehlermeldung
         private static string BuildErrorMessage(string url)
         {
-            // Diese Methode wird NUR für nicht-leere, ungültige URLs aufgerufen
             if (url.Contains(" "))
                 return "URLs should not contain spaces. Please remove spaces or encode them with %20.";
 
@@ -188,7 +184,6 @@ namespace SmartRoutine.UI.Helpers
                    "• file:///C:/Users/Name/file.txt";
         }
 
-        // Hilfsmethoden
         private static bool HasProtocol(string url)
         {
             return url.Contains("://") || url.StartsWith("mailto:");
@@ -196,27 +191,20 @@ namespace SmartRoutine.UI.Helpers
 
         private static bool LooksLikeDomain(string text)
         {
-            // Muss einen Punkt haben (Domain.TLD)
             if (!text.Contains('.'))
                 return false;
 
-            // Sollte keine Leerzeichen enthalten
             if (text.Contains(' '))
                 return false;
 
-            // Extrahiere den Domain-Teil (alles vor erstem / oder ?)
             string domainPart = text.Split('/', '?')[0];
-
-            // Prüfe ob der letzte Teil nach dem Punkt eine typische TLD-Länge hat
             string[] parts = domainPart.Split('.');
+
             if (parts.Length >= 2)
             {
                 string lastPart = parts.Last().ToLower();
-
-                // TLDs sind meist 2-6 Zeichen lang
                 if (lastPart.Length >= 2 && lastPart.Length <= 6)
                 {
-                    // Prüfe ob es nur Buchstaben sind (keine Zahlen oder Sonderzeichen)
                     if (lastPart.All(c => char.IsLetter(c)))
                     {
                         return true;
@@ -224,7 +212,6 @@ namespace SmartRoutine.UI.Helpers
                 }
             }
 
-            // Prüfe auf bekannte TLDs (auch im gesamten Text)
             foreach (string tld in CommonTlds)
             {
                 if (text.ToLowerInvariant().Contains(tld.ToLowerInvariant()))
@@ -238,18 +225,15 @@ namespace SmartRoutine.UI.Helpers
 
         private static bool LooksLikeIpAddress(string text)
         {
-            // Einfache IPv4-Erkennung
             string pattern = @"^\d{1,3}(\.\d{1,3}){3}(:\d+)?$";
             return Regex.IsMatch(text, pattern);
         }
 
         private static bool LooksLikeLocalPath(string text)
         {
-            // Windows-Pfad (C:\ oder \\Server\)
             if (text.Contains(":\\") || text.StartsWith("\\\\"))
                 return true;
 
-            // Unix-Pfad mit / und kein :// (also kein Protokoll)
             if (text.StartsWith("/") && !text.Contains("://"))
                 return true;
 
@@ -258,7 +242,6 @@ namespace SmartRoutine.UI.Helpers
 
         private static bool HasMalformedProtocol(string url)
         {
-            // Häufige Tippfehler bei Protokollen
             string[] malformedProtocols =
             {
                 "htttp://", "htps://", "http//", "https//",
@@ -280,25 +263,18 @@ namespace SmartRoutine.UI.Helpers
 
             if (lowerUrl.StartsWith("htttp://"))
                 return "http://" + url.Substring("htttp://".Length);
-
             if (lowerUrl.StartsWith("htps://"))
                 return "https://" + url.Substring("htps://".Length);
-
             if (lowerUrl.StartsWith("http//"))
                 return "http://" + url.Substring("http//".Length);
-
             if (lowerUrl.StartsWith("https//"))
                 return "https://" + url.Substring("https//".Length);
-
             if (lowerUrl.StartsWith("ttp://"))
                 return "http://" + url.Substring("ttp://".Length);
-
             if (lowerUrl.StartsWith("tps://"))
                 return "https://" + url.Substring("tps://".Length);
-
             if (lowerUrl.StartsWith("htp://"))
                 return "http://" + url.Substring("htp://".Length);
-
             if (lowerUrl.StartsWith("http:"))
                 return "http://" + url.Substring("http:".Length);
 
@@ -311,12 +287,10 @@ namespace SmartRoutine.UI.Helpers
                 !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            // Extrahiere den Teil nach dem Protokoll
             string withoutProtocol = url.Contains("://")
                 ? url.Substring(url.IndexOf("://") + 3)
                 : url;
 
-            // Wenn keine Subdomain vorhanden ist und es eine Domain ist
             return !withoutProtocol.StartsWith("www.", StringComparison.OrdinalIgnoreCase) &&
                    !withoutProtocol.Contains("/") &&
                    withoutProtocol.Contains('.') &&

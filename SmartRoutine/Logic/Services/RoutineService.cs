@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace SmartRoutine.Logic
+namespace SmartRoutine.Logic.Services
 {
     public class RoutineService : IRoutineService
     {
@@ -39,24 +39,26 @@ namespace SmartRoutine.Logic
 
         public void DeleteRoutine(string id) => _repository.DeleteRoutine(id);
 
-        public void AddStep(string routineId, StepType type, string value, string description)
+        public void AddStep(string routineId, StepType type, string value, string description, string userDescription = null)
         {
             var routine = GetRoutine(routineId);
             if (routine == null) return;
 
             var step = new RoutineStep
             {
+                Id = Guid.NewGuid().ToString(),
                 Order = routine.Steps.Count,
                 Type = type,
                 Value = value,
-                Description = description
+                Description = description,
+                UserDescription = userDescription
             };
 
             routine.Steps.Add(step);
             _repository.UpdateRoutine(routine);
         }
 
-        public void UpdateStep(string routineId, string stepId, string value, string description)
+        public void UpdateStep(string routineId, string stepId, string value, string description, string userDescription = null)
         {
             var routine = GetRoutine(routineId);
             var step = routine?.Steps.FirstOrDefault(s => s.Id == stepId);
@@ -65,6 +67,7 @@ namespace SmartRoutine.Logic
             {
                 step.Value = value;
                 step.Description = description;
+                step.UserDescription = userDescription;
                 _repository.UpdateRoutine(routine);
             }
         }
