@@ -114,22 +114,6 @@ namespace SmartRoutine.Logic
                         UseShellExecute = true
                     });
                     break;
-
-                case StepType.OpenFolder:
-                    Process.Start("explorer.exe", step.Value);
-                    break;
-
-                case StepType.OpenApplication:
-                    Process.Start(step.Value);
-                    break;
-
-                case StepType.Wait:
-                    // Wird im UI mit Timer behandelt
-                    break;
-
-                case StepType.Message:
-                    // Wird im UI als MessageBox behandelt
-                    break;
             }
         }
 
@@ -139,10 +123,6 @@ namespace SmartRoutine.Logic
             {
                 case StepType.OpenUrl:
                     return Uri.IsWellFormedUriString(step.Value, UriKind.Absolute);
-                case StepType.OpenFolder:
-                    return Directory.Exists(step.Value);
-                case StepType.OpenApplication:
-                    return File.Exists(step.Value);
                 default:
                     return true;
             }

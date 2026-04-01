@@ -266,7 +266,7 @@ namespace SmartRoutine.UI.Helpers
         // Label-Styles
         public static class Labels
         {
-            public static Label CreateTitle(string text)
+            public static Label CreateTitle(string text = "")
             {
                 return new Label
                 {
@@ -282,7 +282,7 @@ namespace SmartRoutine.UI.Helpers
                 };
             }
 
-            public static Label CreateNormal(string text)
+            public static Label CreateNormal(string text = "")
             {
                 return new Label
                 {
@@ -299,7 +299,7 @@ namespace SmartRoutine.UI.Helpers
                 };
             }
 
-            public static Label CreateMuted(string text)
+            public static Label CreateMuted(string text = "")
             {
                 return new Label
                 {
@@ -362,7 +362,7 @@ namespace SmartRoutine.UI.Helpers
         // ComboBox-Styles
         public static class ComboBoxes
         {
-            public static ComboBox CreateStandard()
+            public static ComboBox CreateStandard(ComboBoxStyle comboBoxStyle)
             {
                 return new ComboBox
                 {
@@ -370,7 +370,7 @@ namespace SmartRoutine.UI.Helpers
                     ForeColor = Colors.TextPrimary,
                     FlatStyle = FlatStyle.Flat,
                     Font = Fonts.Normal,
-                    DropDownStyle = ComboBoxStyle.DropDownList
+                    DropDownStyle = comboBoxStyle
                 };
             }
         }
@@ -411,6 +411,18 @@ namespace SmartRoutine.UI.Helpers
                     BackColor = Color.Transparent,
                     Font = Fonts.Normal,
                     FlatStyle = FlatStyle.Flat
+                };
+            }
+        }
+        public static class TableLayoutPanels
+        {
+            public static TableLayoutPanel CreateStandard(int columnCount, int rowCount)
+            {
+                return new TableLayoutPanel
+                {
+                    ColumnCount = columnCount,
+                    RowCount = rowCount,
+                    BackColor = Colors.BackgroundMediumElevated
                 };
             }
         }

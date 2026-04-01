@@ -79,6 +79,7 @@
     <Compile Include="Data\RoutineRepository.cs" />
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
+    <Compile Include="UI\Helpers\StepTypeHelper.cs" />
     <Compile Include="Logic\RoutineService.cs" />
     <Compile Include="Logic\Interfaces\IRoutineService.cs" />
     <Compile Include="Logic\ValidationHelper.cs" />

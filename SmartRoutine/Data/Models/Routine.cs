@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,18 +26,24 @@ namespace SmartRoutine.Data.Models
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Description { get; set; } = string.Empty;
-
+        public string UserDescription { get; set; } = string.Empty;
         public int Order { get; set; }
         public StepType Type { get; set; }
         public string Value { get; set; } = string.Empty; // URL oder Pfad
+
+        public override string ToString()
+        {
+            return $"{Order + 1}. {Description}";
+        }
     }
 
     public enum StepType
     {
         OpenUrl,
-        OpenFolder,
-        OpenApplication,
-        Wait,
-        Message
+        //OpenFolder,
+        //OpenApplication,
+        //Wait,
+        //Message
     }
+
 }

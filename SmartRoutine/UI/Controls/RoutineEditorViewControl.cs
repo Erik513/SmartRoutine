@@ -2,6 +2,7 @@
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.UI.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -19,22 +20,45 @@ namespace SmartRoutine.UI.Controls
         private RoutineStep _editingStep;
 
         // UI Controls
-        private TextBox txtRoutineName;
-        private Button btnBack;
+        private TableLayoutPanel mainTlp;
+
+        // Inhalt (links + rechts)
+        private TableLayoutPanel contentTlp;
 
         // Linke Seite
+        private TableLayoutPanel leftTlp;
+        private TableLayoutPanel leftRoutineTitleTlp;
+        private Label lblRoutineName;
+        private TextBox txtRoutineName;
         private StyledListBoxWithHeader lstSteps;
+        private TableLayoutPanel leftBtnsTlp;
         private Button btnAddStep, btnDeleteStep;
-        private Panel leftPanel;
-        private Panel rightPanel;
 
         // Rechte Seite
+        private TableLayoutPanel rightTlp;
+        private Label lblStepNameTitle;
+        private Label lblStepName;
         private TextBox txtStepName;
+        private Label lblStepDescription;
         private TextBox txtStepDescription;
+        private Label lblStepType;
         private ComboBox cmbStepType;
-        private TextBox txtUrl;
+
+        private TableLayoutPanel rightBtnsTlp;
         private Button btnSaveStep, btnCancelStep;
-        private Label lblEditorTitle;
+
+        // Controls based on StepType
+        // StepTypeContent
+        private Panel stepTypeContentPanel;
+        private TableLayoutPanel stepTypeContentTlp;
+        // OpenURL
+        private Label lblUrl;
+        private TextBox txtUrl;
+        private ComboBox cmbOpenUrl;
+        // More ...
+
+        // Footer
+        private Button btnBack;
 
         public RoutineEditorViewControl(IRoutineService routineService)
         {
@@ -56,208 +80,193 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeControl()
         {
-            // Haupt-TableLayout für die gesamte Steuerung
-            var mainLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 2,
-                BackColor = UIStyles.Colors.BackgroundMediumElevated
-            };
-            mainLayout.RowStyles.Clear();
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));  // Header
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));  // Inhalt
-
-            // ========== HEADER ==========
-            var headerPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundDark,
-                Padding = new Padding(20, 10, 20, 10)
-            };
-
-            var lblRoutineName = UIStyles.Labels.CreateNormal("Routine-Name:");
-            lblRoutineName.Location = new Point(20, 18);
-            lblRoutineName.Size = new Size(90, 25);
-
-            txtRoutineName = new TextBox
-            {
-                Location = new Point(115, 18),
-                Size = new Size(300, 25),
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = UIStyles.Fonts.Normal
-            };
-
-            btnBack = UIStyles.Buttons.CreateStandard("← Zurück", "", new Size(100, 35));
-            btnBack.Location = new Point(headerPanel.Width - 120, 12);
-            btnBack.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnBack.Click += BtnBack_Click;
-
-            headerPanel.Controls.AddRange(new Control[] { lblRoutineName, txtRoutineName, btnBack });
+            // Hauptstruktur
+            mainTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
+            mainTlp.Dock = DockStyle.Fill;
+            mainTlp.RowStyles.Clear();
+            mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));  // Inhalt
+            mainTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));  // Footer
 
             // ========== INHALT (Linke + Rechte Seite) ==========
-            var stepsLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 1,
-                BackColor = UIStyles.Colors.BackgroundMediumElevated
-            };
-            stepsLayout.ColumnStyles.Clear();
-            stepsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));  // Linke Seite 40%
-            stepsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));  // Rechte Seite 60%
+            contentTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            contentTlp.Dock = DockStyle.Fill;
+            contentTlp.ColumnStyles.Clear();
+            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));  // Linke Seite 40%
+            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));  // Rechte Seite 60%
 
             // ----- LINKE SEITE -----
-            leftPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundDark,
-                Padding = new Padding(10)
-            };
+            leftTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 3);
+            leftTlp.Dock = DockStyle.Fill;
+            leftTlp.RowStyles.Clear();
+            leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+            leftTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
 
-            var lblStepsTitle = UIStyles.Labels.CreateTitle("Schritte");
-            lblStepsTitle.Location = new Point(10, 10);
-            lblStepsTitle.Size = new Size(200, 30);
+            // Oben
+            leftRoutineTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            leftRoutineTitleTlp.Dock = DockStyle.Fill;
+            leftRoutineTitleTlp.ColumnStyles.Clear();
+            leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); 
+            leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
+            lblRoutineName = UIStyles.Labels.CreateTitle("Routinenname:");
+            lblRoutineName.Dock = DockStyle.Fill;
+
+            txtRoutineName = UIStyles.TextBoxes.CreateStandard();
+            txtRoutineName.Dock = DockStyle.Fill;
+
+            leftRoutineTitleTlp.Controls.Add(lblRoutineName, 0, 0);
+            leftRoutineTitleTlp.Controls.Add(txtRoutineName, 1, 0);
+
+            // Mitte
             lstSteps = new StyledListBoxWithHeader("Schritte", ContentAlignment.MiddleCenter)
             {
-                Location = new Point(10, 50),
-                Width = leftPanel.Width - 20,
-                Height = 350,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                Dock = DockStyle.Fill,
                 ItemHeightCustom = 35,
                 Visible = true
             };
             lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
             lstSteps.ItemsReordered += LstSteps_ItemsReordered;
 
+            // Unten
+            leftBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            leftBtnsTlp.Dock = DockStyle.Fill;
+
             btnAddStep = UIStyles.Buttons.CreatePrimary("+ Schritt hinzufügen", "", new Size(155, 35));
-            btnAddStep.Location = new Point(10, 410);
             btnAddStep.Click += BtnAddStep_Click;
 
-            btnDeleteStep = UIStyles.Buttons.CreateStandard("🗑 Löschen", "", new Size(155, 35));
-            btnDeleteStep.Location = new Point(175, 410);
+            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑 Löschen", "", new Size(155, 35));
             btnDeleteStep.Click += BtnDeleteStep_Click;
             btnDeleteStep.Enabled = false;
 
-            leftPanel.Controls.AddRange(new Control[] { lblStepsTitle, lstSteps, btnAddStep, btnDeleteStep });
+            leftBtnsTlp.ColumnStyles.Clear();
+            leftBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnAddStep.Width));
+            leftBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnDeleteStep.Width));
+
+            leftBtnsTlp.Controls.Add(btnAddStep, 0, 0);
+            leftBtnsTlp.Controls.Add(btnDeleteStep, 1, 0);
+
+            leftTlp.Controls.AddRange(new Control[] {
+                leftRoutineTitleTlp, lstSteps, leftBtnsTlp
+            });
 
             // ----- RECHTE SEITE -----
-            rightPanel = new Panel
+            rightTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 9);
+            rightTlp.Dock = DockStyle.Fill;
+            rightTlp.RowStyles.Clear();
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // lblStepNameTitle
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepName
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // txtStepName
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepDescription
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // txtStepDescription
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepType
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // cmbStepType
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // stepTypeContentTlp
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // btnSaveStep, btnCancelStep
+            rightTlp.Visible = false;
+
+            // Titel (lblStepNameTitle)
+            lblStepNameTitle = UIStyles.Labels.CreateTitle();
+            lblStepNameTitle.Dock = DockStyle.Fill;
+
+            // lblStepName
+            lblStepName = UIStyles.Labels.CreateNormal("Name:");
+            lblStepName.Dock = DockStyle.Fill;
+
+            // txtStepName
+            txtStepName = UIStyles.TextBoxes.CreateStandard();
+            txtStepName.Dock = DockStyle.Fill;
+
+            // lblStepDescription
+            lblStepDescription = UIStyles.Labels.CreateNormal("Beschreibung:");
+            lblStepDescription.Dock = DockStyle.Fill;
+
+            // txtStepDescription
+            txtStepDescription = UIStyles.TextBoxes.CreateStandard();
+            txtStepDescription.Dock = DockStyle.Fill;
+
+            // lblStepType
+            lblStepType = UIStyles.Labels.CreateNormal("Aktion:");
+            lblStepType.Dock = DockStyle.Fill;
+            // cmbStepType
+            cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
+            cmbStepType.Dock = DockStyle.Fill;
+            var stepTypes = StepTypeHelper.GetStepTypeListWithEmpty();
+            cmbStepType.DataSource = stepTypes;
+            cmbStepType.DisplayMember = "Value";
+            cmbStepType.ValueMember = "Key";
+            cmbStepType.SelectedIndex = -1;
+            cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
+
+            // ==================================================================================================================
+            // stepTypeContent
+            stepTypeContentPanel = UIStyles.Panels.CreateMedium();
+            stepTypeContentPanel.Dock = DockStyle.Fill;
+
+            stepTypeContentTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 1);
+            stepTypeContentTlp.Dock = DockStyle.Fill;
+
+            stepTypeContentPanel.Controls.Add(stepTypeContentTlp);
+            // OpenURL Controls vorbereiten
+            lblUrl = UIStyles.Labels.CreateNormal("Webseite:");
+            lblUrl.Dock = DockStyle.Fill;
+
+            txtUrl = UIStyles.TextBoxes.CreateStandard();
+            txtUrl.Dock = DockStyle.Fill;
+
+            // ==================================================================================================================
+
+            // btnSaveStep, btnCancelStep
+            rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            rightBtnsTlp.Dock = DockStyle.Fill;
+
+            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾 Schritt speichern", "", new Size(155, 35));
+            btnSaveStep.Click += BtnSaveStep_Click;
+
+            btnCancelStep = UIStyles.Buttons.CreateStandard("✖ Abbrechen", "", new Size(155, 35));
+            btnCancelStep.Click += BtnCancelStep_Click;
+
+            rightBtnsTlp.ColumnStyles.Clear();
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnSaveStep.Width));
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnCancelStep.Width));
+            rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            rightBtnsTlp.Controls.Add(btnSaveStep, 0, 0);
+            rightBtnsTlp.Controls.Add(btnCancelStep, 1, 0);
+
+            rightTlp.Controls.AddRange(new Control[] {
+                lblStepNameTitle, lblStepName, txtStepName,
+                lblStepDescription, txtStepDescription,
+                lblStepType, cmbStepType, stepTypeContentPanel, 
+                rightBtnsTlp
+            });
+
+            // ========== FOOTER ==========
+            var footerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 BackColor = UIStyles.Colors.BackgroundDark,
-                Padding = new Padding(10)
+                Padding = new Padding(20, 10, 20, 10)
             };
 
-            var editorLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 6,
-                BackColor = UIStyles.Colors.BackgroundMediumElevated
-            }
-            ;
-            editorLayout.ColumnStyles.Clear();
-            editorLayout.RowStyles.Add(new ColumnStyle(SizeType.AutoSize, 100));
+            btnBack = UIStyles.Buttons.CreateStandard("← Zurück", "", new Size(100, 35));
+            btnBack.Location = new Point(footerPanel.Width - 120, 12);
+            btnBack.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnBack.Click += BtnBack_Click;
 
-            // Title
-            lblEditorTitle = UIStyles.Labels.CreateTitle("Neuen Schritt erstellen");
-            lblEditorTitle.Dock = DockStyle.Fill;
+            footerPanel.Controls.AddRange(new Control[] { btnBack });
 
-            // Schritt-Name
-            var lblStepName = UIStyles.Labels.CreateNormal("Schritt-Name:");
-            lblStepName.Dock = DockStyle.Fill;
+            // Hinzufügen
+            contentTlp.Controls.Add(leftTlp, 0, 0);
+            contentTlp.Controls.Add(rightTlp, 1, 0);
 
-            txtStepName = new TextBox
-            {
-                Location = new Point(110, 50),
-                Size = new Size(350, 25),
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = UIStyles.Fonts.Normal
-            };
-            txtStepName.Dock = DockStyle.Fill;
+            mainTlp.Controls.Add(contentTlp, 0, 0);
+            mainTlp.Controls.Add(footerPanel, 0, 1);
 
-            // Beschreibung
-            var lblStepDescription = UIStyles.Labels.CreateNormal("Beschreibung:");
-            lblStepDescription.Dock = DockStyle.Fill;
-
-            txtStepDescription = new TextBox
-            {
-                Location = new Point(110, 90),
-                Size = new Size(350, 60),
-                Multiline = true,
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = UIStyles.Fonts.Normal
-            };
-            txtStepDescription.Dock = DockStyle.Fill;
-
-            // Step Typ
-            var lblStepType = UIStyles.Labels.CreateNormal("Typ:");
-            lblStepType.Dock = DockStyle.Fill;
-
-            cmbStepType = new ComboBox
-            {
-                Location = new Point(110, 165),
-                Size = new Size(200, 25),
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                FlatStyle = FlatStyle.Flat
-            };
-            cmbStepType.Dock = DockStyle.Fill;
-            cmbStepType.Items.AddRange(new object[] { "🌐 Website öffnen" });
-            cmbStepType.SelectedIndex = 0;
-
-            // URL Feld
-            var lblUrl = UIStyles.Labels.CreateNormal("URL:");
-            lblUrl.Dock = DockStyle.Fill;
-
-            txtUrl = new TextBox
-            {
-                Location = new Point(110, 205),
-                Size = new Size(350, 25),
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = UIStyles.Fonts.Normal
-            };
-            txtUrl.Dock = DockStyle.Fill;
-
-            // Editor Buttons
-            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾 Schritt speichern", "", new Size(150, 35));
-            btnSaveStep.Dock = DockStyle.Fill;
-            btnSaveStep.Click += BtnSaveStep_Click;
-
-            btnCancelStep = UIStyles.Buttons.CreateStandard("✖ Abbrechen", "", new Size(150, 35));
-            btnCancelStep.Dock = DockStyle.Fill;
-            btnCancelStep.Click += BtnCancelStep_Click;
-
-            editorLayout.Controls.AddRange(new Control[] {
-                lblEditorTitle, lblStepName, txtStepName,
-                lblStepDescription, txtStepDescription,
-                lblStepType, cmbStepType,
-                lblUrl, txtUrl,
-                btnSaveStep, btnCancelStep
-            });
-
-            stepsLayout.Controls.Add(leftPanel, 0, 0);
-            stepsLayout.Controls.Add(rightPanel, 1, 0);
-
-            mainLayout.Controls.Add(headerPanel, 0, 0);
-            mainLayout.Controls.Add(stepsLayout, 0, 1);
-
-            this.Controls.Add(mainLayout);
+            this.Controls.Add(mainTlp);
 
             // Initial Zustand
             SetEditorEnabled(false);
-            btnDeleteStep.Enabled = false;
         }
 
         // ========== PUBLIC METHODS ==========
@@ -267,9 +276,9 @@ namespace SmartRoutine.UI.Controls
             {
                 _originalRoutine = DeepCopy(routine);
                 _currentRoutine = DeepCopy(routine);
-                txtRoutineName.Text = _currentRoutine.Name;  // Name sollte jetzt angezeigt werden
+                txtRoutineName.Text = _currentRoutine.Name;
 
-                RefreshStepsList();  // Steps sollten jetzt angezeigt werden
+                RefreshStepsList();
             }
             else
             {
@@ -341,39 +350,57 @@ namespace SmartRoutine.UI.Controls
             var steps = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
             foreach (var step in steps)
             {
-                lstSteps.Items.Add(step.Description);
-                Console.WriteLine($"Added step: {step.Description}");
+                lstSteps.Items.Add(step);
             }
 
-            // "Keine Schritte" Label anzeigen/ausblenden
             bool hasSteps = lstSteps.Items.Count > 0;
             lstSteps.Visible = hasSteps;
-
-            Console.WriteLine($"Steps in ListBox: {lstSteps.Items.Count}, hasSteps: {hasSteps}");
 
             SetStepButtonsEnabled(hasSteps);
         }
 
         private void ClearEditor()
         {
-            lblEditorTitle.Text = "Neuen Schritt erstellen";
+            lblStepNameTitle.Text = "Neuen Schritt erstellen";
             txtStepName.Text = "";
             txtStepDescription.Text = "";
             txtUrl.Text = "";
+            cmbStepType.SelectedIndex = -1;
+            stepTypeContentTlp.Visible = false;
             _editingStep = null;
             SetEditorEnabled(false);
         }
 
         private void LoadStepToEditor(RoutineStep step)
         {
-            lblEditorTitle.Text = "Schritt bearbeiten";
+            lblStepNameTitle.Text = $"{step.Description} bearbeiten";
             txtStepName.Text = step.Description;
-            txtStepDescription.Text = step.Description;
-            txtUrl.Text = step.Value;
+            txtStepDescription.Text = step.UserDescription;
+
+            // Je nach StepType den entsprechenden Content laden
+            var stepTypes = (List<KeyValuePair<StepType, string>>)cmbStepType.DataSource;
+            for (int i = 0; i < stepTypes.Count; i++)
+            {
+                if (stepTypes[i].Key == step.Type && !string.IsNullOrEmpty(stepTypes[i].Value))
+                {
+                    cmbStepType.SelectedIndex = i;
+                    break;
+                }
+            }
+
+            if (step.Type == StepType.OpenUrl)
+            {
+                txtUrl.Text = step.Value;
+                stepTypeContentTlp.Visible = true;
+            }
+            else
+            {
+                stepTypeContentTlp.Visible = false;
+            }
+
             _editingStep = step;
             SetEditorEnabled(true);
         }
-
         private void SetStepButtonsEnabled(bool enabled)
         {
             btnDeleteStep.Enabled = enabled;
@@ -381,24 +408,32 @@ namespace SmartRoutine.UI.Controls
 
         private void SetEditorEnabled(bool enabled)
         {
-            txtStepName.Enabled = enabled;
-            txtStepDescription.Enabled = enabled;
-            cmbStepType.Enabled = enabled;
-            txtUrl.Enabled = enabled;
-            btnSaveStep.Enabled = enabled;
-            btnCancelStep.Enabled = enabled;
+            foreach (Control control in rightTlp.Controls)
+            {
+                control.Enabled = enabled;
+            }
+            // stepTypeContentTlp Controls manuell aktivieren/deaktivieren
+            foreach (Control control in stepTypeContentTlp.Controls)
+            {
+                control.Enabled = enabled;
+            }
         }
 
         // ========== STEP EVENT HANDLER ==========
         private void LstSteps_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // Prüfen ob ein Item ausgewählt ist und ob es ein RoutineStep ist
             if (lstSteps.SelectedItem is RoutineStep step)
             {
+                // Rechte Seite sichtbar machen
+                rightTlp.Visible = true;
                 LoadStepToEditor(step);
                 btnDeleteStep.Enabled = true;
             }
             else
             {
+                // Kein Schritt ausgewählt -> Rechte Seite unsichtbar
+                rightTlp.Visible = false;
                 ClearEditor();
                 btnDeleteStep.Enabled = false;
             }
@@ -423,6 +458,7 @@ namespace SmartRoutine.UI.Controls
         {
             ClearEditor();
             _editingStep = null;
+            rightTlp.Visible = true;
             SetEditorEnabled(true);
             txtStepName.Focus();
         }
@@ -446,8 +482,9 @@ namespace SmartRoutine.UI.Controls
         private void BtnSaveStep_Click(object sender, EventArgs e)
         {
             string stepName = txtStepName.Text.Trim();
-            string stepUrl = txtUrl.Text.Trim();
+            string userDescription = txtStepDescription.Text.Trim();
 
+            // Validierung
             if (string.IsNullOrWhiteSpace(stepName))
             {
                 MessageBox.Show("Bitte gib einen Namen für den Schritt ein.", "Hinweis",
@@ -456,55 +493,124 @@ namespace SmartRoutine.UI.Controls
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(stepUrl))
+            // Schritt-Typ aus ComboBox holen
+            StepType selectedType = StepType.OpenUrl;
+            string stepUrl = "";
+
+            if (cmbStepType.SelectedIndex != -1)
             {
-                MessageBox.Show("Bitte gib eine URL ein.", "Hinweis",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtUrl.Focus();
-                return;
+                var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
+                if (!string.IsNullOrEmpty(selectedItem.Value))
+                {
+                    selectedType = selectedItem.Key;
+                }
             }
 
-            string description = txtStepDescription.Text.Trim();
-            if (string.IsNullOrWhiteSpace(description))
+            // Validierung je nach Typ
+            if (selectedType == StepType.OpenUrl)
             {
-                description = stepName;
+                stepUrl = txtUrl.Text.Trim();
+                if (string.IsNullOrWhiteSpace(stepUrl))
+                {
+                    MessageBox.Show("Bitte gib eine URL ein.", "Hinweis",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtUrl.Focus();
+                    return;
+                }
             }
 
+            // Schritt speichern oder aktualisieren
             if (_editingStep != null)
             {
+                // Vorhandenen Schritt aktualisieren
                 _editingStep.Description = stepName;
-                _editingStep.Value = stepUrl;
-                _editingStep.Type = StepType.OpenUrl;
+                _editingStep.UserDescription = userDescription;
+                _editingStep.Type = selectedType;
+                if (selectedType == StepType.OpenUrl)
+                {
+                    _editingStep.Value = stepUrl;
+                }
             }
             else
             {
+                // Neuen Schritt erstellen
                 var newStep = new RoutineStep
                 {
                     Id = Guid.NewGuid().ToString(),
                     Order = _currentRoutine.Steps.Count,
-                    Type = StepType.OpenUrl,
-                    Value = stepUrl,
-                    Description = stepName
+                    Type = selectedType,
+                    Value = selectedType == StepType.OpenUrl ? stepUrl : "",
+                    Description = stepName,
+                    UserDescription = userDescription
                 };
                 _currentRoutine.Steps.Add(newStep);
             }
 
+            // UI aktualisieren
             RefreshStepsList();
             ClearEditor();
+            rightTlp.Visible = false;
             btnDeleteStep.Enabled = false;
+            lstSteps.SelectedIndex = -1;
 
-            if (_currentRoutine.Steps.Count > 0)
-            {
-                lstSteps.SelectedIndex = _currentRoutine.Steps.Count - 1;
-            }
+            // Routine als geändert markieren
+            _currentRoutine.UpdatedAt = DateTime.Now;
         }
 
         private void BtnCancelStep_Click(object sender, EventArgs e)
         {
             ClearEditor();
+            rightTlp.Visible = false;
             btnDeleteStep.Enabled = lstSteps.SelectedItem != null;
         }
+        private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Alten Inhalt löschen
+            stepTypeContentTlp.Controls.Clear();
+            stepTypeContentTlp.RowStyles.Clear();
+            stepTypeContentTlp.ColumnStyles.Clear();
 
+            // Prüfen ob etwas ausgewählt ist
+            if (cmbStepType.SelectedIndex == -1)
+            {
+                stepTypeContentTlp.Visible = false;
+                return;
+            }
+
+            // Ausgewählten StepType holen
+            var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
+            StepType selectedType = selectedItem.Key;
+
+            // Prüfen ob es der leere Eintrag ist (leerer String)
+            if (string.IsNullOrEmpty(selectedItem.Value))
+            {
+                stepTypeContentTlp.Visible = false;
+                return;
+            }
+
+            // Je nach ausgewähltem Typ den Content aufbauen
+            switch (selectedType)
+            {
+                case StepType.OpenUrl:
+                    stepTypeContentTlp.ColumnCount = 1;
+                    stepTypeContentTlp.RowCount = 2;
+
+                    stepTypeContentTlp.RowStyles.Clear();
+                    stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+                    stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+
+                    // Label und TextBox hinzufügen
+                    stepTypeContentTlp.Controls.Add(lblUrl, 0, 0);
+                    stepTypeContentTlp.Controls.Add(txtUrl, 0, 1);
+
+                    stepTypeContentTlp.Visible = true;
+                    break;
+
+                default:
+                    stepTypeContentTlp.Visible = false;
+                    break;
+            }
+        }
         // ========== BACK BUTTON ==========
         private void BtnBack_Click(object sender, EventArgs e)
         {
