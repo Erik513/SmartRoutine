@@ -21,6 +21,7 @@ namespace SmartRoutine.UI.Controls
         private Routine _currentRoutine;
         private RoutineStep _editingStep;
         private ToolTip _errorToolTip = UIStyles.ToolTips.CreateToolTip();
+        private bool _isInternalChange = false;
 
         // UI Controls
         private TableLayoutPanel mainTlp;
@@ -305,19 +306,22 @@ namespace SmartRoutine.UI.Controls
             {
                 _originalRoutine = DeepCopy(routine);
                 _currentRoutine = DeepCopy(routine);
-                txtRoutineName.Text = _currentRoutine.Name;
-                RefreshStepsList();
             }
             else
             {
                 _originalRoutine = null;
                 _currentRoutine = new Routine { Name = "", Steps = new List<RoutineStep>() };
                 txtRoutineName.Text = "";
-                RefreshStepsList();
             }
-
+            txtRoutineName.Text = _currentRoutine.Name;
+            RefreshStepsList();
             ClearEditor();
             btnDeleteStep.Enabled = false;
+
+            if (_currentRoutine.Steps.Count == 0)
+            {
+                rightTlp.Visible = false;
+            }
         }
         private void TxtUrl_TextChanged(object sender, EventArgs e)
         {
@@ -441,6 +445,13 @@ namespace SmartRoutine.UI.Controls
             }
             lstSteps.Visible = true;
 
+            if (steps.Count == 0)
+            {
+                rightTlp.Visible = false;
+                ClearEditor();
+                btnDeleteStep.Enabled = false;
+            }
+
             bool hasSteps = lstSteps.Items.Count > 0;
             SetStepButtonsEnabled(hasSteps);
         }
@@ -508,23 +519,45 @@ namespace SmartRoutine.UI.Controls
         // ========== STEP EVENT HANDLER ==========
         private void LstSteps_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Prüfen ob ein Item ausgewählt ist und ob es ein RoutineStep ist
+            // Ignoriere programmatische Änderungen
+            if (_isInternalChange) return;
+
+            // Aktuellen Schritt speichern (wenn vorhanden)
+            if (_editingStep != null && rightTlp.Visible)
+            {
+                if (!ValidateCurrentStep())
+                {
+                    _isInternalChange = true;
+
+                    // Alte Auswahl wiederherstellen
+                    var stepsList = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
+                    int currentIndex = stepsList.IndexOf(_editingStep);
+                    if (currentIndex >= 0 && currentIndex < lstSteps.Items.Count)
+                    {
+                        lstSteps.SelectedIndex = currentIndex;
+                    }
+
+                    _isInternalChange = false;
+                    return;
+                }
+
+                SaveCurrentStep(false);
+            }
+
+            // Neuen Schritt laden
             if (lstSteps.SelectedItem is RoutineStep step)
             {
-                // Rechte Seite sichtbar machen
                 rightTlp.Visible = true;
                 LoadStepToEditor(step);
                 btnDeleteStep.Enabled = true;
             }
             else
             {
-                // Kein Schritt ausgewählt -> Rechte Seite unsichtbar
                 rightTlp.Visible = false;
                 ClearEditor();
                 btnDeleteStep.Enabled = false;
             }
         }
-
         private void LstSteps_ItemsReordered(object sender, EventArgs e)
         {
             var newOrder = new List<RoutineStep>();
@@ -540,9 +573,52 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine.Steps = newOrder;
             _routineService.UpdateRoutine(_currentRoutine);
         }
+        private void LstSteps_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            // Aktuellen Schritt speichern (wenn vorhanden)
+            if (_editingStep != null && rightTlp.Visible)
+            {
+                if (!ValidateCurrentStep())
+                {
+                    // Auswahl zurücksetzen
+                    var stepsList = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
+                    int currentIndex = stepsList.IndexOf(_editingStep);
+                    if (currentIndex >= 0 && currentIndex < lstSteps.Items.Count)
+                    {
+                        lstSteps.SelectedIndex = currentIndex;
+                    }
+                    return;
+                }
+
+                SaveCurrentStep(false);
+            }
+
+            // Neuen Schritt laden
+            if (lstSteps.SelectedItem is RoutineStep step)
+            {
+                rightTlp.Visible = true;
+                LoadStepToEditor(step);
+                btnDeleteStep.Enabled = true;
+            }
+            else
+            {
+                rightTlp.Visible = false;
+                ClearEditor();
+                btnDeleteStep.Enabled = false;
+            }
+        }
 
         private void BtnAddStep_Click(object sender, EventArgs e)
         {
+            // Aktuellen Schritt speichern
+            if (_editingStep != null && rightTlp.Visible)
+            {
+                if (!ValidateCurrentStep())
+                    return; // Bei Fehler: Abbrechen
+
+                SaveCurrentStep(false);
+            }
+
             ClearEditor();
             _editingStep = null;
             rightTlp.Visible = true;
@@ -557,19 +633,12 @@ namespace SmartRoutine.UI.Controls
                 if (MessageBox.Show($"Schritt '{step.Description}' löschen?", "Bestätigen",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    _currentRoutine.Steps.Remove(step);
-
-                    // Orders aktualisieren
-                    for (int i = 0; i < _currentRoutine.Steps.Count; i++)
-                    {
-                        _currentRoutine.Steps[i].Order = i;
-                    }
-
+                    _routineService.RemoveStep(_currentRoutine.Id, step.Id);
+                    _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
                     RefreshStepsList();
                     ClearEditor();
                     btnDeleteStep.Enabled = false;
 
-                    _routineService.UpdateRoutine(_currentRoutine);
                     SaveChanges?.Invoke(this, _currentRoutine);
                 }
             }
@@ -577,89 +646,14 @@ namespace SmartRoutine.UI.Controls
 
         private void BtnSaveStep_Click(object sender, EventArgs e)
         {
-            string stepName = txtStepName.Text.Trim();
-            string userDescription = txtStepDescription.Text.Trim();
-
-            // Validierung
-            if (string.IsNullOrWhiteSpace(stepName))
-            {
-                MessageBox.Show("Bitte gib einen Namen für den Schritt ein.", "Hinweis",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtStepName.Focus();
+            if (!ValidateCurrentStep())
                 return;
-            }
 
-            // Schritt-Typ aus ComboBox holen
-            StepType selectedType = StepType.OpenUrl;
-            string stepUrl = "";
-
-            if (cmbStepType.SelectedIndex != -1)
-            {
-                var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
-                if (!string.IsNullOrEmpty(selectedItem.Value))
-                {
-                    selectedType = selectedItem.Key;
-                }
-            }
-
-            // Validierung je nach Typ
-            if (selectedType == StepType.OpenUrl)
-            {
-                stepUrl = txtUrl.Text.Trim();
-
-                // Validiere mit Service
-                var validationResult = _urlValidationService.ValidateAndRepairUrl(stepUrl, false);
-
-                if (!validationResult.IsValid)
-                {
-                    MessageBox.Show(validationResult.ErrorMessage, "Ungültige URL",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    txtUrl.Focus();
-                    return;
-                }
-
-                // Verwende die reparierte URL
-                stepUrl = validationResult.RepairedUrl;
-            }
-
-            // Schritt speichern oder aktualisieren
-            if (_editingStep != null)
-            {
-                // Vorhandenen Schritt aktualisieren
-                _editingStep.Description = stepName;
-                _editingStep.UserDescription = userDescription;
-                _editingStep.Type = selectedType;
-                if (selectedType == StepType.OpenUrl)
-                {
-                    _editingStep.Value = stepUrl;
-                }
-            }
-            else
-            {
-                // Neuen Schritt erstellen
-                var newStep = new RoutineStep
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Order = _currentRoutine.Steps.Count,
-                    Type = selectedType,
-                    Value = selectedType == StepType.OpenUrl ? stepUrl : "",
-                    Description = stepName,
-                    UserDescription = userDescription
-                };
-                _currentRoutine.Steps.Add(newStep);
-            }
-
-            // UI aktualisieren
-            RefreshStepsList();
+            SaveCurrentStep();
             ClearEditor();
             rightTlp.Visible = false;
             btnDeleteStep.Enabled = false;
             lstSteps.SelectedIndex = -1;
-
-            // Routine als geändert markieren
-            _currentRoutine.UpdatedAt = DateTime.Now;
-
-            _routineService.UpdateRoutine(_currentRoutine);
         }
 
         private void BtnCancelStep_Click(object sender, EventArgs e)
@@ -716,32 +710,134 @@ namespace SmartRoutine.UI.Controls
                     break;
             }
         }
+
         // ========== BACK BUTTON ==========
         private void BtnBack_Click(object sender, EventArgs e)
         {
+            // Aktuellen Schritt speichern
+            if (_editingStep != null && rightTlp.Visible)
+            {
+                if (!ValidateCurrentStep())
+                    return;
+
+                SaveCurrentStep();
+            }
+
+            // Routinenamen validieren
+            if (!ValidateRoutineName())
+                return;
+
+            // Routine speichern
             if (HasChanges())
             {
-                DialogResult result = MessageBox.Show(
-                    "Möchten Sie die Änderungen speichern?",
-                    "Änderungen speichern",
-                    MessageBoxButtons.YesNoCancel,
-                    MessageBoxIcon.Question);
+                SaveCurrentRoutine();
+                SaveChanges?.Invoke(this, _currentRoutine);
+            }
 
-                if (result == DialogResult.Yes)
-                {
-                    SaveCurrentRoutine();
-                    _routineService.UpdateRoutine(_currentRoutine);
-                    SaveChanges?.Invoke(this, _currentRoutine);
-                    BackToRoutinesClicked?.Invoke(sender, e);
-                }
-                else if (result == DialogResult.No)
-                {
-                    BackToRoutinesClicked?.Invoke(sender, e);
-                }
+            BackToRoutinesClicked?.Invoke(sender, e);
+        }
+        private bool ValidateRoutineName()
+        {
+            string routineName = txtRoutineName.Text.Trim();
+
+            // Prüfen ob Name leer ist
+            if (string.IsNullOrWhiteSpace(routineName))
+            {
+                MessageBox.Show("Bitte geben Sie einen Namen für die Routine ein.", "Validierung",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtRoutineName.Focus();
+                return false;
+            }
+
+            // Prüfen ob Name bereits existiert
+            var existingRoutines = _routineService.GetAllRoutines();
+            bool nameExists = existingRoutines.Any(r =>
+                r.Name.Equals(routineName, StringComparison.OrdinalIgnoreCase) &&
+                r.Id != _currentRoutine.Id);
+
+            if (nameExists)
+            {
+                MessageBox.Show($"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
+                    "Validierung",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtRoutineName.Focus();
+                txtRoutineName.SelectAll();
+                return false;
+            }
+
+            return true;
+        }
+        private bool ValidateCurrentStep()
+        {
+            if (string.IsNullOrWhiteSpace(txtStepName.Text))
+            {
+                MessageBox.Show("Bitte geben Sie einen Namen für den Schritt ein.", "Validierung",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtStepName.Focus();
+                return false;
+            }
+
+            if (cmbStepType.SelectedIndex == -1)
+            {
+                MessageBox.Show("Bitte wählen Sie einen Aktionstyp aus.", "Validierung",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cmbStepType.Focus();
+                return false;
+            }
+
+            var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
+            if (selectedItem.Key == StepType.OpenUrl && string.IsNullOrWhiteSpace(txtUrl.Text))
+            {
+                MessageBox.Show("Bitte geben Sie eine URL ein.", "Validierung",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtUrl.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        private void SaveCurrentStep(bool refreshList = true)
+        {
+            string stepName = txtStepName.Text.Trim();
+            string userDescription = txtStepDescription.Text.Trim();
+
+            var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
+            StepType selectedType = selectedItem.Key;
+            string stepUrl = "";
+
+            if (selectedType == StepType.OpenUrl)
+            {
+                stepUrl = txtUrl.Text.Trim();
+                var validationResult = _urlValidationService.ValidateAndRepairUrl(stepUrl, false);
+                stepUrl = validationResult.RepairedUrl;
+            }
+
+            if (_editingStep != null)
+            {
+                _routineService.UpdateStep(_currentRoutine.Id, _editingStep.Id, stepUrl, stepName, userDescription);
+
+                // Lokale Kopie aktualisieren
+                _editingStep.Description = stepName;
+                _editingStep.UserDescription = userDescription;
+                _editingStep.Type = selectedType;
+                _editingStep.Value = stepUrl;
             }
             else
             {
-                BackToRoutinesClicked?.Invoke(sender, e);
+                _routineService.AddStep(_currentRoutine.Id, selectedType, stepUrl, stepName, userDescription);
+                _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
+                _editingStep = _currentRoutine.Steps.OrderBy(s => s.Order).LastOrDefault();
+            }
+
+            if (refreshList)
+            {
+                var oldSelectedIndex = lstSteps.SelectedIndex;
+                RefreshStepsList();
+                if (oldSelectedIndex >= 0 && oldSelectedIndex < lstSteps.Items.Count)
+                {
+                    lstSteps.SelectedIndex = oldSelectedIndex;
+                }
             }
         }
 
@@ -750,6 +846,7 @@ namespace SmartRoutine.UI.Controls
             if (_currentRoutine == null) return;
             _currentRoutine.Name = txtRoutineName.Text.Trim();
             _currentRoutine.UpdatedAt = DateTime.Now;
+            _routineService.UpdateRoutine(_currentRoutine);
         }
     }
 }
