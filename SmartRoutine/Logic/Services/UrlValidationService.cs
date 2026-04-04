@@ -31,8 +31,8 @@ namespace SmartRoutine.Logic.Services
         public (bool IsValid, string RepairedUrl, string ErrorMessage) ValidateAndRepairUrl(string url, bool allowEmpty = false)
         {
             // DEBUG: Zeige den genauen Inhalt der URL
-            System.Diagnostics.Debug.WriteLine($"URLValidator received: '{url}'");
-            System.Diagnostics.Debug.WriteLine($"URL length: {url?.Length ?? 0}");
+            //System.Diagnostics.Debug.WriteLine($"URLValidator received: '{url}'");
+            //System.Diagnostics.Debug.WriteLine($"URL length: {url?.Length ?? 0}");
 
             if (url != null)
             {

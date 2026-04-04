@@ -79,6 +79,9 @@
     <Compile Include="Data\RoutineRepository.cs" />
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
+    <Compile Include="Logic\Interfaces\ITestDataService.cs" />
+    <Compile Include="Logic\Services\TestDataService.cs" />
+    <Compile Include="UI\Helpers\AppSettings.cs" />
     <Compile Include="UI\Helpers\DragDropHelper.cs" />
     <Compile Include="Logic\Interfaces\IUrlValidationService.cs" />
     <Compile Include="Logic\Services\UrlValidationService.cs" />

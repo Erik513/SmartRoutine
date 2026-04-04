@@ -23,6 +23,7 @@ namespace SmartRoutine.UI
         private RoutinesViewControl _routinesView;
         private RoutineEditorViewControl _editorView;
         private Routine _currentRoutine;
+        private const bool DEVELOPER_MODE = true;
 
         // Constants
         private static readonly Size DEFAULT_WINDOW_SIZE = new Size(1024, 768);
@@ -68,7 +69,8 @@ namespace SmartRoutine.UI
             this.Controls.Add(contentPanel);
 
             // UserControls
-            _routinesView = new RoutinesViewControl(_routineService);
+            var testDataService = new TestDataService();
+            _routinesView = new RoutinesViewControl(_routineService, testDataService);
             _routinesView.NewRoutineClicked += (s, e) => ShowEditorView(null);
             _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine);
             _routinesView.DeleteRoutineClicked += (s, routine) => DeleteRoutine(routine);
@@ -86,16 +88,13 @@ namespace SmartRoutine.UI
         {
             if (routine == null) return;
 
-            // Prüfen ob neue oder bestehende Routine
             var existing = _routineService.GetRoutine(routine.Id);
             if (existing == null)
             {
-                // Neue Routine
                 _routineService.CreateRoutine(routine.Name);
                 var newRoutine = _routineService.GetAllRoutines().LastOrDefault();
                 if (newRoutine != null)
                 {
-                    // Schritte hinzufügen
                     foreach (var step in routine.Steps)
                     {
                         _routineService.AddStep(newRoutine.Id, step.Type, step.Value, step.Description, step.UserDescription);
@@ -104,19 +103,10 @@ namespace SmartRoutine.UI
             }
             else
             {
-                // Bestehende Routine aktualisieren
                 existing.Name = routine.Name;
+                existing.Steps = routine.Steps;
+                existing.UpdatedAt = DateTime.Now;
                 _routineService.UpdateRoutine(existing);
-
-                // Schritte aktualisieren (vereinfacht: alte löschen, neue hinzufügen)
-                foreach (var step in existing.Steps.ToList())
-                {
-                    _routineService.RemoveStep(existing.Id, step.Id);
-                }
-                foreach (var step in routine.Steps.OrderBy(s => s.Order))
-                {
-                    _routineService.AddStep(existing.Id, step.Type, step.Value, step.Description, step.UserDescription);
-                }
             }
 
             _routinesView.LoadRoutines();

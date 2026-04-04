@@ -527,7 +527,7 @@ namespace SmartRoutine.UI.Controls
 
         private void LstSteps_ItemsReordered(object sender, EventArgs e)
         {
-            var newOrder = new System.Collections.Generic.List<RoutineStep>();
+            var newOrder = new List<RoutineStep>();
             for (int i = 0; i < lstSteps.Items.Count; i++)
             {
                 var step = lstSteps.Items[i] as RoutineStep;
@@ -538,6 +538,7 @@ namespace SmartRoutine.UI.Controls
                 }
             }
             _currentRoutine.Steps = newOrder;
+            _routineService.UpdateRoutine(_currentRoutine);
         }
 
         private void BtnAddStep_Click(object sender, EventArgs e)
@@ -557,10 +558,19 @@ namespace SmartRoutine.UI.Controls
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     _currentRoutine.Steps.Remove(step);
+
+                    // Orders aktualisieren
+                    for (int i = 0; i < _currentRoutine.Steps.Count; i++)
+                    {
+                        _currentRoutine.Steps[i].Order = i;
+                    }
+
                     RefreshStepsList();
                     ClearEditor();
                     btnDeleteStep.Enabled = false;
-                    SaveChanges.Invoke(this, _currentRoutine);
+
+                    _routineService.UpdateRoutine(_currentRoutine);
+                    SaveChanges?.Invoke(this, _currentRoutine);
                 }
             }
         }
@@ -648,6 +658,8 @@ namespace SmartRoutine.UI.Controls
 
             // Routine als geändert markieren
             _currentRoutine.UpdatedAt = DateTime.Now;
+
+            _routineService.UpdateRoutine(_currentRoutine);
         }
 
         private void BtnCancelStep_Click(object sender, EventArgs e)
@@ -718,6 +730,7 @@ namespace SmartRoutine.UI.Controls
                 if (result == DialogResult.Yes)
                 {
                     SaveCurrentRoutine();
+                    _routineService.UpdateRoutine(_currentRoutine);
                     SaveChanges?.Invoke(this, _currentRoutine);
                     BackToRoutinesClicked?.Invoke(sender, e);
                 }
