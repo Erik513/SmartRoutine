@@ -123,10 +123,51 @@ namespace SmartRoutine.Logic.Services
                 }
             }
         }
+        public void SaveRoutine(Routine routine)
+        {
+            if (routine == null) return;
+
+            var existing = GetRoutine(routine.Id);
+            if (existing == null)
+            {
+                // Neue Routine
+                CreateRoutine(routine.Name);
+                var newRoutine = GetAllRoutines().LastOrDefault();
+                if (newRoutine != null)
+                {
+                    // Steps in der richtigen Reihenfolge hinzufügen
+                    foreach (var step in routine.Steps.OrderBy(s => s.Order))
+                    {
+                        AddStep(newRoutine.Id, step.Type, step.Value, step.Description, step.UserDescription);
+                    }
+                }
+            }
+            else
+            {
+                // Bestehende Routine aktualisieren
+                existing.Name = routine.Name;
+                existing.UpdatedAt = DateTime.Now;
+
+                // Steps aktualisieren (Reihenfolge erhalten)
+                // Lösche alle vorhandenen Steps
+                foreach (var step in existing.Steps.ToList())
+                {
+                    RemoveStep(existing.Id, step.Id);
+                }
+
+                // Füge neue Steps mit korrekter Order hinzu
+                foreach (var step in routine.Steps.OrderBy(s => s.Order))
+                {
+                    AddStep(existing.Id, step.Type, step.Value, step.Description, step.UserDescription);
+                }
+
+                UpdateRoutine(existing);
+            }
+        }
 
         // Steps =================================================================================
 
-        public void AddStep(string routineId, StepType type, string value, string description, string userDescription = null)
+        public void AddStep(string routineId, StepType type, string value, string description, string userDescription = null, int? order = null)
         {
             var routine = GetRoutine(routineId);
             if (routine == null) return;
@@ -134,7 +175,7 @@ namespace SmartRoutine.Logic.Services
             var step = new RoutineStep
             {
                 Id = Guid.NewGuid().ToString(),
-                Order = routine.Steps.Count,
+                Order = order ?? routine.Steps.Count,
                 Type = type,
                 Value = value,
                 Description = description,
@@ -143,12 +184,20 @@ namespace SmartRoutine.Logic.Services
 
             routine.Steps.Add(step);
 
+            // Falls eine spezifische Order angegeben wurde, alle Orders neu berechnen
+            if (order.HasValue)
+            {
+                for (int i = 0; i < routine.Steps.Count; i++)
+                {
+                    routine.Steps[i].Order = i;
+                }
+            }
+
             if (!AppSettings.UseTestData)
             {
                 _repository.UpdateRoutine(routine);
             }
         }
-
         public void UpdateStep(string routineId, string stepId, string value, string description, string userDescription = null)
         {
             var routine = GetRoutine(routineId);

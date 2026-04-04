@@ -661,6 +661,7 @@ namespace SmartRoutine.UI.Controls
             ClearEditor();
             rightTlp.Visible = false;
             btnDeleteStep.Enabled = lstSteps.SelectedItem != null;
+            lstSteps.SelectedIndex = -1;
         }
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
         {

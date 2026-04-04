@@ -22,7 +22,6 @@ namespace SmartRoutine.UI
         private readonly IRoutineService _routineService;
         private RoutinesViewControl _routinesView;
         private RoutineEditorViewControl _editorView;
-        private Routine _currentRoutine;
         private const bool DEVELOPER_MODE = true;
 
         // Constants
@@ -33,13 +32,13 @@ namespace SmartRoutine.UI
         public MainForm(IRoutineService routineService)
         {
             _routineService = routineService ?? throw new ArgumentNullException(nameof(routineService));
+            AppSettings.UseTestData = DEVELOPER_MODE;
 
             ConfigureForm();
             CreateIntegratedUI();
             ShowRoutinesView();
 
             this.Resize += MainForm_Resize;
-            this.Load += MainForm_Load;
         }
         // ========== CONFIGURATION ==========
         private void ConfigureForm()
@@ -88,27 +87,7 @@ namespace SmartRoutine.UI
         {
             if (routine == null) return;
 
-            var existing = _routineService.GetRoutine(routine.Id);
-            if (existing == null)
-            {
-                _routineService.CreateRoutine(routine.Name);
-                var newRoutine = _routineService.GetAllRoutines().LastOrDefault();
-                if (newRoutine != null)
-                {
-                    foreach (var step in routine.Steps)
-                    {
-                        _routineService.AddStep(newRoutine.Id, step.Type, step.Value, step.Description, step.UserDescription);
-                    }
-                }
-            }
-            else
-            {
-                existing.Name = routine.Name;
-                existing.Steps = routine.Steps;
-                existing.UpdatedAt = DateTime.Now;
-                _routineService.UpdateRoutine(existing);
-            }
-
+            _routineService.SaveRoutine(routine);
             _routinesView.LoadRoutines();
         }
 
@@ -116,16 +95,15 @@ namespace SmartRoutine.UI
 
         private void ShowRoutinesView()
         {
-            _routinesView.Visible = true;
-            _editorView.Visible = false;
+            _routinesView.Show();
+            _editorView.Hide();
             _routinesView.LoadRoutines();
         }
 
         private void ShowEditorView(Routine routine)
         {
-            _currentRoutine = routine;
-            _routinesView.Visible = false;
-            _editorView.Visible = true;
+            _routinesView.Hide();
+            _editorView.Show();
             _editorView.LoadRoutine(routine);
         }
 
@@ -149,19 +127,6 @@ namespace SmartRoutine.UI
 
 
         // ========== EVENT HANDLER ==========
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                // Keine Testdaten mehr nötig, da sie direkt in RoutinesViewControl erstellt werden
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Fehler beim Laden: {ex.Message}", "Initialisierungsfehler",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
         private void MainForm_Resize(object sender, EventArgs e)
         {
             this.SuspendLayout();
@@ -178,7 +143,6 @@ namespace SmartRoutine.UI
                 this.PerformLayout();
             }
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
