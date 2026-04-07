@@ -79,8 +79,7 @@
     <Compile Include="Data\RoutineRepository.cs" />
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
-    <Compile Include="Logic\Interfaces\ITestDataService.cs" />
-    <Compile Include="Logic\Services\TestDataService.cs" />
+    <Compile Include="Logic\Services\TestData.cs" />
     <Compile Include="UI\Helpers\AppSettings.cs" />
     <Compile Include="UI\Helpers\DragDropHelper.cs" />
     <Compile Include="Logic\Interfaces\IUrlValidationService.cs" />
@@ -120,6 +119,9 @@
       <DependentUpon>BorderlessResizableForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Helpers\FormDragHandle.cs" />
+    <Compile Include="UI\Helpers\ToggleSwitch.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\Helpers\UIStyles.cs" />
     <Compile Include="UI\MainForm.cs">
       <SubType>Form</SubType>

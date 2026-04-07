@@ -20,8 +20,8 @@ namespace SmartRoutine.Logic.Interfaces
         void ReorderRoutines(List<Routine> reorderedRoutines);
         void SaveRoutine(Routine routine);
 
-        void AddStep(string routineId, StepType type, string value, string description, string userDescription, int? order = null);
-        void UpdateStep(string routineId, string stepId, string value, string description, string userDescription);
+        void AddStep(string routineId, string name, string description, bool show, StepType type, string value);
+        void UpdateStep(string routineId, string stepId, string name, string description, bool show, StepType type, string value);
         void RemoveStep(string routineId, string stepId);
         void ReorderSteps(string routineId, int oldIndex, int newIndex);
 

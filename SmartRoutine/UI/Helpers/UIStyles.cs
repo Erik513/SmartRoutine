@@ -402,7 +402,7 @@ namespace SmartRoutine.UI.Helpers
         // CheckBox-Styles
         public static class CheckBoxes
         {
-            public static CheckBox CreateStandard(string text)
+            public static CheckBox CreateStandard(string text = "", bool checkedState = true)
             {
                 return new CheckBox
                 {
@@ -411,6 +411,49 @@ namespace SmartRoutine.UI.Helpers
                     BackColor = Color.Transparent,
                     Font = Fonts.Normal,
                     FlatStyle = FlatStyle.Flat
+                };
+            }
+            // Compact CheckBox (ohne Text, nur Kontrollkästchen)
+            public static CheckBox CreateCompact(bool checkedState = true)
+            {
+                var checkBox = CreateStandard("", checkedState);
+                checkBox.Size = new Size(25, 25);
+                return checkBox;
+            }
+        }
+        // ToggleSwitches-Styles
+        public static class ToggleSwitches
+        {
+            public static ToggleSwitch CreateStandard(bool checkedState = true, string tooltipChecked = null, string tooltipUnchecked = null)
+            {
+                return new ToggleSwitch
+                {
+                    Checked = checkedState,
+                    Size = new Size(45, 25),
+                    ToolTipTextChecked = tooltipChecked,
+                    ToolTipTextUnchecked = tooltipUnchecked
+                };
+            }
+
+            public static ToggleSwitch CreateSmall(bool checkedState = true, string tooltipChecked = null, string tooltipUnchecked = null)
+            {
+                return new ToggleSwitch
+                {
+                    Checked = checkedState,
+                    Size = new Size(35, 20),
+                    ToolTipTextChecked = tooltipChecked,
+                    ToolTipTextUnchecked = tooltipUnchecked
+                };
+            }
+
+            public static ToggleSwitch CreateLarge(bool checkedState = true, string tooltipChecked = null, string tooltipUnchecked = null)
+            {
+                return new ToggleSwitch
+                {
+                    Checked = checkedState,
+                    Size = new Size(55, 30),
+                    ToolTipTextChecked = tooltipChecked,
+                    ToolTipTextUnchecked = tooltipUnchecked
                 };
             }
         }

@@ -16,6 +16,7 @@ namespace SmartRoutine.Data.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         public List<RoutineStep> Steps { get; set; } = new List<RoutineStep>();
+        public bool IsNew { get; set; } = false;
 
         public override string ToString()
         {
@@ -26,15 +27,22 @@ namespace SmartRoutine.Data.Models
     public class RoutineStep
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
+        public int Order { get; set; } = 0;
+        public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string UserDescription { get; set; } = string.Empty;
-        public int Order { get; set; }
+        public bool Show { get; set; } = true;
         public StepType Type { get; set; }
         public string Value { get; set; } = string.Empty; // URL oder Pfad
 
         public override string ToString()
         {
-            return $"{Order + 1}. {Description}";
+            string result = $"{Order + 1}. {Name}";
+            System.Diagnostics.Debug.WriteLine($"ToString: {result}, Order={Order}");
+            return result;
+        }
+        public void EnsureCorrectOrder(int newOrder)
+        {
+            Order = newOrder;
         }
     }
 

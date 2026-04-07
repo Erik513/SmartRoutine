@@ -22,6 +22,7 @@ namespace SmartRoutine.UI
         private readonly IRoutineService _routineService;
         private RoutinesViewControl _routinesView;
         private RoutineEditorViewControl _editorView;
+        private Routine _currentRoutine;
         private const bool DEVELOPER_MODE = true;
 
         // Constants
@@ -68,9 +69,8 @@ namespace SmartRoutine.UI
             this.Controls.Add(contentPanel);
 
             // UserControls
-            var testDataService = new TestDataService();
-            _routinesView = new RoutinesViewControl(_routineService, testDataService);
-            _routinesView.NewRoutineClicked += (s, e) => ShowEditorView(null);
+            _routinesView = new RoutinesViewControl(_routineService);
+            _routinesView.NewRoutineClicked += (s, routine) => ShowEditorView(routine);
             _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine);
             _routinesView.DeleteRoutineClicked += (s, routine) => DeleteRoutine(routine);
             _routinesView.StartRoutineClicked += (s, routine) => StartRoutine(routine);
@@ -88,6 +88,13 @@ namespace SmartRoutine.UI
             if (routine == null) return;
 
             _routineService.SaveRoutine(routine);
+
+            // Frische Version mit garantiert korrekten Orders holen
+            if (_currentRoutine != null && _currentRoutine.Id == routine.Id)
+            {
+                _currentRoutine = _routineService.GetRoutine(routine.Id);
+            }
+
             _routinesView.LoadRoutines();
         }
 
@@ -102,6 +109,7 @@ namespace SmartRoutine.UI
 
         private void ShowEditorView(Routine routine)
         {
+            _currentRoutine = routine;
             _routinesView.Hide();
             _editorView.Show();
             _editorView.LoadRoutine(routine);

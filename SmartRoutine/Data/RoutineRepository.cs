@@ -78,6 +78,12 @@ namespace SmartRoutine.Data
             var index = _routines.FindIndex(r => r.Id == routine.Id);
             if (index >= 0)
             {
+                // Steps vor dem Speichern sortieren
+                if (routine.Steps != null && routine.Steps.Any())
+                {
+                    routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
+                }
+
                 routine.UpdatedAt = DateTime.Now;
                 _routines[index] = routine;
                 SaveToFile();

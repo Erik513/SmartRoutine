@@ -8,6 +8,9 @@ namespace SmartRoutine.UI.Helpers
 {
     public static class AppSettings
     {
-        public static bool UseTestData { get; set; } = true;  // true = Testdaten, false = echte Daten
+        /// <summary>
+        /// true = Testdata, false = real data
+        /// </summary>
+        public static bool UseTestData { get; set; } = true;  
     }
 }

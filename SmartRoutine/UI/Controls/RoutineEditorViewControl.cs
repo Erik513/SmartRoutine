@@ -4,6 +4,7 @@ using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -21,7 +22,7 @@ namespace SmartRoutine.UI.Controls
         private Routine _currentRoutine;
         private RoutineStep _editingStep;
         private ToolTip _errorToolTip = UIStyles.ToolTips.CreateToolTip();
-        private bool _isInternalChange = false;
+        private bool _isRefreshing = false;
 
         // UI Controls
         private TableLayoutPanel mainTlp;
@@ -35,12 +36,16 @@ namespace SmartRoutine.UI.Controls
         private Label lblRoutineName;
         private TextBox txtRoutineName;
         private StyledListBoxWithHeader lstSteps;
+        //private ListBox lstSteps;
+
         private TableLayoutPanel leftBtnsTlp;
         private Button btnAddStep, btnDeleteStep;
 
         // Rechte Seite
         private TableLayoutPanel rightTlp;
+        private TableLayoutPanel rightTitleTlp;
         private Label lblStepNameTitle;
+        private ToggleSwitch tglStepEnabled;
         private Label lblStepName;
         private TextBox txtStepName;
         private Label lblStepDescription;
@@ -140,6 +145,16 @@ namespace SmartRoutine.UI.Controls
             lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
             lstSteps.ItemsReordered += LstSteps_ItemsReordered;
 
+            //lstSteps = new ListBox  // Normale ListBox, nicht Ihre StyledListBox
+            //{
+            //    Dock = DockStyle.Fill,
+            //    Font = new Font("Segoe UI", 9.5f),
+            //    BackColor = UIStyles.Colors.BackgroundDark,
+            //    ForeColor = UIStyles.Colors.TextPrimary,
+            //    Height = 200
+            //};
+            //lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
+
             // Unten
             leftBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
             leftBtnsTlp.Dock = DockStyle.Fill;
@@ -177,9 +192,24 @@ namespace SmartRoutine.UI.Controls
             rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // btnSaveStep, btnCancelStep
             rightTlp.Visible = false;
 
+            // rightTitleTlp
+            rightTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            rightTitleTlp.Dock = DockStyle.Fill;
+            rightTitleTlp.ColumnStyles.Clear();
+            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // lblStepNameTitle
+            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60)); // chkStepEnabled
+
             // Titel (lblStepNameTitle)
             lblStepNameTitle = UIStyles.Labels.CreateTitle();
             lblStepNameTitle.Dock = DockStyle.Fill;
+
+            // chkStepEnabled
+            tglStepEnabled = UIStyles.ToggleSwitches.CreateStandard(true, "Schritt ist aktiviert", "Schritt ist deaktiviert");
+            tglStepEnabled.Location = new Point(0, 0);
+            tglStepEnabled.Anchor = AnchorStyles.None;
+
+            rightTitleTlp.Controls.Add(lblStepNameTitle, 0, 0);
+            rightTitleTlp.Controls.Add(tglStepEnabled, 1, 0);
 
             // lblStepName
             lblStepName = UIStyles.Labels.CreateNormal("Name:");
@@ -265,7 +295,7 @@ namespace SmartRoutine.UI.Controls
             rightBtnsTlp.Controls.Add(btnCancelStep, 1, 0);
 
             rightTlp.Controls.AddRange(new Control[] {
-                lblStepNameTitle, lblStepName, txtStepName,
+                rightTitleTlp, lblStepName, txtStepName,
                 lblStepDescription, txtStepDescription,
                 lblStepType, cmbStepType, stepTypeContentPanel, 
                 rightBtnsTlp
@@ -302,6 +332,7 @@ namespace SmartRoutine.UI.Controls
         // ========== PUBLIC METHODS ==========
         public void LoadRoutine(Routine routine)
         {
+            DebugAllOrders("VOR LoadRoutine");
             if (routine != null)
             {
                 _originalRoutine = DeepCopy(routine);
@@ -313,6 +344,8 @@ namespace SmartRoutine.UI.Controls
                 _currentRoutine = new Routine { Name = "", Steps = new List<RoutineStep>() };
                 txtRoutineName.Text = "";
             }
+            DebugAllOrders("NACH DeepCopy");
+
             txtRoutineName.Text = _currentRoutine.Name;
             RefreshStepsList();
             ClearEditor();
@@ -321,6 +354,17 @@ namespace SmartRoutine.UI.Controls
             if (_currentRoutine.Steps.Count == 0)
             {
                 rightTlp.Visible = false;
+            }
+
+            if (routine != null && routine.IsNew)
+            {
+                this.BeginInvoke(new Action(() =>
+                {
+                    txtRoutineName.Focus();
+                    txtRoutineName.SelectAll();
+                }));
+
+                routine.IsNew = false;
             }
         }
         private void TxtUrl_TextChanged(object sender, EventArgs e)
@@ -396,8 +440,8 @@ namespace SmartRoutine.UI.Controls
                     Order = s.Order,
                     Type = s.Type,
                     Value = s.Value,
-                    Description = s.Description,
-                    UserDescription = s.UserDescription
+                    Name = s.Name,
+                    Description = s.Description
                 }).ToList()
             };
         }
@@ -423,37 +467,12 @@ namespace SmartRoutine.UI.Controls
                 if (orig.Order != curr.Order ||
                     orig.Type != curr.Type ||
                     orig.Value != curr.Value ||
-                    orig.Description != curr.Description ||
-                    orig.UserDescription != curr.UserDescription)
+                    orig.Name != curr.Name ||
+                    orig.Description != curr.Description)
                     return true;
             }
 
             return false;
-        }
-
-        // ========== STEP LIST METHODS ==========
-        private void RefreshStepsList()
-        {
-            if (_currentRoutine == null) return;
-
-            lstSteps.Items.Clear();
-
-            var steps = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
-            foreach (var step in steps)
-            {
-                lstSteps.Items.Add(step);
-            }
-            lstSteps.Visible = true;
-
-            if (steps.Count == 0)
-            {
-                rightTlp.Visible = false;
-                ClearEditor();
-                btnDeleteStep.Enabled = false;
-            }
-
-            bool hasSteps = lstSteps.Items.Count > 0;
-            SetStepButtonsEnabled(hasSteps);
         }
 
         private void ClearEditor()
@@ -462,6 +481,7 @@ namespace SmartRoutine.UI.Controls
             txtStepName.Text = "";
             txtStepDescription.Text = "";
             txtUrl.Text = "";
+            tglStepEnabled.Checked = true;
             cmbStepType.SelectedIndex = -1;
             stepTypeContentTlp.Visible = false;
             _editingStep = null;
@@ -470,9 +490,10 @@ namespace SmartRoutine.UI.Controls
 
         private void LoadStepToEditor(RoutineStep step)
         {
-            lblStepNameTitle.Text = $"{step.Description} bearbeiten";
-            txtStepName.Text = step.Description;
-            txtStepDescription.Text = step.UserDescription;
+            lblStepNameTitle.Text = $"{step.Name} bearbeiten";
+            txtStepName.Text = step.Name;
+            txtStepDescription.Text = step.Description;
+            tglStepEnabled.Checked = step.Show;
 
             // Je nach StepType den entsprechenden Content laden
             var stepTypes = (List<KeyValuePair<StepType, string>>)cmbStepType.DataSource;
@@ -498,10 +519,6 @@ namespace SmartRoutine.UI.Controls
             _editingStep = step;
             SetEditorEnabled(true);
         }
-        private void SetStepButtonsEnabled(bool enabled)
-        {
-            btnDeleteStep.Enabled = enabled;
-        }
 
         private void SetEditorEnabled(bool enabled)
         {
@@ -519,34 +536,19 @@ namespace SmartRoutine.UI.Controls
         // ========== STEP EVENT HANDLER ==========
         private void LstSteps_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Ignoriere programmatische Änderungen
-            if (_isInternalChange) return;
-
-            // Aktuellen Schritt speichern (wenn vorhanden)
-            if (_editingStep != null && rightTlp.Visible)
-            {
-                if (!ValidateCurrentStep())
-                {
-                    _isInternalChange = true;
-
-                    // Alte Auswahl wiederherstellen
-                    var stepsList = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
-                    int currentIndex = stepsList.IndexOf(_editingStep);
-                    if (currentIndex >= 0 && currentIndex < lstSteps.Items.Count)
-                    {
-                        lstSteps.SelectedIndex = currentIndex;
-                    }
-
-                    _isInternalChange = false;
-                    return;
-                }
-
-                SaveCurrentStep(false);
-            }
-
-            // Neuen Schritt laden
             if (lstSteps.SelectedItem is RoutineStep step)
             {
+                // Order in Console ausgeben
+                System.Diagnostics.Debug.WriteLine($"=== Ausgewählter Schritt ===");
+                System.Diagnostics.Debug.WriteLine($"ID: {step.Id}, Name: {step.Name}, Order: {step.Order}");
+
+                // Rest Ihres vorhandenen Codes...
+                if (_editingStep != null && rightTlp.Visible)
+                {
+                    if (!ValidateCurrentStep()) return;
+                    SaveCurrentStep(false);
+                }
+
                 rightTlp.Visible = true;
                 LoadStepToEditor(step);
                 btnDeleteStep.Enabled = true;
@@ -560,19 +562,29 @@ namespace SmartRoutine.UI.Controls
         }
         private void LstSteps_ItemsReordered(object sender, EventArgs e)
         {
-            var newOrder = new List<RoutineStep>();
+            if (_isRefreshing) return;
+
+            System.Diagnostics.Debug.WriteLine(">>> Steps ItemsReordered");
+
+            var stepsInNewOrder = new List<RoutineStep>();
+
             for (int i = 0; i < lstSteps.Items.Count; i++)
             {
                 var step = lstSteps.Items[i] as RoutineStep;
                 if (step != null)
                 {
                     step.Order = i;
-                    newOrder.Add(step);
+                    stepsInNewOrder.Add(step);
                 }
             }
-            _currentRoutine.Steps = newOrder;
+
+            _currentRoutine.Steps = stepsInNewOrder;
+
+            // WICHTIG: Niemals die Routine.Order verändern!
             _routineService.UpdateRoutine(_currentRoutine);
         }
+
+
         private void LstSteps_SelectionChangeCommitted(object sender, EventArgs e)
         {
             // Aktuellen Schritt speichern (wenn vorhanden)
@@ -628,21 +640,93 @@ namespace SmartRoutine.UI.Controls
 
         private void BtnDeleteStep_Click(object sender, EventArgs e)
         {
-            if (lstSteps.SelectedItem is RoutineStep step)
-            {
-                if (MessageBox.Show($"Schritt '{step.Description}' löschen?", "Bestätigen",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    _routineService.RemoveStep(_currentRoutine.Id, step.Id);
-                    _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
-                    RefreshStepsList();
-                    ClearEditor();
-                    btnDeleteStep.Enabled = false;
+            if (lstSteps.SelectedItem == null) return;
 
-                    SaveChanges?.Invoke(this, _currentRoutine);
-                }
+            RoutineStep stepToDelete = lstSteps.SelectedItem as RoutineStep;
+            if (stepToDelete == null) return;
+
+            if (MessageBox.Show($"Schritt '{stepToDelete.Name}' wirklich löschen?",
+                    "Bestätigen", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                != DialogResult.Yes)
+                return;
+
+            _routineService.RemoveStep(_currentRoutine.Id, stepToDelete.Id);
+
+            _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
+
+            RefreshStepsList();
+
+            lstSteps.SelectedIndex = -1;
+            ClearEditor();
+            rightTlp.Visible = false;
+            btnDeleteStep.Enabled = _currentRoutine.Steps.Count > 0;
+
+            DebugAllOrders("VOR SaveChanges Event");     // ← NEU
+
+            SaveChanges?.Invoke(this, _currentRoutine);
+
+            // Frische Version mit korrekten Orders zurückholen
+            _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
+
+            DebugAllOrders("Final nach Delete");
+        }
+
+
+
+        // ========== STEP LIST METHODS ==========
+        private void RefreshStepsList()
+        {
+            if (_currentRoutine == null) return;
+
+            _isRefreshing = true;                    // ← Schutz aktivieren
+            System.Diagnostics.Debug.WriteLine("=== RefreshStepsList START ===");
+
+            lstSteps.BeginUpdate();
+            lstSteps.Items.Clear();
+
+            var orderedSteps = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
+
+            foreach (var step in orderedSteps)
+            {
+                lstSteps.Items.Add(step);
+                Debug.WriteLine($"Added: {step.Name} | Order={step.Order} | Id={step.Id}");
+            }
+
+            lstSteps.EndUpdate();
+            // lstSteps.ForceRefresh();   // kannst du erstmal auskommentieren
+
+            _isRefreshing = false;                   // ← Schutz deaktivieren
+
+            Debug.WriteLine($"ListBox enthält jetzt {lstSteps.Items.Count} Einträge");
+        }
+
+
+        private void DebugAllOrders(string context)
+        {
+            System.Diagnostics.Debug.WriteLine($"=== DEBUG ORDERS: {context} ===");
+            if (_currentRoutine?.Steps == null)
+            {
+                System.Diagnostics.Debug.WriteLine("Keine Steps vorhanden");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine("Aktuelle Steps im _currentRoutine (unsortiert):");
+            for (int i = 0; i < _currentRoutine.Steps.Count; i++)
+            {
+                var step = _currentRoutine.Steps[i];
+                System.Diagnostics.Debug.WriteLine($"  [{i}] {step.Name} | Order={step.Order} | Id={step.Id}");
+            }
+
+            System.Diagnostics.Debug.WriteLine("Nach Order sortiert:");
+            foreach (var step in _currentRoutine.Steps.OrderBy(s => s.Order))
+            {
+                System.Diagnostics.Debug.WriteLine($"  {step.Name} | Order={step.Order}");
             }
         }
+
+
+
+
 
         private void BtnSaveStep_Click(object sender, EventArgs e)
         {
@@ -800,45 +884,59 @@ namespace SmartRoutine.UI.Controls
 
         private void SaveCurrentStep(bool refreshList = true)
         {
-            string stepName = txtStepName.Text.Trim();
-            string userDescription = txtStepDescription.Text.Trim();
+            string name = txtStepName.Text.Trim();
+            string description = txtStepDescription.Text.Trim();
+            bool show = tglStepEnabled.Checked;
+
+            // Sicherstellen, dass ein StepType ausgewählt ist
+            if (cmbStepType.SelectedIndex == -1)
+            {
+                MessageBox.Show("Bitte wählen Sie einen Aktionstyp aus.", "Validierung",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
-            StepType selectedType = selectedItem.Key;
-            string stepUrl = "";
+            StepType type = selectedItem.Key;
+            string value = "";
 
-            if (selectedType == StepType.OpenUrl)
+            if (type == StepType.OpenUrl)
             {
-                stepUrl = txtUrl.Text.Trim();
-                var validationResult = _urlValidationService.ValidateAndRepairUrl(stepUrl, false);
-                stepUrl = validationResult.RepairedUrl;
+                value = txtUrl.Text.Trim();
+                var validationResult = _urlValidationService.ValidateAndRepairUrl(value, false);
+                value = validationResult.RepairedUrl;
             }
 
             if (_editingStep != null)
             {
-                _routineService.UpdateStep(_currentRoutine.Id, _editingStep.Id, stepUrl, stepName, userDescription);
+                // Vorhandenen Schritt aktualisieren
+                _routineService.UpdateStep(_currentRoutine.Id, _editingStep.Id, name, description, show, type, value);
 
                 // Lokale Kopie aktualisieren
-                _editingStep.Description = stepName;
-                _editingStep.UserDescription = userDescription;
-                _editingStep.Type = selectedType;
-                _editingStep.Value = stepUrl;
+                _editingStep.Name = name;
+                _editingStep.Description = description;
+                _editingStep.Show = show;
+                _editingStep.Type = type;
+                _editingStep.Value = value;
             }
             else
             {
-                _routineService.AddStep(_currentRoutine.Id, selectedType, stepUrl, stepName, userDescription);
+                // Neuen Schritt hinzufügen
+                _routineService.AddStep(_currentRoutine.Id, name, description, show, type, value);
+
+                // Aktuelle Routine neu laden (um die neue ID und Order zu bekommen)
                 _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
-                _editingStep = _currentRoutine.Steps.OrderBy(s => s.Order).LastOrDefault();
+
+                // Den neu erstellten Schritt finden (der letzte in der sortierten Liste)
+                if (_currentRoutine != null && _currentRoutine.Steps != null && _currentRoutine.Steps.Count > 0)
+                {
+                    _editingStep = _currentRoutine.Steps.OrderBy(s => s.Order).LastOrDefault();
+                }
             }
 
             if (refreshList)
             {
-                var oldSelectedIndex = lstSteps.SelectedIndex;
                 RefreshStepsList();
-                if (oldSelectedIndex >= 0 && oldSelectedIndex < lstSteps.Items.Count)
-                {
-                    lstSteps.SelectedIndex = oldSelectedIndex;
-                }
             }
         }
 

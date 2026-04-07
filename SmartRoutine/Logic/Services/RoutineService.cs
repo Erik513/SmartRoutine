@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 
 namespace SmartRoutine.Logic.Services
 {
@@ -13,48 +14,86 @@ namespace SmartRoutine.Logic.Services
     {
         private readonly IRoutineRepository _repository;
         private List<Routine> _testRoutines;
-        private readonly ITestDataService _testDataService;
+        private bool _useTestData = AppSettings.UseTestData;
+        private TestData _testDataService;
 
         public RoutineService(IRoutineRepository repository)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _testDataService = new TestDataService();
+
+            if (_useTestData)
+            {
+                LoadTestData();
+            }
+        }
+
+        private void LoadTestData()
+        {
+            var testData = new TestData();
+            _testRoutines = testData.GetTestRoutines();
         }
 
         public List<Routine> GetAllRoutines()
         {
-            if (AppSettings.UseTestData)
+            List<Routine> routines;
+
+            if (_useTestData)
             {
-                // Beim ersten Aufruf: Frische Testdaten laden
-                if (_testRoutines == null)
-                {
-                    _testRoutines = _testDataService.GetTestRoutines();
-                }
-                return _testRoutines;
+                routines = _testRoutines;
             }
             else
             {
-                return _repository.LoadRoutines().OrderBy(r => r.Order).ToList();
+                routines = _repository.LoadRoutines();
             }
+
+            // Routinen nach Order sortieren
+            routines = routines.OrderBy(r => r.Order).ToList();
+
+            // UND: Steps in jeder Routine sortieren
+            foreach (var routine in routines)
+            {
+                if (routine.Steps != null && routine.Steps.Any())
+                {
+                    routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
+                }
+            }
+
+            return routines;
         }
 
         public Routine GetRoutine(string id)
         {
-            return GetAllRoutines().FirstOrDefault(r => r.Id == id);
+            Routine routine;
+
+            if (_useTestData)
+            {
+                routine = _testRoutines?.FirstOrDefault(r => r.Id == id);
+            }
+            else
+            {
+                routine = _repository.LoadRoutines().FirstOrDefault(r => r.Id == id);
+            }
+
+            // ===== CRITICAL: Steps IMMER nach Order sortieren =====
+            if (routine != null && routine.Steps != null && routine.Steps.Any())
+            {
+                routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
+            }
+
+            return routine;
         }
 
         public void CreateRoutine(string name)
         {
-            if (AppSettings.UseTestData)
+            if (_useTestData)
             {
-                // In die Test-Liste einfügen
                 var newRoutine = new Routine
                 {
                     Id = Guid.NewGuid().ToString(),
                     Name = name,
                     Order = _testRoutines.Count,
                     CreatedAt = DateTime.Now,
-                    Steps = new List<RoutineStep>()
+                    Steps = new List<RoutineStep>(),
                 };
                 _testRoutines.Add(newRoutine);
             }
@@ -74,25 +113,27 @@ namespace SmartRoutine.Logic.Services
 
         public void UpdateRoutine(Routine routine)
         {
-            if (AppSettings.UseTestData)
+            if (_useTestData)
             {
-                var existing = _testRoutines.FirstOrDefault(r => r.Id == routine.Id);
-                if (existing != null)
+                var index = _testRoutines.FindIndex(r => r.Id == routine.Id);
+                if (index >= 0)
                 {
-                    existing.Name = routine.Name;
-                    existing.Steps = routine.Steps;
-                    existing.UpdatedAt = DateTime.Now;
+                    // Steps vor dem Speichern sortieren
+                    routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
+                    _testRoutines[index] = routine;
                 }
             }
             else
             {
+                // Steps vor dem Speichern sortieren
+                routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
                 _repository.UpdateRoutine(routine);
             }
         }
 
         public void DeleteRoutine(string id)
         {
-            if (AppSettings.UseTestData)
+            if (_useTestData)
             {
                 _testRoutines.RemoveAll(r => r.Id == id);
             }
@@ -108,12 +149,12 @@ namespace SmartRoutine.Logic.Services
 
             for (int i = 0; i < reorderedRoutines.Count; i++)
             {
-                reorderedRoutines[i].Order = i;
+                reorderedRoutines[i].Order = i; // nur Routine.Order
             }
 
-            if (AppSettings.UseTestData)
+            if (_useTestData)
             {
-                _testRoutines = reorderedRoutines;
+                _testRoutines = reorderedRoutines.ToList(); // neue Liste
             }
             else
             {
@@ -123,93 +164,94 @@ namespace SmartRoutine.Logic.Services
                 }
             }
         }
+
         public void SaveRoutine(Routine routine)
         {
             if (routine == null) return;
 
-            var existing = GetRoutine(routine.Id);
-            if (existing == null)
+            if (_useTestData)
             {
-                // Neue Routine
-                CreateRoutine(routine.Name);
-                var newRoutine = GetAllRoutines().LastOrDefault();
-                if (newRoutine != null)
+                var index = _testRoutines.FindIndex(r => r.Id == routine.Id);
+                if (index >= 0)
                 {
-                    // Steps in der richtigen Reihenfolge hinzufügen
-                    foreach (var step in routine.Steps.OrderBy(s => s.Order))
+                    // Orders explizit korrigieren
+                    for (int i = 0; i < routine.Steps.Count; i++)
                     {
-                        AddStep(newRoutine.Id, step.Type, step.Value, step.Description, step.UserDescription);
+                        routine.Steps[i].Order = i;
                     }
+                    _testRoutines[index] = routine;
                 }
             }
             else
             {
-                // Bestehende Routine aktualisieren
-                existing.Name = routine.Name;
-                existing.UpdatedAt = DateTime.Now;
-
-                // Steps aktualisieren (Reihenfolge erhalten)
-                // Lösche alle vorhandenen Steps
-                foreach (var step in existing.Steps.ToList())
+                // Für echte Repository später ähnlich
+                var existing = _repository.LoadRoutines().FirstOrDefault(r => r.Id == routine.Id);
+                if (existing != null)
                 {
-                    RemoveStep(existing.Id, step.Id);
-                }
+                    existing.Name = routine.Name;
+                    existing.UpdatedAt = DateTime.Now;
 
-                // Füge neue Steps mit korrekter Order hinzu
-                foreach (var step in routine.Steps.OrderBy(s => s.Order))
-                {
-                    AddStep(existing.Id, step.Type, step.Value, step.Description, step.UserDescription);
+                    // Steps komplett ersetzen
+                    existing.Steps.Clear();
+                    foreach (var step in routine.Steps.OrderBy(s => s.Order))
+                    {
+                        existing.Steps.Add(new RoutineStep
+                        {
+                            Id = step.Id,
+                            Order = step.Order,
+                            Name = step.Name,
+                            Description = step.Description,
+                            Show = step.Show,
+                            Type = step.Type,
+                            Value = step.Value
+                        });
+                    }
+                    _repository.UpdateRoutine(existing);
                 }
-
-                UpdateRoutine(existing);
             }
         }
-
         // Steps =================================================================================
 
-        public void AddStep(string routineId, StepType type, string value, string description, string userDescription = null, int? order = null)
+        public void AddStep(string routineId, string name, string description, bool show, StepType type, string value)
         {
             var routine = GetRoutine(routineId);
             if (routine == null) return;
 
+            int maxOrder = routine.Steps.Any() ? routine.Steps.Max(s => s.Order) : -1;
+
             var step = new RoutineStep
             {
                 Id = Guid.NewGuid().ToString(),
-                Order = order ?? routine.Steps.Count,
-                Type = type,
-                Value = value,
+                Order = maxOrder + 1,
+                Name = name,
                 Description = description,
-                UserDescription = userDescription ?? description
+                Show = show,
+                Type = type,
+                Value = value
             };
 
             routine.Steps.Add(step);
 
-            // Falls eine spezifische Order angegeben wurde, alle Orders neu berechnen
-            if (order.HasValue)
-            {
-                for (int i = 0; i < routine.Steps.Count; i++)
-                {
-                    routine.Steps[i].Order = i;
-                }
-            }
-
-            if (!AppSettings.UseTestData)
+            if (!_useTestData)
             {
                 _repository.UpdateRoutine(routine);
             }
         }
-        public void UpdateStep(string routineId, string stepId, string value, string description, string userDescription = null)
+
+        public void UpdateStep(string routineId, string stepId, string name, string description, bool show, StepType type, string value)
         {
             var routine = GetRoutine(routineId);
             var step = routine?.Steps.FirstOrDefault(s => s.Id == stepId);
 
             if (step != null)
             {
-                step.Value = value;
+                step.Name = name;
                 step.Description = description;
-                step.UserDescription = userDescription ?? description;
+                step.Show = show;
+                step.Type = type;
+                step.Value = value;
 
-                if (!AppSettings.UseTestData)
+                if (!_useTestData)
                 {
                     _repository.UpdateRoutine(routine);
                 }
@@ -219,20 +261,34 @@ namespace SmartRoutine.Logic.Services
         public void RemoveStep(string routineId, string stepId)
         {
             var routine = GetRoutine(routineId);
-            var step = routine?.Steps.FirstOrDefault(s => s.Id == stepId);
+            if (routine == null) return;
 
-            if (step != null)
+            var step = routine.Steps.FirstOrDefault(s => s.Id == stepId);
+            if (step == null) return;
+
+            // Schritt entfernen
+            routine.Steps.Remove(step);
+
+            // WICHTIG: Erst SORTIEREN, dann Orders neu vergeben
+            var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
+            for (int i = 0; i < orderedSteps.Count; i++)
             {
-                routine.Steps.Remove(step);
-                for (int i = 0; i < routine.Steps.Count; i++)
-                    routine.Steps[i].Order = i;
+                orderedSteps[i].Order = i;
+            }
 
-                if (!AppSettings.UseTestData)
-                {
-                    _repository.UpdateRoutine(routine);
-                }
+            // Die sortierte Liste wieder zuweisen
+            routine.Steps = orderedSteps;
+
+            // UpdatedAt aktualisieren
+            routine.UpdatedAt = DateTime.Now;
+
+            // Speichern
+            if (!_useTestData)
+            {
+                _repository.UpdateRoutine(routine);
             }
         }
+
 
         public void ReorderSteps(string routineId, int oldIndex, int newIndex)
         {
@@ -249,7 +305,7 @@ namespace SmartRoutine.Logic.Services
 
             routine.Steps = steps;
 
-            if (!AppSettings.UseTestData)
+            if (!_useTestData)
             {
                 _repository.UpdateRoutine(routine);
             }

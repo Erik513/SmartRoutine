@@ -13,23 +13,20 @@ namespace SmartRoutine.UI.Controls
     public partial class RoutinesViewControl : UserControl
     {
         public event EventHandler<Routine> RoutineSelected;
-        public event EventHandler NewRoutineClicked;
+        public event EventHandler<Routine> NewRoutineClicked;
         public event EventHandler<Routine> EditRoutineClicked;
         public event EventHandler<Routine> DeleteRoutineClicked;
         public event EventHandler<Routine> StartRoutineClicked;
 
         private readonly IRoutineService _routineService;
-        private ITestDataService _testDataService;
-        private List<Routine> _testRoutines;
         private Routine _selectedRoutine;
 
         private StyledListBoxWithHeader lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
 
-        public RoutinesViewControl(IRoutineService routineService, ITestDataService testDataService)
+        public RoutinesViewControl(IRoutineService routineService)
         {
             _routineService = routineService;
-            _testDataService = testDataService;
 
             this.Dock = DockStyle.Fill;
             this.BackColor = UIStyles.Colors.BackgroundLight;
@@ -41,8 +38,6 @@ namespace SmartRoutine.UI.Controls
 
             InitializeControl();
             LoadRoutines();
-
-            lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
         }
 
         private void InitializeControl()
@@ -71,6 +66,7 @@ namespace SmartRoutine.UI.Controls
                 Height = 200
             };
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
+            lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
             mainLayout.Controls.Add(lstRoutines, 0, 0);
 
             // ========== UNTERE ZEILE: Button Panel (4x1 Layout) ==========
@@ -99,7 +95,21 @@ namespace SmartRoutine.UI.Controls
             btnNewRoutine = UIStyles.Buttons.CreatePrimary("+ Neue Routine", "", new Size(0, 0));
             btnNewRoutine.Dock = DockStyle.Fill;
             btnNewRoutine.Margin = new Padding(5, 5, 5, 5);
-            btnNewRoutine.Click += (s, e) => NewRoutineClicked?.Invoke(s, EventArgs.Empty);
+            btnNewRoutine.Click += (s, e) =>
+            {
+                // Finde die nächste verfügbare Nummer
+                int nextNumber = GetNextRoutineNumber();
+                string newRoutineName = $"Meine Routine {nextNumber}";
+
+                // Neue Routine erstellen
+                _routineService.CreateRoutine(newRoutineName);
+                var newRoutine = _routineService.GetAllRoutines().LastOrDefault();
+                if (newRoutine != null)
+                {
+                    newRoutine.IsNew = true;
+                    NewRoutineClicked?.Invoke(s, newRoutine);
+                }
+            };
 
             btnEditRoutine = UIStyles.Buttons.CreatePrimary("✎ Bearbeiten", "", new Size(0, 0));
             btnEditRoutine.Dock = DockStyle.Fill;
@@ -131,6 +141,28 @@ namespace SmartRoutine.UI.Controls
 
             // Resize-Event für Zentrierung
             this.Resize += (s, e) => CenterControls(mainLayout);
+        }
+
+        private int GetNextRoutineNumber()
+        {
+            var routines = _routineService.GetAllRoutines();
+            int maxNumber = 0;
+
+            foreach (var routine in routines)
+            {
+                string name = routine.Name;
+                if (name.StartsWith("Meine Routine "))
+                {
+                    string numberPart = name.Substring("Meine Routine ".Length);
+                    if (int.TryParse(numberPart, out int number))
+                    {
+                        if (number > maxNumber)
+                            maxNumber = number;
+                    }
+                }
+            }
+
+            return maxNumber + 1;
         }
 
         private void CenterControls(TableLayoutPanel mainLayout)
@@ -193,13 +225,15 @@ namespace SmartRoutine.UI.Controls
         private void LstRoutines_ItemsReordered(object sender, EventArgs e)
         {
             var newOrder = new List<Routine>();
-            foreach (var item in lstRoutines.Items)
+            for (int i = 0; i < lstRoutines.Items.Count; i++)
             {
-                if (item is Routine routine)
+                if (lstRoutines.Items[i] is Routine routine)
                 {
+                    routine.Order = i;           // explizit setzen
                     newOrder.Add(routine);
                 }
             }
+
             _routineService.ReorderRoutines(newOrder);
             LoadRoutines();
         }
