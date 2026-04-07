@@ -62,8 +62,7 @@ namespace SmartRoutine.UI.Controls
             lstRoutines = new StyledListBoxWithHeader("Meine Routinen", ContentAlignment.MiddleCenter)
             {
                 Dock = DockStyle.Fill,
-                ItemHeightCustom = 35, 
-                Height = 200
+                ItemHeightCustom = 35
             };
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
             lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
@@ -146,21 +145,16 @@ namespace SmartRoutine.UI.Controls
         private int GetNextRoutineNumber()
         {
             var routines = _routineService.GetAllRoutines();
-            int maxNumber = 0;
 
-            foreach (var routine in routines)
-            {
-                string name = routine.Name;
-                if (name.StartsWith("Meine Routine "))
+            int maxNumber = routines
+                .Where(r => r.Name.StartsWith("Meine Routine "))
+                .Select(r =>
                 {
-                    string numberPart = name.Substring("Meine Routine ".Length);
-                    if (int.TryParse(numberPart, out int number))
-                    {
-                        if (number > maxNumber)
-                            maxNumber = number;
-                    }
-                }
-            }
+                    string numberPart = r.Name.Substring("Meine Routine ".Length);
+                    return int.TryParse(numberPart, out int num) ? num : 0;
+                })
+                .DefaultIfEmpty(0)
+                .Max();
 
             return maxNumber + 1;
         }
@@ -193,37 +187,22 @@ namespace SmartRoutine.UI.Controls
                 lstRoutines.SelectedIndex = -1;
 
             _selectedRoutine = lstRoutines.SelectedItem as Routine;
-            LstRoutines_SelectedIndexChanged(this, EventArgs.Empty);
+            UpdateButtonStates();
         }
 
         public void SelectRoutine(Routine routine)
         {
             if (routine == null) return;
-
-            for (int i = 0; i < lstRoutines.Items.Count; i++)
-            {
-                var r = lstRoutines.Items[i] as Routine;
-                if (r != null && r.Id == routine.Id)
-                {
-                    lstRoutines.SelectedIndex = i;
-                    break;
-                }
-            }
+            SelectRoutineById(routine.Id);
         }
 
         private void LstRoutines_SelectedIndexChanged(object sender, EventArgs e)
         {
             _selectedRoutine = lstRoutines.SelectedItem as Routine;
+            UpdateButtonStates();
 
-            bool hasSelection = _selectedRoutine != null;
-            btnEditRoutine.Enabled = hasSelection;
-            btnDeleteRoutine.Enabled = hasSelection;
-            btnStartRoutine.Enabled = hasSelection;
-
-            if (hasSelection)
-            {
+            if (_selectedRoutine != null)
                 RoutineSelected?.Invoke(this, _selectedRoutine);
-            }
         }
         private void LstRoutines_ItemsReordered(object sender, EventArgs e)
         {
@@ -241,15 +220,11 @@ namespace SmartRoutine.UI.Controls
             }
 
             _routineService.ReorderRoutines(newOrder);
-
-            // Liste neu laden
             LoadRoutines();
 
-            // Auswahl wiederherstellen
-            if (!string.IsNullOrEmpty(selectedId))
-            {
+            // Falls LoadRoutines die Auswahl nicht wiederherstellen konnte
+            if (!string.IsNullOrEmpty(selectedId) && lstRoutines.SelectedIndex == -1)
                 SelectRoutineById(selectedId);
-            }
         }
         private void SelectRoutineById(string routineId)
         {
@@ -263,6 +238,13 @@ namespace SmartRoutine.UI.Controls
                     return;
                 }
             }
+        }
+        private void UpdateButtonStates()
+        {
+            bool hasSelection = _selectedRoutine != null;
+            btnEditRoutine.Enabled = hasSelection;
+            btnDeleteRoutine.Enabled = hasSelection;
+            btnStartRoutine.Enabled = hasSelection;
         }
     }
 }
