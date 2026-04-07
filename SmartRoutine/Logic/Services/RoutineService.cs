@@ -113,21 +113,48 @@ namespace SmartRoutine.Logic.Services
 
         public void UpdateRoutine(Routine routine)
         {
+            if (routine == null) return;
+
             if (_useTestData)
             {
                 var index = _testRoutines.FindIndex(r => r.Id == routine.Id);
                 if (index >= 0)
                 {
-                    // Steps vor dem Speichern sortieren
-                    routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
-                    _testRoutines[index] = routine;
+                    var existing = _testRoutines[index];
+
+                    // Nur Name und UpdatedAt aktualisieren
+                    existing.Name = routine.Name;
+                    existing.UpdatedAt = routine.UpdatedAt;
+
+                    // Steps ersetzen (mit korrekten Orders)
+                    var sortedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
+                    for (int i = 0; i < sortedSteps.Count; i++)
+                    {
+                        sortedSteps[i].Order = i;
+                    }
+                    existing.Steps = sortedSteps;
+
+                    // WICHTIG: Die Order der Routine selbst NICHT ändern!
+                    // existing.Order bleibt wie es ist
                 }
             }
             else
             {
-                // Steps vor dem Speichern sortieren
-                routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
-                _repository.UpdateRoutine(routine);
+                var existing = _repository.GetRoutine(routine.Id);
+                if (existing != null)
+                {
+                    existing.Name = routine.Name;
+                    existing.UpdatedAt = routine.UpdatedAt;
+
+                    var sortedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
+                    for (int i = 0; i < sortedSteps.Count; i++)
+                    {
+                        sortedSteps[i].Order = i;
+                    }
+                    existing.Steps = sortedSteps;
+
+                    _repository.UpdateRoutine(existing);
+                }
             }
         }
 

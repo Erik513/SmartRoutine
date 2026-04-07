@@ -14,5 +14,6 @@ namespace SmartRoutine.Data.Interfaces
         void AddRoutine(Routine routine);
         void UpdateRoutine(Routine routine);
         void DeleteRoutine(string routineId);
+        Routine GetRoutine(string routineId);
     }
 }

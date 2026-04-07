@@ -95,5 +95,10 @@ namespace SmartRoutine.Data
             _routines.RemoveAll(r => r.Id == routineId);
             SaveToFile();
         }
+
+        public Routine GetRoutine(string routineId)
+        {
+            return _routines.FirstOrDefault(r => r.Id == routineId);
+        }
     }
 }

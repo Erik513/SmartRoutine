@@ -414,6 +414,7 @@ namespace SmartRoutine.UI.Controls
             {
                 Id = original.Id,
                 Name = original.Name,
+                Order = original.Order,
                 CreatedAt = original.CreatedAt,
                 UpdatedAt = original.UpdatedAt,
                 Steps = original.Steps.Select(s => new RoutineStep
@@ -543,13 +544,15 @@ namespace SmartRoutine.UI.Controls
         {
             if (_isRefreshing) return;
 
-            var reordered = lstSteps.Items.Cast<RoutineStep>().ToList();
+            var reorderedSteps = lstSteps.Items.Cast<RoutineStep>().ToList();
 
-            for (int i = 0; i < reordered.Count; i++)
-                reordered[i].Order = i;
-
-            _currentRoutine.Steps = reordered;
+            for (int i = 0; i < reorderedSteps.Count; i++)
+            {
+                reorderedSteps[i].Order = i;
+            }
+            _currentRoutine.Steps = reorderedSteps;
             _routineService.UpdateRoutine(_currentRoutine);
+            RefreshStepsList(silent: true);
         }
         private void BtnAddStep_Click(object sender, EventArgs e)
         {
@@ -794,8 +797,8 @@ namespace SmartRoutine.UI.Controls
                 _routineService.AddStep(_currentRoutine.Id, name, description, show, type, value);
                 _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
 
-                if (_currentRoutine.Steps.Any())
-                    _editingStep = _currentRoutine.Steps.OrderBy(s => s.Order).LastOrDefault();
+                if (_originalRoutine != null)
+                    _currentRoutine.Order = _originalRoutine.Order;
             }
             if (refreshList)
                 RefreshStepsList(silent: true);
