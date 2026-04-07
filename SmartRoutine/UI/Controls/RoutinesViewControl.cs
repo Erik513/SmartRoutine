@@ -179,17 +179,20 @@ namespace SmartRoutine.UI.Controls
 
         public void LoadRoutines()
         {
+            string selectedId = _selectedRoutine?.Id;
+
             lstRoutines.Items.Clear();
-
             var routines = _routineService.GetAllRoutines();
-            foreach (var routine in routines)
-            {
-                lstRoutines.Items.Add(routine);
-            }
 
-            lstRoutines.Visible = true;
-            _selectedRoutine = null;
-            lstRoutines.SelectedIndex = -1;
+            foreach (var routine in routines)
+                lstRoutines.Items.Add(routine);
+
+            if (!string.IsNullOrEmpty(selectedId))
+                SelectRoutineById(selectedId);
+            else
+                lstRoutines.SelectedIndex = -1;
+
+            _selectedRoutine = lstRoutines.SelectedItem as Routine;
             LstRoutines_SelectedIndexChanged(this, EventArgs.Empty);
         }
 
@@ -224,18 +227,42 @@ namespace SmartRoutine.UI.Controls
         }
         private void LstRoutines_ItemsReordered(object sender, EventArgs e)
         {
+            string selectedId = _selectedRoutine?.Id;
+
             var newOrder = new List<Routine>();
+
             for (int i = 0; i < lstRoutines.Items.Count; i++)
             {
                 if (lstRoutines.Items[i] is Routine routine)
                 {
-                    routine.Order = i;           // explizit setzen
+                    routine.Order = i;
                     newOrder.Add(routine);
                 }
             }
 
             _routineService.ReorderRoutines(newOrder);
+
+            // Liste neu laden
             LoadRoutines();
+
+            // Auswahl wiederherstellen
+            if (!string.IsNullOrEmpty(selectedId))
+            {
+                SelectRoutineById(selectedId);
+            }
+        }
+        private void SelectRoutineById(string routineId)
+        {
+            if (string.IsNullOrEmpty(routineId)) return;
+
+            for (int i = 0; i < lstRoutines.Items.Count; i++)
+            {
+                if (lstRoutines.Items[i] is Routine r && r.Id == routineId)
+                {
+                    lstRoutines.SelectedIndex = i;
+                    return;
+                }
+            }
         }
     }
 }
