@@ -29,7 +29,7 @@ namespace SmartRoutine
             IRoutineRepository data = new RoutineRepository();
 
             // BusinessLogic
-            IRoutineService logic = new RoutineService(data);
+            IRoutineService logic = new RoutineService(data, true);
 
             // UI
             Application.Run(new MainForm(logic));

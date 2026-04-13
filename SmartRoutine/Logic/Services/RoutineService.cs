@@ -17,13 +17,32 @@ namespace SmartRoutine.Logic.Services
         private bool _useTestData = AppSettings.UseTestData;
         private TestData _testDataService;
 
-        public RoutineService(IRoutineRepository repository)
+        public bool UseTestData
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            get => _useTestData;
+            set
+            {
+                _useTestData = value;
+                if (_useTestData)
+                {
+                    LoadTestData();
+                }
+            }
+        }
+        public RoutineService(IRoutineRepository repository = null, bool useTestData = true)
+        {
+            _repository = repository;
+            _useTestData = useTestData;
 
             if (_useTestData)
             {
                 LoadTestData();
+            }
+
+            // Nur wenn kein Testdaten-Modus, dann muss Repository existieren
+            if (!_useTestData && _repository == null)
+            {
+                throw new ArgumentNullException(nameof(repository), "Repository is required when not using test data");
             }
         }
 

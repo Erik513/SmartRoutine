@@ -1,104 +1,81 @@
-﻿using SmartRoutine.Data.Interfaces;
+﻿using LiteDB;
+using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Data.Models;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.Json;
 
 namespace SmartRoutine.Data
 {
     public class RoutineRepository : IRoutineRepository
     {
-        private readonly string _dataPath;
-        private List<Routine> _routines;
-        public RoutineRepository()
-        {
-            _dataPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "SmartRoutine",
-                "routines.json");
+        // Der Pfad zur Datenbankdatei (wird im Benutzerordner erstellt)
+        private readonly string _dbPath = "SmartRoutine.db";
 
-            _routines = LoadFromFile();
+        // Hilfsmethode, um eine Datenbankverbindung zu öffnen
+        private LiteDatabase OpenDatabase()
+        {
+            // 'connection=true' ist wichtig, damit BsonMapper automatisch Ihre Eigenschaften mapped
+            return new LiteDatabase($"Filename={_dbPath}; connection=shared");
         }
 
-        private List<Routine> LoadFromFile()
+        public List<Routine> LoadRoutines()
         {
-            try
+            using (var db = OpenDatabase())
             {
-                if (File.Exists(_dataPath))
-                {
-                    var json = File.ReadAllText(_dataPath);
-                    return JsonSerializer.Deserialize<List<Routine>>(json) ?? new List<Routine>();
-                }
+                // Holt alle Routinen aus der Collection "routines"
+                // OrderBy sorgt für die richtige Reihenfolge
+                return db.GetCollection<Routine>("routines")
+                         .Query()
+                         .OrderBy(r => r.Order)
+                         .ToList();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Fehler beim Laden: {ex.Message}");
-            }
-
-            return new List<Routine>();
-        }
-
-        private void SaveToFile()
-        {
-            try
-            {
-                var directory = Path.GetDirectoryName(_dataPath);
-                if (!Directory.Exists(directory))
-                    Directory.CreateDirectory(directory);
-
-                var json = JsonSerializer.Serialize(_routines, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(_dataPath, json);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Fehler beim Speichern: {ex.Message}");
-            }
-        }
-
-        public List<Routine> LoadRoutines() => _routines;
-
-        public void SaveRoutines(List<Routine> routines)
-        {
-            _routines = routines;
-            SaveToFile();
         }
 
         public void AddRoutine(Routine routine)
         {
-            _routines.Add(routine);
-            SaveToFile();
+            using (var db = OpenDatabase())
+            {
+                var col = db.GetCollection<Routine>("routines");
+                col.Insert(routine); // Die ID wird automatisch vergeben
+            }
         }
 
         public void UpdateRoutine(Routine routine)
         {
-            var index = _routines.FindIndex(r => r.Id == routine.Id);
-            if (index >= 0)
+            using (var db = OpenDatabase())
             {
-                // Steps vor dem Speichern sortieren
-                if (routine.Steps != null && routine.Steps.Any())
-                {
-                    routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
-                }
-
-                routine.UpdatedAt = DateTime.Now;
-                _routines[index] = routine;
-                SaveToFile();
+                var col = db.GetCollection<Routine>("routines");
+                col.Update(routine); // Aktualisiert die Routine anhand der Id
             }
         }
 
         public void DeleteRoutine(string routineId)
         {
-            _routines.RemoveAll(r => r.Id == routineId);
-            SaveToFile();
+            using (var db = OpenDatabase())
+            {
+                var col = db.GetCollection<Routine>("routines");
+                col.Delete(routineId);
+            }
         }
 
+        // Diese Methode brauchen Sie für Ihre Service-Logik
         public Routine GetRoutine(string routineId)
         {
-            return _routines.FirstOrDefault(r => r.Id == routineId);
+            using (var db = OpenDatabase())
+            {
+                return db.GetCollection<Routine>("routines")
+                         .FindById(routineId);
+            }
+        }
+
+        // Die SaveRoutines-Methode wird mit LiteDB nicht mehr benötigt.
+        // Sie können sie aus dem Interface entfernen oder leer lassen.
+        public void SaveRoutines(List<Routine> routines)
+        {
+            // Wird nicht mehr benötigt, da jede Änderung direkt gespeichert wird.
+            // Sie können die Methode aus Ihrem Interface IRoutineRepository entfernen.
+            throw new NotImplementedException("Use AddRoutine, UpdateRoutine, and DeleteRoutine instead.");
         }
     }
 }

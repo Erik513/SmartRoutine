@@ -23,7 +23,6 @@ namespace SmartRoutine.UI
         private RoutinesViewControl _routinesView;
         private RoutineEditorViewControl _editorView;
         private Routine _currentRoutine;
-        private const bool DEVELOPER_MODE = true;
 
         // Constants
         private static readonly Size DEFAULT_WINDOW_SIZE = new Size(1024, 768);
@@ -33,7 +32,6 @@ namespace SmartRoutine.UI
         public MainForm(IRoutineService routineService)
         {
             _routineService = routineService ?? throw new ArgumentNullException(nameof(routineService));
-            AppSettings.UseTestData = DEVELOPER_MODE;
 
             ConfigureForm();
             CreateIntegratedUI();
