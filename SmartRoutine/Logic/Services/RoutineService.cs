@@ -220,24 +220,25 @@ namespace SmartRoutine.Logic.Services
                 var index = _testRoutines.FindIndex(r => r.Id == routine.Id);
                 if (index >= 0)
                 {
-                    // Orders explizit korrigieren
                     for (int i = 0; i < routine.Steps.Count; i++)
                     {
                         routine.Steps[i].Order = i;
                     }
                     _testRoutines[index] = routine;
                 }
+                else
+                {
+                    routine.Order = _testRoutines.Count;
+                    _testRoutines.Add(routine);
+                }
             }
             else
             {
-                // Für echte Repository später ähnlich
                 var existing = _repository.LoadRoutines().FirstOrDefault(r => r.Id == routine.Id);
                 if (existing != null)
                 {
                     existing.Name = routine.Name;
                     existing.UpdatedAt = DateTime.Now;
-
-                    // Steps komplett ersetzen
                     existing.Steps.Clear();
                     foreach (var step in routine.Steps.OrderBy(s => s.Order))
                     {
@@ -253,6 +254,14 @@ namespace SmartRoutine.Logic.Services
                         });
                     }
                     _repository.UpdateRoutine(existing);
+                }
+                else
+                {
+                    var routines = _repository.LoadRoutines();
+                    int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
+                    routine.Order = maxOrder + 1;
+                    routine.CreatedAt = DateTime.Now;
+                    _repository.AddRoutine(routine);
                 }
             }
         }
@@ -342,6 +351,12 @@ namespace SmartRoutine.Logic.Services
             if (routine == null) return;
 
             var steps = routine.Steps.ToList();
+
+            // VALIDIERUNG: Prüfe ob Indizes gültig sind
+            if (oldIndex < 0 || oldIndex >= steps.Count) return;
+            if (newIndex < 0 || newIndex >= steps.Count) return;
+            if (oldIndex == newIndex) return;
+
             var step = steps[oldIndex];
             steps.RemoveAt(oldIndex);
             steps.Insert(newIndex, step);

@@ -9,8 +9,18 @@ namespace SmartRoutine.Data
 {
     public class RoutineRepository : IRoutineRepository
     {
-        // Der Pfad zur Datenbankdatei (wird im Benutzerordner erstellt)
-        private readonly string _dbPath = "SmartRoutine.db";
+        private readonly string _dbPath;
+
+        // Standardkonstruktor für die echte App
+        public RoutineRepository() : this("SmartRoutine.db")
+        {
+        }
+
+        // Konstruktor für Tests (erlaubt eigenen Pfad)
+        public RoutineRepository(string dbPath)
+        {
+            _dbPath = dbPath;
+        }
 
         // Hilfsmethode, um eine Datenbankverbindung zu öffnen
         private LiteDatabase OpenDatabase()
