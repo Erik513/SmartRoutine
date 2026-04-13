@@ -13,6 +13,9 @@ namespace SmartRoutine.UI.Controls
 {
     public partial class RoutineEditorViewControl : UserControl
     {
+        // Für Tests: Wenn true, werden MessageBoxen automatisch mit "Ja" beantwortet
+        public bool AutoConfirmDialogs { get; set; } = false;
+
         public event EventHandler BackToRoutinesClicked;
         public event EventHandler<Routine> SaveChanges;
 
@@ -572,10 +575,15 @@ namespace SmartRoutine.UI.Controls
         {
             if (!(lstSteps.SelectedItem is RoutineStep stepToDelete)) return;
 
-            if (MessageBox.Show($"Schritt '{stepToDelete.Name}' wirklich löschen?",
-                    "Bestätigen", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-                != DialogResult.Yes)
-                return;
+            bool shouldDelete = AutoConfirmDialogs;
+
+            if (!shouldDelete)
+            {
+                shouldDelete = MessageBox.Show($"Schritt '{stepToDelete.Name}' wirklich löschen?",
+                    "Bestätigen", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+            }
+
+            if (!shouldDelete) return;
 
             _routineService.RemoveStep(_currentRoutine.Id, stepToDelete.Id);
             _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
@@ -708,8 +716,9 @@ namespace SmartRoutine.UI.Controls
             // Prüfen ob Name leer ist
             if (string.IsNullOrWhiteSpace(routineName))
             {
-                MessageBox.Show("Bitte geben Sie einen Namen für die Routine ein.", "Validierung",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (!AutoConfirmDialogs)
+                    MessageBox.Show("Bitte geben Sie einen Namen für die Routine ein.", "Validierung",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtRoutineName.Focus();
                 return false;
             }
@@ -722,9 +731,9 @@ namespace SmartRoutine.UI.Controls
 
             if (nameExists)
             {
-                MessageBox.Show($"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
-                    "Validierung",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (!AutoConfirmDialogs)
+                    MessageBox.Show($"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
+                        "Validierung", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtRoutineName.Focus();
                 txtRoutineName.SelectAll();
                 return false;
@@ -736,16 +745,18 @@ namespace SmartRoutine.UI.Controls
         {
             if (string.IsNullOrWhiteSpace(txtStepName.Text))
             {
-                MessageBox.Show("Bitte geben Sie einen Namen für den Schritt ein.", "Validierung",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (!AutoConfirmDialogs)
+                    MessageBox.Show("Bitte geben Sie einen Namen für den Schritt ein.", "Validierung",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtStepName.Focus();
                 return false;
             }
 
             if (cmbStepType.SelectedIndex == -1)
             {
-                MessageBox.Show("Bitte wählen Sie einen Aktionstyp aus.", "Validierung",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (!AutoConfirmDialogs)
+                    MessageBox.Show("Bitte wählen Sie einen Aktionstyp aus.", "Validierung",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 cmbStepType.Focus();
                 return false;
             }
@@ -753,8 +764,9 @@ namespace SmartRoutine.UI.Controls
             var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
             if (selectedItem.Key == StepType.OpenUrl && string.IsNullOrWhiteSpace(txtUrl.Text))
             {
-                MessageBox.Show("Bitte geben Sie eine URL ein.", "Validierung",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (!AutoConfirmDialogs)
+                    MessageBox.Show("Bitte geben Sie eine URL ein.", "Validierung",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtUrl.Focus();
                 return false;
             }
