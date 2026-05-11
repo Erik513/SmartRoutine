@@ -26,7 +26,6 @@ namespace SmartRoutine.UI.Controls
         private RoutineStep _editingStep;
         private ToolTip _errorToolTip = UIStyles.ToolTips.CreateToolTip();
         private bool _isRefreshing = false;
-        private bool _suppressSelectionEvent = false;
 
         // UI Controls
         private TableLayoutPanel mainTlp;
@@ -64,11 +63,19 @@ namespace SmartRoutine.UI.Controls
         // StepTypeContent
         private Panel stepTypeContentPanel;
         private TableLayoutPanel stepTypeContentTlp;
-        // OpenURL
-        private Label lblUrl;
+        
+        // OpenURL Controls
         private TextBox txtUrl;
-        private ComboBox cmbOpenUrl;
-        // More ...
+        private ToggleSwitch chkOpenInExternBrowser;
+
+        // OpenFolder Controls
+        private TextBox txtFolderPath;
+        private ToggleSwitch chkOpenInNewWindow;
+
+        // OpenApplication Controls
+        private TextBox txtAppPath;
+        private TextBox txtAppArguments;
+        private ToggleSwitch chkRunAsAdmin;
 
         // Footer
         private Button btnBack;
@@ -244,8 +251,8 @@ namespace SmartRoutine.UI.Controls
 
             stepTypeContentPanel.Controls.Add(stepTypeContentTlp);
             // OpenURL Controls vorbereiten
-            lblUrl = UIStyles.Labels.CreateNormal("Webseite:");
-            lblUrl.Dock = DockStyle.Fill;
+            //lblUrl = UIStyles.Labels.CreateNormal("Webseite:");
+            //lblUrl.Dock = DockStyle.Fill;
 
             txtUrl = UIStyles.TextBoxes.CreateStandard();
             txtUrl.Dock = DockStyle.Fill;
@@ -413,24 +420,62 @@ namespace SmartRoutine.UI.Controls
         {
             if (original == null) return null;
 
-            return new Routine
+            var copy = new Routine
             {
                 Id = original.Id,
                 Name = original.Name,
                 Order = original.Order,
                 CreatedAt = original.CreatedAt,
                 UpdatedAt = original.UpdatedAt,
-                Steps = original.Steps.Select(s => new RoutineStep
-                {
-                    Id = s.Id,
-                    Order = s.Order,
-                    Name = s.Name,
-                    Description = s.Description,
-                    Show = s.Show,
-                    Type = s.Type,
-                    Value = s.Value
-                }).ToList()
+                Steps = new List<RoutineStep>()
             };
+
+            foreach (var step in original.Steps)
+            {
+                switch (step)
+                {
+                    case OpenUrlStep urlStep:
+                        copy.Steps.Add(new OpenUrlStep
+                        {
+                            Id = urlStep.Id,
+                            Order = urlStep.Order,
+                            Name = urlStep.Name,
+                            Description = urlStep.Description,
+                            Show = urlStep.Show,
+                            Url = urlStep.Url,
+                            OpenInExternBrowser = urlStep.OpenInExternBrowser
+                        });
+                        break;
+                    case OpenFolderStep folderStep:
+                        copy.Steps.Add(new OpenFolderStep
+                        {
+                            Id = folderStep.Id,
+                            Order = folderStep.Order,
+                            Name = folderStep.Name,
+                            Description = folderStep.Description,
+                            Show = folderStep.Show,
+                            FolderPath = folderStep.FolderPath,
+                            OpenInNewWindow = folderStep.OpenInNewWindow
+                        });
+                        break;
+                    case OpenApplicationStep appStep:
+                        copy.Steps.Add(new OpenApplicationStep
+                        {
+                            Id = appStep.Id,
+                            Order = appStep.Order,
+                            Name = appStep.Name,
+                            Description = appStep.Description,
+                            Show = appStep.Show,
+                            ApplicationPath = appStep.ApplicationPath,
+                            Arguments = appStep.Arguments,
+                            RunAsAdmin = appStep.RunAsAdmin,
+                            WorkingDirectory = appStep.WorkingDirectory
+                        });
+                        break;
+                }
+            }
+
+            return copy;
         }
 
         private bool HasChanges()
@@ -451,15 +496,53 @@ namespace SmartRoutine.UI.Controls
                 var orig = _originalRoutine.Steps[i];
                 var curr = _currentRoutine.Steps[i];
 
-                if (orig.Order != curr.Order ||
-                    orig.Type != curr.Type ||
-                    orig.Value != curr.Value ||
-                    orig.Name != curr.Name ||
-                    orig.Description != curr.Description)
+                if (orig.Order != curr.Order || orig.Name != curr.Name || orig.Description != curr.Description)
                     return true;
+
+                // Step-spezifische Vergleiche
+                switch (orig)
+                {
+                    case OpenUrlStep origUrl when curr is OpenUrlStep currUrl:
+                        if (origUrl.Url != currUrl.Url || origUrl.OpenInExternBrowser != currUrl.OpenInExternBrowser)
+                            return true;
+                        break;
+                    case OpenFolderStep origFolder when curr is OpenFolderStep currFolder:
+                        if (origFolder.FolderPath != currFolder.FolderPath || origFolder.OpenInNewWindow != currFolder.OpenInNewWindow)
+                            return true;
+                        break;
+                    case OpenApplicationStep origApp when curr is OpenApplicationStep currApp:
+                        if (origApp.ApplicationPath != currApp.ApplicationPath ||
+                            origApp.Arguments != currApp.Arguments ||
+                            origApp.RunAsAdmin != currApp.RunAsAdmin)
+                            return true;
+                        break;
+                }
             }
 
             return false;
+        }
+        
+        private void OpenEditorForStep(RoutineStep step = null)
+        {
+            CloseEditor();
+            if (step != null)
+            {
+                LoadStepToEditor(step);
+            }
+            else
+            {
+                ClearEditor();
+            }
+
+            rightTlp.Visible = true;
+            SetEditorEnabled(true);
+        }
+
+
+        private void CloseEditor()
+        {
+            rightTlp.Visible = false;
+            _editingStep = null;
         }
 
         private void ClearEditor()
@@ -467,13 +550,25 @@ namespace SmartRoutine.UI.Controls
             lblStepNameTitle.Text = "Neuen Schritt erstellen";
             txtStepName.Text = "";
             txtStepDescription.Text = "";
-            txtUrl.Text = "";
+
+            // OpenUrl Controls
+            if (txtUrl != null) txtUrl.Text = "";
+            if (chkOpenInExternBrowser != null) chkOpenInExternBrowser.Checked = true;
+
+            // OpenFolder Controls
+            if (txtFolderPath != null) txtFolderPath.Text = "";
+            if (chkOpenInNewWindow != null) chkOpenInNewWindow.Checked = true;
+
+            // OpenApplication Controls
+            if (txtAppPath != null) txtAppPath.Text = "";
+            if (txtAppArguments != null) txtAppArguments.Text = "";
+            if (chkRunAsAdmin != null) chkRunAsAdmin.Checked = false;
+
             tglStepEnabled.Checked = true;
             cmbStepType.SelectedIndex = -1;
             stepTypeContentTlp.Visible = false;
             _editingStep = null;
             SetEditorEnabled(false);
-            rightTlp.Visible = false;
         }
 
         private void LoadStepToEditor(RoutineStep step)
@@ -483,25 +578,33 @@ namespace SmartRoutine.UI.Controls
             txtStepDescription.Text = step.Description;
             tglStepEnabled.Checked = step.Show;
 
-            // Je nach StepType den entsprechenden Content laden
-            var stepTypes = (List<KeyValuePair<StepType, string>>)cmbStepType.DataSource;
-            for (int i = 0; i < stepTypes.Count; i++)
+            // StepType auswählen
+            for (int i = 0; i < cmbStepType.Items.Count; i++)
             {
-                if (stepTypes[i].Key == step.Type && !string.IsNullOrEmpty(stepTypes[i].Value))
+                var item = (KeyValuePair<StepType, string>)cmbStepType.Items[i];
+                if (item.Key == step.Type)
                 {
                     cmbStepType.SelectedIndex = i;
                     break;
                 }
             }
 
-            if (step.Type == StepType.OpenUrl)
+            // Step-spezifische Werte laden
+            switch (step)
             {
-                txtUrl.Text = step.Value;
-                stepTypeContentTlp.Visible = true;
-            }
-            else
-            {
-                stepTypeContentTlp.Visible = false;
+                case OpenUrlStep urlStep:
+                    if (txtUrl != null) txtUrl.Text = urlStep.Url;
+                    if (chkOpenInExternBrowser != null) chkOpenInExternBrowser.Checked = urlStep.OpenInExternBrowser;
+                    break;
+                case OpenFolderStep folderStep:
+                    if (txtFolderPath != null) txtFolderPath.Text = folderStep.FolderPath;
+                    if (chkOpenInNewWindow != null) chkOpenInNewWindow.Checked = folderStep.OpenInNewWindow;
+                    break;
+                case OpenApplicationStep appStep:
+                    if (txtAppPath != null) txtAppPath.Text = appStep.ApplicationPath;
+                    if (txtAppArguments != null) txtAppArguments.Text = appStep.Arguments;
+                    if (chkRunAsAdmin != null) chkRunAsAdmin.Checked = appStep.RunAsAdmin;
+                    break;
             }
 
             _editingStep = step;
@@ -524,7 +627,9 @@ namespace SmartRoutine.UI.Controls
         // ========== STEP EVENT HANDLER ==========
         private void LstSteps_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (_isRefreshing || !(lstSteps.SelectedItem is RoutineStep step))
+            if (_isRefreshing) return;
+
+            if (!(lstSteps.SelectedItem is RoutineStep step))
             {
                 rightTlp.Visible = false;
                 ClearEditor();
@@ -532,17 +637,11 @@ namespace SmartRoutine.UI.Controls
                 return;
             }
 
-            // Aktuellen Schritt speichern, bevor neuer geladen wird
-            if (_editingStep != null && rightTlp.Visible)
-            {
-                if (!ValidateCurrentStep()) return;
-                SaveCurrentStep(refreshList: false);
-            }
-
-            rightTlp.Visible = true;
-            LoadStepToEditor(step);
+            CloseEditor();
+            OpenEditorForStep(step);
             btnDeleteStep.Enabled = true;
         }
+
         private void LstSteps_ItemsReordered(object sender, EventArgs e)
         {
             if (_isRefreshing) return;
@@ -559,15 +658,8 @@ namespace SmartRoutine.UI.Controls
         }
         private void BtnAddStep_Click(object sender, EventArgs e)
         {
-            if (_editingStep != null && rightTlp.Visible)
-            {
-                if (!ValidateCurrentStep()) return;
-                SaveCurrentStep(refreshList: false);
-            }
-
-            ClearEditor();
-            rightTlp.Visible = true;
-            SetEditorEnabled(true);
+            CloseEditor();
+            OpenEditorForStep(null);
             txtStepName.Focus();
         }
 
@@ -609,9 +701,15 @@ namespace SmartRoutine.UI.Controls
             lstSteps.BeginUpdate();
             lstSteps.Items.Clear();
 
+            // Stelle sicher, dass die Steps aus der aktuellen Routine kommen
             var orderedSteps = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
+
+            Debug.WriteLine($"RefreshStepsList: {orderedSteps.Count} Schritte werden geladen");
             foreach (var step in orderedSteps)
+            {
+                Debug.WriteLine($"  - {step.Name} (Order: {step.Order})");
                 lstSteps.Items.Add(step);
+            }
 
             lstSteps.EndUpdate();
             _isRefreshing = false;
@@ -643,61 +741,266 @@ namespace SmartRoutine.UI.Controls
         }
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Alten Inhalt löschen
             stepTypeContentTlp.Controls.Clear();
             stepTypeContentTlp.RowStyles.Clear();
             stepTypeContentTlp.ColumnStyles.Clear();
 
-            // Prüfen ob etwas ausgewählt ist
             if (cmbStepType.SelectedIndex == -1)
             {
                 stepTypeContentTlp.Visible = false;
                 return;
             }
 
-            // Ausgewählten StepType holen
-            var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
-            StepType selectedType = selectedItem.Key;
+            var selectedType = (StepType)cmbStepType.SelectedValue;
 
-            // Prüfen ob es der leere Eintrag ist (leerer String)
-            if (string.IsNullOrEmpty(selectedItem.Value))
-            {
-                stepTypeContentTlp.Visible = false;
-                return;
-            }
-
-            // Je nach ausgewähltem Typ den Content aufbauen
             switch (selectedType)
             {
                 case StepType.OpenUrl:
-                    stepTypeContentTlp.ColumnCount = 1;
-                    stepTypeContentTlp.RowCount = 2;
-
-                    stepTypeContentTlp.RowStyles.Clear();
-                    stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-                    stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-
-                    // Label und TextBox hinzufügen
-                    stepTypeContentTlp.Controls.Add(lblUrl, 0, 0);
-                    stepTypeContentTlp.Controls.Add(txtUrl, 0, 1);
-
-                    stepTypeContentTlp.Visible = true;
+                    CreateOpenUrlControls();
                     break;
-
-                default:
-                    stepTypeContentTlp.Visible = false;
+                case StepType.OpenFolder:
+                    CreateOpenFolderControls();
+                    break;
+                case StepType.OpenApplication:
+                    CreateOpenApplicationControls();
                     break;
             }
+        }
+
+        private void CreateOpenUrlControls()
+        {
+            stepTypeContentTlp.Controls.Clear();
+            stepTypeContentTlp.RowStyles.Clear();
+            stepTypeContentTlp.ColumnCount = 1;
+            stepTypeContentTlp.RowCount = 4;  // 4 Zeilen (keine extra Füllzeile mehr)
+            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label URL
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox URL
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Horizontale Reihe (Label + Toggle)
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Füll-Zeile
+
+            // Label URL
+            var lblUrl = UIStyles.Labels.CreateNormal("URL:");
+            lblUrl.Dock = DockStyle.Fill;
+            lblUrl.Margin = new Padding(3, 5, 3, 3);
+
+            // TextBox URL
+            txtUrl = UIStyles.TextBoxes.CreateStandard();
+            txtUrl.Name = "txtUrl";
+            txtUrl.Dock = DockStyle.Fill;
+            txtUrl.Margin = new Padding(3, 3, 3, 10);
+
+            // Horizontales Panel für Label + ToggleSwitch
+            var horizontalPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
+            };
+            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            horizontalPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            // Label
+            var lblInternal = UIStyles.Labels.CreateNormal("Öffnen in (App/Browser):");
+            lblInternal.Dock = DockStyle.Fill;
+            lblInternal.Margin = new Padding(3, 5, 3, 3);
+
+            // ToggleSwitch
+            chkOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(false, "Externer Browser", "In App öffnen");
+            chkOpenInExternBrowser.Name = "chkOpenInternally";
+            chkOpenInExternBrowser.Anchor = AnchorStyles.Left;
+            chkOpenInExternBrowser.Margin = new Padding(3, 3, 3, 3);
+
+            horizontalPanel.Controls.Add(lblInternal, 0, 0);
+            horizontalPanel.Controls.Add(chkOpenInExternBrowser, 1, 0);
+
+            // Controls hinzufügen
+            stepTypeContentTlp.Controls.Add(lblUrl, 0, 0);
+            stepTypeContentTlp.Controls.Add(txtUrl, 0, 1);
+            stepTypeContentTlp.Controls.Add(horizontalPanel, 0, 2);
+
+            stepTypeContentTlp.Visible = true;
+        }
+        private void CreateOpenFolderControls()
+        {
+            stepTypeContentTlp.Controls.Clear();
+            stepTypeContentTlp.RowStyles.Clear();
+            stepTypeContentTlp.ColumnCount = 2;
+            stepTypeContentTlp.RowCount = 4;
+            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label Ordnerpfad
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox + Browse Button
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Horizontale Reihe (Label + Toggle)
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Füll-Zeile
+
+            // Label Ordnerpfad
+            var lblPath = UIStyles.Labels.CreateNormal("Ordnerpfad:");
+            lblPath.Dock = DockStyle.Fill;
+            lblPath.Margin = new Padding(3, 5, 3, 3);
+
+            // TextBox Ordnerpfad
+            txtFolderPath = UIStyles.TextBoxes.CreateStandard();
+            txtFolderPath.Name = "txtFolderPath";
+            txtFolderPath.Dock = DockStyle.Fill;
+            txtFolderPath.Margin = new Padding(3, 3, 3, 3);
+
+            // Browse Button
+            var btnBrowse = UIStyles.Buttons.CreateStandard("Durchsuchen...");
+            btnBrowse.Dock = DockStyle.Fill;
+            btnBrowse.Margin = new Padding(3, 3, 3, 10);
+            btnBrowse.Click += (s, e) =>
+            {
+                using (var dialog = new FolderBrowserDialog())
+                {
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                        txtFolderPath.Text = dialog.SelectedPath;
+                }
+            };
+
+            // Horizontales Panel für Label + ToggleSwitch
+            var horizontalPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
+            };
+            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            horizontalPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            var lblOptions = UIStyles.Labels.CreateNormal("Im neuen Fenster öffnen:");
+            lblOptions.Dock = DockStyle.Fill;
+            lblOptions.Margin = new Padding(3, 5, 3, 3);
+
+            chkOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
+            chkOpenInNewWindow.Name = "chkOpenInNewWindow";
+            chkOpenInNewWindow.Anchor = AnchorStyles.Left;
+            chkOpenInNewWindow.Margin = new Padding(3, 3, 3, 3);
+
+            horizontalPanel.Controls.Add(lblOptions, 0, 0);
+            horizontalPanel.Controls.Add(chkOpenInNewWindow, 1, 0);
+
+            // Controls hinzufügen
+            stepTypeContentTlp.Controls.Add(lblPath, 0, 0);
+            stepTypeContentTlp.SetColumnSpan(lblPath, 2);
+
+            stepTypeContentTlp.Controls.Add(txtFolderPath, 0, 1);
+            stepTypeContentTlp.Controls.Add(btnBrowse, 1, 1);
+
+            stepTypeContentTlp.Controls.Add(horizontalPanel, 0, 2);
+            stepTypeContentTlp.SetColumnSpan(horizontalPanel, 2);
+
+            stepTypeContentTlp.Visible = true;
+        }
+        private void CreateOpenApplicationControls()
+        {
+            stepTypeContentTlp.Controls.Clear();
+            stepTypeContentTlp.RowStyles.Clear();
+            stepTypeContentTlp.ColumnCount = 2;
+            stepTypeContentTlp.RowCount = 6;
+            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label Programmpfad
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox + Browse Button
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label Argumente
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox Argumente
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Horizontale Reihe (Label + Toggle)
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Füll-Zeile
+
+            // Label Programmpfad
+            var lblPath = UIStyles.Labels.CreateNormal("Programmpfad:");
+            lblPath.Dock = DockStyle.Fill;
+            lblPath.Margin = new Padding(3, 5, 3, 3);
+
+            // TextBox Programmpfad
+            txtAppPath = UIStyles.TextBoxes.CreateStandard();
+            txtAppPath.Name = "txtAppPath";
+            txtAppPath.Dock = DockStyle.Fill;
+            txtAppPath.Margin = new Padding(3, 3, 3, 3);
+
+            // Browse Button
+            var btnBrowse = UIStyles.Buttons.CreateStandard("Durchsuchen...");
+            btnBrowse.Dock = DockStyle.Fill;
+            btnBrowse.Margin = new Padding(3, 3, 3, 10);
+            btnBrowse.Click += (s, e) =>
+            {
+                using (var dialog = new OpenFileDialog())
+                {
+                    dialog.Filter = "Anwendungen (*.exe)|*.exe|Alle Dateien (*.*)|*.*";
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                        txtAppPath.Text = dialog.FileName;
+                }
+            };
+
+            // Label Argumente
+            var lblArgs = UIStyles.Labels.CreateNormal("Argumente:");
+            lblArgs.Dock = DockStyle.Fill;
+            lblArgs.Margin = new Padding(3, 5, 3, 3);
+
+            // TextBox Argumente
+            txtAppArguments = UIStyles.TextBoxes.CreateStandard();
+            txtAppArguments.Name = "txtAppArguments";
+            txtAppArguments.Dock = DockStyle.Fill;
+            txtAppArguments.Margin = new Padding(3, 3, 3, 10);
+            txtAppArguments.Multiline = false;
+
+            // Horizontales Panel für Label + ToggleSwitch
+            var horizontalPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
+            };
+            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            horizontalPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            var lblOptions = UIStyles.Labels.CreateNormal("Als Admin ausführen:");
+            lblOptions.Dock = DockStyle.Fill;
+            lblOptions.Margin = new Padding(3, 5, 3, 3);
+
+            chkRunAsAdmin = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
+            chkRunAsAdmin.Name = "chkRunAsAdmin";
+            chkRunAsAdmin.Anchor = AnchorStyles.Left;
+            chkRunAsAdmin.Margin = new Padding(3, 3, 3, 3);
+
+            horizontalPanel.Controls.Add(lblOptions, 0, 0);
+            horizontalPanel.Controls.Add(chkRunAsAdmin, 1, 0);
+
+            // Controls hinzufügen
+            stepTypeContentTlp.Controls.Add(lblPath, 0, 0);
+            stepTypeContentTlp.SetColumnSpan(lblPath, 2);
+
+            stepTypeContentTlp.Controls.Add(txtAppPath, 0, 1);
+            stepTypeContentTlp.Controls.Add(btnBrowse, 1, 1);
+
+            stepTypeContentTlp.Controls.Add(lblArgs, 0, 2);
+            stepTypeContentTlp.SetColumnSpan(lblArgs, 2);
+
+            stepTypeContentTlp.Controls.Add(txtAppArguments, 0, 3);
+            stepTypeContentTlp.SetColumnSpan(txtAppArguments, 2);
+
+            stepTypeContentTlp.Controls.Add(horizontalPanel, 0, 4);
+            stepTypeContentTlp.SetColumnSpan(horizontalPanel, 2);
+
+            stepTypeContentTlp.Visible = true;
         }
 
         // ========== BACK BUTTON ==========
         private void BtnBack_Click(object sender, EventArgs e)
         {
-            if (_editingStep != null && rightTlp.Visible)
-            {
-                if (!ValidateCurrentStep()) return;
-                SaveCurrentStep(refreshList: false);
-            }
+            CloseEditor();
 
             if (!ValidateRoutineName()) return;
 
@@ -741,11 +1044,11 @@ namespace SmartRoutine.UI.Controls
 
             return true;
         }
-        private bool ValidateCurrentStep()
+        private bool ValidateCurrentStep(bool showMessageBox = true)
         {
             if (string.IsNullOrWhiteSpace(txtStepName.Text))
             {
-                if (!AutoConfirmDialogs)
+                if (showMessageBox && !AutoConfirmDialogs)
                     MessageBox.Show("Bitte geben Sie einen Namen für den Schritt ein.", "Validierung",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtStepName.Focus();
@@ -754,68 +1057,123 @@ namespace SmartRoutine.UI.Controls
 
             if (cmbStepType.SelectedIndex == -1)
             {
-                if (!AutoConfirmDialogs)
+                if (showMessageBox && !AutoConfirmDialogs)
                     MessageBox.Show("Bitte wählen Sie einen Aktionstyp aus.", "Validierung",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 cmbStepType.Focus();
                 return false;
             }
 
-            var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
-            if (selectedItem.Key == StepType.OpenUrl && string.IsNullOrWhiteSpace(txtUrl.Text))
+            var selectedType = (StepType)cmbStepType.SelectedValue;
+
+            switch (selectedType)
             {
-                if (!AutoConfirmDialogs)
-                    MessageBox.Show("Bitte geben Sie eine URL ein.", "Validierung",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtUrl.Focus();
-                return false;
+                case StepType.OpenUrl:
+                    if (string.IsNullOrWhiteSpace(txtUrl?.Text))
+                    {
+                        if (showMessageBox && !AutoConfirmDialogs)
+                            MessageBox.Show("Bitte geben Sie eine URL ein.", "Validierung",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtUrl?.Focus();
+                        return false;
+                    }
+                    break;
+                case StepType.OpenFolder:
+                    if (string.IsNullOrWhiteSpace(txtFolderPath?.Text))
+                    {
+                        if (showMessageBox && !AutoConfirmDialogs)
+                            MessageBox.Show("Bitte geben Sie einen Ordnerpfad ein.", "Validierung",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtFolderPath?.Focus();
+                        return false;
+                    }
+                    break;
+                case StepType.OpenApplication:
+                    if (string.IsNullOrWhiteSpace(txtAppPath?.Text))
+                    {
+                        if (showMessageBox && !AutoConfirmDialogs)
+                            MessageBox.Show("Bitte geben Sie einen Programmpfad ein.", "Validierung",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtAppPath?.Focus();
+                        return false;
+                    }
+                    break;
             }
 
             return true;
         }
-
         private void SaveCurrentStep(bool refreshList = true)
         {
+            Debug.WriteLine("=== SaveCurrentStep wurde aufgerufen ===");
+
+            // Validierung ohne MessageBox (weil schon gezeigt)
+            if (!ValidateCurrentStep(false)) return;
+
             string name = txtStepName.Text.Trim();
             string description = txtStepDescription.Text.Trim();
             bool show = tglStepEnabled.Checked;
 
-            if (cmbStepType.SelectedIndex == -1)
+            if (cmbStepType.SelectedIndex == -1) return;
+
+            var selectedType = (StepType)cmbStepType.SelectedValue;
+            RoutineStep step;
+
+            switch (selectedType)
             {
-                MessageBox.Show("Bitte wählen Sie einen Aktionstyp aus.", "Validierung", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                case StepType.OpenUrl:
+                    step = new OpenUrlStep
+                    {
+                        Url = txtUrl?.Text ?? "",
+                        OpenInExternBrowser = chkOpenInExternBrowser?.Checked ?? true
+                    };
+                    break;
+                case StepType.OpenFolder:
+                    step = new OpenFolderStep
+                    {
+                        FolderPath = txtFolderPath?.Text ?? "",
+                        OpenInNewWindow = chkOpenInNewWindow?.Checked ?? true
+                    };
+                    break;
+                case StepType.OpenApplication:
+                    step = new OpenApplicationStep
+                    {
+                        ApplicationPath = txtAppPath?.Text ?? "",
+                        Arguments = txtAppArguments?.Text ?? "",
+                        RunAsAdmin = chkRunAsAdmin?.Checked ?? false
+                    };
+                    break;
+                default:
+                    throw new NotSupportedException();
             }
 
-            var selectedItem = (KeyValuePair<StepType, string>)cmbStepType.SelectedItem;
-            StepType type = selectedItem.Key;
-
-            string value = type == StepType.OpenUrl
-                ? _urlValidationService.ValidateAndRepairUrl(txtUrl.Text.Trim(), false).RepairedUrl
-                : "";
+            step.Name = name;
+            step.Description = description;
+            step.Show = show;
 
             if (_editingStep != null)
             {
-                _routineService.UpdateStep(_currentRoutine.Id, _editingStep.Id, name, description, show, type, value);
-
-                // Lokale Kopie aktualisieren
-                _editingStep.Name = name;
-                _editingStep.Description = description;
-                _editingStep.Show = show;
-                _editingStep.Type = type;
-                _editingStep.Value = value;
+                step.Id = _editingStep.Id;
+                step.Order = _editingStep.Order;
+                _routineService.UpdateStep(_currentRoutine.Id, step);
+                _editingStep = step;
+                _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
             }
             else
             {
-                _routineService.AddStep(_currentRoutine.Id, name, description, show, type, value);
+                _routineService.AddStep(_currentRoutine.Id, step);
                 _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
 
                 if (_originalRoutine != null)
                     _currentRoutine.Order = _originalRoutine.Order;
-            }
-            if (refreshList)
-                RefreshStepsList(silent: true);
-        }
 
+                _editingStep = _currentRoutine.Steps.LastOrDefault();
+            }
+
+            if (refreshList)
+            {
+                RefreshStepsList(silent: false);
+            }
+        }
         private void SaveCurrentRoutine()
         {
             _currentRoutine.Name = txtRoutineName.Text.Trim();

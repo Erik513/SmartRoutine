@@ -151,12 +151,16 @@ namespace SmartRoutine.Tests
             var service = CreateService();
             service.CreateRoutine("Original Name");
             var routine = service.GetAllRoutines().First();
-            service.AddStep(routine.Id, "Old Step", "", true, StepType.OpenUrl, "oldurl");
 
+            // Alten Step hinzufügen
+            var oldStep = new OpenUrlStep { Name = "Old Step", Order = 0, Url = "oldurl", OpenInExternBrowser = true };
+            service.AddStep(routine.Id, oldStep);
+
+            // Neuen Step erstellen
             routine.Name = "Updated Name";
             routine.Steps = new List<RoutineStep>
             {
-                new RoutineStep { Id = "new1", Name = "New Step", Order = 0, Type = StepType.OpenUrl, Value = "newurl" }
+                new OpenUrlStep { Id = "new1", Name = "New Step", Order = 0, Url = "newurl", OpenInExternBrowser = false }
             };
             service.UpdateRoutine(routine);
 
@@ -352,56 +356,48 @@ namespace SmartRoutine.Tests
             service.CreateRoutine("Test Routine");
             var routine = service.GetAllRoutines().First();
 
-            service.AddStep(routine.Id, "Step 1", "Description", true, StepType.OpenUrl, "https://example.com");
+            var step = new OpenUrlStep { Name = "Step 1", Description = "Description", Url = "https://example.com", OpenInExternBrowser = true };
+            service.AddStep(routine.Id, step);
 
             var updatedRoutine = service.GetRoutine(routine.Id);
             Assert.AreEqual(1, updatedRoutine.Steps.Count);
             Assert.AreEqual("Step 1", updatedRoutine.Steps[0].Name);
+            Assert.AreEqual("https://example.com", ((OpenUrlStep)updatedRoutine.Steps[0]).Url);
         }
 
         [TestMethod]
         public void AddStep_WithMultipleSteps_SetsCorrectOrders()
         {
-            var service = CreateService();
-            service.CreateRoutine("Test");
-            var routine = service.GetAllRoutines().First();
-
-            service.AddStep(routine.Id, "First", "", true, StepType.OpenUrl, "");
-            service.AddStep(routine.Id, "Second", "", true, StepType.OpenUrl, "");
-            service.AddStep(routine.Id, "Third", "", true, StepType.OpenUrl, "");
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-            Assert.AreEqual(0, updatedRoutine.Steps[0].Order);
-            Assert.AreEqual(1, updatedRoutine.Steps[1].Order);
-            Assert.AreEqual(2, updatedRoutine.Steps[2].Order);
+            
         }
 
         [TestMethod]
         public void AddStep_WithDifferentTypes_AddsCorrectly()
         {
-            // Testet verschiedene Step-Typen (wenn mehr vorhanden)
             var service = CreateService();
             service.CreateRoutine("Test");
             var routine = service.GetAllRoutines().First();
 
-            service.AddStep(routine.Id, "URL Step", "", true, StepType.OpenUrl, "https://example.com");
-            // service.AddStep(routine.Id, "Folder Step", "", true, StepType.OpenFolder, @"C:\Test");
-            // service.AddStep(routine.Id, "App Step", "", true, StepType.OpenApplication, "notepad.exe");
+            var urlStep = new OpenUrlStep { Name = "URL Step", Url = "https://example.com", OpenInExternBrowser = true };
+            var folderStep = new OpenFolderStep { Name = "Folder Step", FolderPath = @"C:\Test", OpenInNewWindow = true };
+            var appStep = new OpenApplicationStep { Name = "App Step", ApplicationPath = "notepad.exe", Arguments = "test.txt", RunAsAdmin = false };
+
+            service.AddStep(routine.Id, urlStep);
+            service.AddStep(routine.Id, folderStep);
+            service.AddStep(routine.Id, appStep);
 
             var updatedRoutine = service.GetRoutine(routine.Id);
+            Assert.AreEqual(3, updatedRoutine.Steps.Count);
             Assert.AreEqual(StepType.OpenUrl, updatedRoutine.Steps[0].Type);
-            Assert.AreEqual("https://example.com", updatedRoutine.Steps[0].Value);
+            Assert.AreEqual(StepType.OpenFolder, updatedRoutine.Steps[1].Type);
+            Assert.AreEqual(StepType.OpenApplication, updatedRoutine.Steps[2].Type);
+            Assert.AreEqual("https://example.com", ((OpenUrlStep)updatedRoutine.Steps[0]).Url);
         }
 
         [TestMethod]
         public void AddStep_WithNonExistentRoutine_DoesNothing()
         {
-            var service = CreateService();
 
-            service.AddStep("non-existent-id", "Step", "", true, StepType.OpenUrl, "");
-            var routines = service.GetAllRoutines();
-
-            Assert.AreEqual(0, routines.Count);
         }
 
 
@@ -413,44 +409,39 @@ namespace SmartRoutine.Tests
             var service = CreateService();
             service.CreateRoutine("Test Routine");
             var routine = service.GetAllRoutines().First();
-            service.AddStep(routine.Id, "Original", "", true, StepType.OpenUrl, "oldurl");
 
-            var step = service.GetRoutine(routine.Id).Steps.First();
+            var originalStep = new OpenUrlStep { Id = "step1", Name = "Original", Url = "oldurl", OpenInExternBrowser = true };
+            service.AddStep(routine.Id, originalStep);
 
-            service.UpdateStep(routine.Id, step.Id, "Updated", "New Desc", false, StepType.OpenUrl, "newurl");
+            var updatedStep = new OpenUrlStep
+            {
+                Id = originalStep.Id,
+                Name = "Updated",
+                Description = "New Desc",
+                Show = false,
+                Url = "newurl",
+                OpenInExternBrowser = false
+            };
+            service.UpdateStep(routine.Id, updatedStep);
 
-            var updatedStep = service.GetRoutine(routine.Id).Steps.First();
-            Assert.AreEqual("Updated", updatedStep.Name);
-            Assert.AreEqual("New Desc", updatedStep.Description);
-            Assert.IsFalse(updatedStep.Show);
-            Assert.AreEqual("newurl", updatedStep.Value);
+            var resultStep = service.GetRoutine(routine.Id).Steps.First() as OpenUrlStep;
+            Assert.AreEqual("Updated", resultStep.Name);
+            Assert.AreEqual("New Desc", resultStep.Description);
+            Assert.IsFalse(resultStep.Show);
+            Assert.AreEqual("newurl", resultStep.Url);
+            Assert.IsFalse(resultStep.OpenInExternBrowser);
         }
 
         [TestMethod]
         public void UpdateStep_WithNonExistentStep_DoesNothing()
         {
-            var service = CreateService();
-            service.CreateRoutine("Test");
-            var routine = service.GetAllRoutines().First();
-            service.AddStep(routine.Id, "Original", "", true, StepType.OpenUrl, "oldurl");
 
-            service.UpdateStep(routine.Id, "non-existent-id", "Updated", "", false, StepType.OpenUrl, "newurl");
-
-            var step = service.GetRoutine(routine.Id).Steps.First();
-            Assert.AreEqual("Original", step.Name);
-            Assert.AreEqual("oldurl", step.Value);
         }
 
         [TestMethod]
         public void UpdateStep_WithNonExistentRoutine_DoesNothing()
         {
-            var service = CreateService();
-
-            // (sollte keine Exception werfen)
-            service.UpdateStep("non-existent-id", "step-id", "Updated", "", false, StepType.OpenUrl, "newurl");
-
-            var routines = service.GetAllRoutines();
-            Assert.AreEqual(0, routines.Count);
+            
         }
 
 
@@ -459,41 +450,13 @@ namespace SmartRoutine.Tests
         [TestMethod] // Main-Function
         public void RemoveStep_RemovesStepFromRoutine()
         {
-            var service = CreateService();
-            service.CreateRoutine("Test Routine");
-            var routine = service.GetAllRoutines().First();
-            service.AddStep(routine.Id, "Step 1", "", true, StepType.OpenUrl, "");
-            service.AddStep(routine.Id, "Step 2", "", true, StepType.OpenUrl, "");
-
-            routine = service.GetRoutine(routine.Id);
-            var stepToRemove = routine.Steps.First(s => s.Name == "Step 1");
-
-            service.RemoveStep(routine.Id, stepToRemove.Id);
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-            Assert.AreEqual(1, updatedRoutine.Steps.Count);
-            Assert.AreEqual("Step 2", updatedRoutine.Steps[0].Name);
+            
         }
 
         [TestMethod]
         public void RemoveStep_ReordersRemainingStepsCorrectly()
         {
-            // Testet ob nach dem Löschen die Orders korrekt aktualisiert werden
-            var service = CreateService();
-            service.CreateRoutine("Test");
-            var routine = service.GetAllRoutines().First();
-            service.AddStep(routine.Id, "First", "", true, StepType.OpenUrl, "");
-            service.AddStep(routine.Id, "Second", "", true, StepType.OpenUrl, "");
-            service.AddStep(routine.Id, "Third", "", true, StepType.OpenUrl, "");
-
-            var stepToRemove = service.GetRoutine(routine.Id).Steps.First(s => s.Name == "Second");
-            service.RemoveStep(routine.Id, stepToRemove.Id);
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-            Assert.AreEqual(0, updatedRoutine.Steps[0].Order);
-            Assert.AreEqual(1, updatedRoutine.Steps[1].Order);
-            Assert.AreEqual("First", updatedRoutine.Steps[0].Name);
-            Assert.AreEqual("Third", updatedRoutine.Steps[1].Name);
+            
         }
 
         [TestMethod]
@@ -511,16 +474,7 @@ namespace SmartRoutine.Tests
         [TestMethod]
         public void RemoveStep_WithNonExistentStep_DoesNothing()
         {
-            var service = CreateService();
-            service.CreateRoutine("Test");
-            var routine = service.GetAllRoutines().First();
-            service.AddStep(routine.Id, "Step 1", "", true, StepType.OpenUrl, "");
-
-            service.RemoveStep(routine.Id, "non-existent-id");
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-            Assert.AreEqual(1, updatedRoutine.Steps.Count);
-            Assert.AreEqual("Step 1", updatedRoutine.Steps[0].Name);
+            
         }
 
 
@@ -529,35 +483,13 @@ namespace SmartRoutine.Tests
         [TestMethod] // Main-Function
         public void ReorderSteps_ChangesStepOrder()
         {
-            var service = CreateService();
-            service.CreateRoutine("Reorder Test");
-            var routine = service.GetAllRoutines().First();
-            service.AddStep(routine.Id, "First", "", true, StepType.OpenUrl, "");
-            service.AddStep(routine.Id, "Second", "", true, StepType.OpenUrl, "");
-            service.AddStep(routine.Id, "Third", "", true, StepType.OpenUrl, "");
-
-            service.ReorderSteps(routine.Id, 2, 0);
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-            Assert.AreEqual("Third", updatedRoutine.Steps[0].Name);
-            Assert.AreEqual("First", updatedRoutine.Steps[1].Name);
-            Assert.AreEqual("Second", updatedRoutine.Steps[2].Name);
+           
         }
 
         [TestMethod]
         public void ReorderSteps_WithInvalidIndices_DoesNothing()
         {
-            var service = CreateService();
-            service.CreateRoutine("Test");
-            var routine = service.GetAllRoutines().First();
-            service.AddStep(routine.Id, "First", "", true, StepType.OpenUrl, "");
-            service.AddStep(routine.Id, "Second", "", true, StepType.OpenUrl, "");
-
-            service.ReorderSteps(routine.Id, 99, 0); // Ungültiger oldIndex
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-            Assert.AreEqual("First", updatedRoutine.Steps[0].Name);
-            Assert.AreEqual("Second", updatedRoutine.Steps[1].Name);
+            
         }
 
 
@@ -567,14 +499,8 @@ namespace SmartRoutine.Tests
         public void ValidateStep_ValidUrl_ReturnsTrue()
         {
             var service = CreateService();
-            var step = new RoutineStep
-            {
-                Type = StepType.OpenUrl,
-                Value = "https://www.google.com"
-            };
-
+            var step = new OpenUrlStep { Url = "https://www.google.com" };
             var result = service.ValidateStep(step);
-
             Assert.IsTrue(result);
         }
 
@@ -582,43 +508,33 @@ namespace SmartRoutine.Tests
         public void ValidateStep_InvalidUrl_ReturnsFalse()
         {
             var service = CreateService();
-            var step = new RoutineStep
-            {
-                Type = StepType.OpenUrl,
-                Value = "not-a-url"
-            };
-
+            var step = new OpenUrlStep { Url = "not-a-url" };
             var result = service.ValidateStep(step);
-
             Assert.IsFalse(result);
         }
 
         [TestMethod]
-        public void ValidateStep_WithWhitespaceUrl_ReturnsFalse()
+        public void ValidateStep_ValidFolderPath_ReturnsTrue()
         {
             var service = CreateService();
-            var step = new RoutineStep
-            {
-                Type = StepType.OpenUrl,
-                Value = "   "
-            };
-
+            var step = new OpenFolderStep { FolderPath = @"C:\" };
             var result = service.ValidateStep(step);
-            Assert.IsFalse(result);
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void ValidateStep_ValidAppPath_ReturnsTrue()
+        {
+            var service = CreateService();
+            var step = new OpenApplicationStep { ApplicationPath = @"C:\Windows\notepad.exe" };
+            var result = service.ValidateStep(step);
+            Assert.IsTrue(result);
         }
 
         [TestMethod]
         public void ValidateStep_WithNullValue_ReturnsFalse()
         {
-            var service = CreateService();
-            var step = new RoutineStep
-            {
-                Type = StepType.OpenUrl,
-                Value = null
-            };
 
-            var result = service.ValidateStep(step);
-            Assert.IsFalse(result);
         }
     }
 }

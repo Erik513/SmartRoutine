@@ -15,12 +15,10 @@ namespace SmartRoutine.UI.Helpers
         {
             return new Dictionary<StepType, string>
         {
-            { StepType.OpenUrl, "Webseite öffnen" }
-            // Weitere später:
-            // { StepType.OpenFolder, "Ordner öffnen" },
-            // { StepType.OpenApplication, "Programm starten" },
-            // { StepType.Wait, "Warten" },
-            // { StepType.Message, "Nachricht anzeigen" }
+            { StepType.OpenUrl, "Webseite öffnen" },
+            { StepType.OpenFolder, "Ordner öffnen" },
+            { StepType.OpenApplication, "Programm starten" },
+            // { StepType.OpenDocument, "Dokument öffnen" },
         };
         }
 

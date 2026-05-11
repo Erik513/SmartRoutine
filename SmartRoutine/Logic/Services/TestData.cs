@@ -1,9 +1,6 @@
 ﻿using SmartRoutine.Data.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SmartRoutine.Logic.Services
 {
@@ -27,9 +24,30 @@ namespace SmartRoutine.Logic.Services
                 CreatedAt = DateTime.Now,
                 Steps = new List<RoutineStep>
                 {
-                    new RoutineStep { Id = "test_step_1", Order = 0, Type = StepType.OpenUrl, Value = "https://www.wetter.de", Name = "Wetter checken" },
-                    new RoutineStep { Id = "test_step_2", Order = 1, Type = StepType.OpenUrl, Value = "https://www.spiegel.de", Name = "Nachrichten lesen" },
-                    new RoutineStep { Id = "test_step_3", Order = 2, Type = StepType.OpenUrl, Value = "https://mail.google.com", Name = "E-Mails prüfen" }
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_1",
+                        Order = 0,
+                        Name = "Wetter checken",
+                        Url = "https://www.wetter.de",
+                        OpenInExternBrowser = false
+                    },
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_2",
+                        Order = 1,
+                        Name = "Nachrichten lesen",
+                        Url = "https://www.spiegel.de",
+                        OpenInExternBrowser = true
+                    },
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_3",
+                        Order = 2,
+                        Name = "E-Mails prüfen",
+                        Url = "https://mail.google.com",
+                        OpenInExternBrowser = false
+                    }
                 }
             };
             routines.Add(morningRoutine);
@@ -43,9 +61,30 @@ namespace SmartRoutine.Logic.Services
                 CreatedAt = DateTime.Now,
                 Steps = new List<RoutineStep>
                 {
-                    new RoutineStep { Id = "test_step_4", Order = 0, Type = StepType.OpenUrl, Value = "https://trello.com", Name = "Trello öffnen" },
-                    new RoutineStep { Id = "test_step_5", Order = 1, Type = StepType.OpenUrl, Value = "https://github.com", Name = "GitHub öffnen" },
-                    new RoutineStep { Id = "test_step_6", Order = 2, Type = StepType.OpenUrl, Value = "https://slack.com", Name = "Slack öffnen" }
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_4",
+                        Order = 0,
+                        Name = "Trello öffnen",
+                        Url = "https://trello.com",
+                        OpenInExternBrowser = false
+                    },
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_5",
+                        Order = 1,
+                        Name = "GitHub öffnen",
+                        Url = "https://github.com",
+                        OpenInExternBrowser = false
+                    },
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_6",
+                        Order = 2,
+                        Name = "Slack öffnen",
+                        Url = "https://slack.com",
+                        OpenInExternBrowser = false
+                    }
                 }
             };
             routines.Add(workRoutine);
@@ -59,9 +98,30 @@ namespace SmartRoutine.Logic.Services
                 CreatedAt = DateTime.Now,
                 Steps = new List<RoutineStep>
                 {
-                    new RoutineStep { Id = "test_step_7", Order = 0, Type = StepType.OpenUrl, Value = "https://www.netflix.com", Name = "Netflix öffnen" },
-                    new RoutineStep { Id = "test_step_8", Order = 1, Type = StepType.OpenUrl, Value = "https://www.spotify.com", Name = "Spotify öffnen" },
-                    new RoutineStep { Id = "test_step_9", Order = 2, Type = StepType.OpenUrl, Value = "https://www.youtube.com", Name = "YouTube öffnen" }
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_7",
+                        Order = 0,
+                        Name = "Netflix öffnen",
+                        Url = "https://www.netflix.com",
+                        OpenInExternBrowser = false
+                    },
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_8",
+                        Order = 1,
+                        Name = "Spotify öffnen",
+                        Url = "https://www.spotify.com",
+                        OpenInExternBrowser = false
+                    },
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_9",
+                        Order = 2,
+                        Name = "YouTube öffnen",
+                        Url = "https://www.youtube.com",
+                        OpenInExternBrowser = false
+                    }
                 }
             };
             routines.Add(eveningRoutine);
@@ -75,13 +135,27 @@ namespace SmartRoutine.Logic.Services
                 CreatedAt = DateTime.Now,
                 Steps = new List<RoutineStep>
                 {
-                    new RoutineStep { Id = "test_step_10", Order = 0, Type = StepType.OpenUrl, Value = "https://www.eventim.de", Name = "Events checken" },
-                    new RoutineStep { Id = "test_step_11", Order = 1, Type = StepType.OpenUrl, Value = "https://www.booking.com", Name = "Reise planen" }
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_10",
+                        Order = 0,
+                        Name = "Events checken",
+                        Url = "https://www.eventim.de",
+                        OpenInExternBrowser = false
+                    },
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_11",
+                        Order = 1,
+                        Name = "Reise planen",
+                        Url = "https://www.booking.com",
+                        OpenInExternBrowser = false
+                    }
                 }
             };
             routines.Add(weekendRoutine);
 
-            // Routine 5: Entwickeln
+            // Routine 5: Entwickeln (mit gemischten Step-Typen als Beispiel)
             var devRoutine = new Routine
             {
                 Id = "test_dev_5",
@@ -90,9 +164,42 @@ namespace SmartRoutine.Logic.Services
                 CreatedAt = DateTime.Now,
                 Steps = new List<RoutineStep>
                 {
-                    new RoutineStep { Id = "test_step_12", Order = 0, Type = StepType.OpenUrl, Value = "https://stackoverflow.com", Name = "Stack Overflow" },
-                    new RoutineStep { Id = "test_step_13", Order = 1, Type = StepType.OpenUrl, Value = "https://docs.microsoft.com", Name = "Microsoft Docs" },
-                    new RoutineStep { Id = "test_step_14", Order = 2, Type = StepType.OpenUrl, Value = "https://github.com", Name = "GitHub" }
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_12",
+                        Order = 0,
+                        Name = "Stack Overflow",
+                        Url = "https://stackoverflow.com",
+                        OpenInExternBrowser = false
+                    },
+                    new OpenUrlStep
+                    {
+                        Id = "test_step_13",
+                        Order = 1,
+                        Name = "Microsoft Docs",
+                        Url = "https://docs.microsoft.com",
+                        OpenInExternBrowser = false
+                    },
+                    new OpenFolderStep
+                    {
+                        Id = "test_step_14",
+                        Order = 2,
+                        Name = "Projektordner öffnen",
+                        Description = "Öffnet den Projektordner",
+                        FolderPath = @"C:\Projects",
+                        OpenInNewWindow = true
+                    },
+                    new OpenApplicationStep
+                    {
+                        Id = "test_step_15",
+                        Order = 3,
+                        Name = "Visual Studio starten",
+                        Description = "Startet Visual Studio",
+                        ApplicationPath = @"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\devenv.exe",
+                        Arguments = "",
+                        RunAsAdmin = false,
+                        WorkingDirectory = ""
+                    }
                 }
             };
             routines.Add(devRoutine);

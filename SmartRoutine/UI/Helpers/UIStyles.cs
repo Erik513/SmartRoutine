@@ -290,7 +290,7 @@ namespace SmartRoutine.UI.Helpers
                     ForeColor = Colors.TextSecondary,
                     Font = Fonts.Normal,
                     BackColor = Color.Transparent,
-                    TextAlign = ContentAlignment.MiddleCenter,
+                    TextAlign = ContentAlignment.MiddleLeft,
                     AutoEllipsis = true,
                     AllowDrop = true,
                     AutoSize = false,

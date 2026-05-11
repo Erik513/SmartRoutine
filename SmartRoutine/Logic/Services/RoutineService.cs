@@ -82,21 +82,33 @@ namespace SmartRoutine.Logic.Services
 
         public Routine GetRoutine(string id)
         {
-            Routine routine;
+            Debug.WriteLine($"=== SERVICE GetRoutine: {id} ===");
 
+            Routine routine;
             if (_useTestData)
             {
                 routine = _testRoutines?.FirstOrDefault(r => r.Id == id);
+                Debug.WriteLine($"  TestData Modus, Routine gefunden: {routine != null}");
             }
             else
             {
                 routine = _repository.LoadRoutines().FirstOrDefault(r => r.Id == id);
+                Debug.WriteLine($"  Repository Modus, Routine gefunden: {routine != null}");
             }
 
-            // ===== CRITICAL: Steps IMMER nach Order sortieren =====
             if (routine != null && routine.Steps != null && routine.Steps.Any())
             {
+                Debug.WriteLine($"  Steps vor Sortierung: {string.Join(", ", routine.Steps.Select(s => s.Name))}");
                 routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
+                Debug.WriteLine($"  Steps nach Sortierung: {string.Join(", ", routine.Steps.Select(s => s.Name))}");
+
+                // Zeige Step-Typen an
+                foreach (var step in routine.Steps)
+                {
+                    Debug.WriteLine($"    Step: {step.Name}, Typ: {step.GetType().Name}");
+                    if (step is OpenUrlStep urlStep)
+                        Debug.WriteLine($"      Url: {urlStep.Url}, OpenInternally: {urlStep.OpenInExternBrowser}");
+                }
             }
 
             return routine;
@@ -242,16 +254,8 @@ namespace SmartRoutine.Logic.Services
                     existing.Steps.Clear();
                     foreach (var step in routine.Steps.OrderBy(s => s.Order))
                     {
-                        existing.Steps.Add(new RoutineStep
-                        {
-                            Id = step.Id,
-                            Order = step.Order,
-                            Name = step.Name,
-                            Description = step.Description,
-                            Show = step.Show,
-                            Type = step.Type,
-                            Value = step.Value
-                        });
+                        // Kopiere den Step mit seinem konkreten Typ
+                        existing.Steps.Add(CopyStep(step));
                     }
                     _repository.UpdateRoutine(existing);
                 }
@@ -265,52 +269,120 @@ namespace SmartRoutine.Logic.Services
                 }
             }
         }
+        private RoutineStep CopyStep(RoutineStep original)
+        {
+            switch (original)
+            {
+                case OpenUrlStep urlStep:
+                    return new OpenUrlStep
+                    {
+                        Id = urlStep.Id,
+                        Order = urlStep.Order,
+                        Name = urlStep.Name,
+                        Description = urlStep.Description,
+                        Show = urlStep.Show,
+                        Url = urlStep.Url,
+                        OpenInExternBrowser = urlStep.OpenInExternBrowser
+                    };
+                case OpenFolderStep folderStep:
+                    return new OpenFolderStep
+                    {
+                        Id = folderStep.Id,
+                        Order = folderStep.Order,
+                        Name = folderStep.Name,
+                        Description = folderStep.Description,
+                        Show = folderStep.Show,
+                        FolderPath = folderStep.FolderPath,
+                        OpenInNewWindow = folderStep.OpenInNewWindow
+                    };
+                case OpenApplicationStep appStep:
+                    return new OpenApplicationStep
+                    {
+                        Id = appStep.Id,
+                        Order = appStep.Order,
+                        Name = appStep.Name,
+                        Description = appStep.Description,
+                        Show = appStep.Show,
+                        ApplicationPath = appStep.ApplicationPath,
+                        Arguments = appStep.Arguments,
+                        RunAsAdmin = appStep.RunAsAdmin,
+                        WorkingDirectory = appStep.WorkingDirectory
+                    };
+                default:
+                    throw new NotSupportedException($"Step type {original.GetType()} not supported");
+            }
+        }
         // Steps =================================================================================
 
-        public void AddStep(string routineId, string name, string description, bool show, StepType type, string value)
+        public void AddStep(string routineId, RoutineStep step)
         {
             var routine = GetRoutine(routineId);
             if (routine == null) return;
 
             int maxOrder = routine.Steps.Any() ? routine.Steps.Max(s => s.Order) : -1;
-
-            var step = new RoutineStep
-            {
-                Id = Guid.NewGuid().ToString(),
-                Order = maxOrder + 1,
-                Name = name,
-                Description = description,
-                Show = show,
-                Type = type,
-                Value = value
-            };
+            step.Order = maxOrder + 1;
+            step.Id = Guid.NewGuid().ToString();
 
             routine.Steps.Add(step);
 
             if (!_useTestData)
             {
-                _repository.UpdateRoutine(routine);
+                _repository.UpdateRoutine(routine);  // LiteDB speichert alles korrekt!
             }
         }
 
-        public void UpdateStep(string routineId, string stepId, string name, string description, bool show, StepType type, string value)
+        public void UpdateStep(string routineId, RoutineStep step)
         {
-            var routine = GetRoutine(routineId);
-            var step = routine?.Steps.FirstOrDefault(s => s.Id == stepId);
+            Debug.WriteLine($"=== SERVICE UpdateStep ===");
+            Debug.WriteLine($"  RoutineId: {routineId}");
+            Debug.WriteLine($"  Step.Id: {step.Id}");
+            Debug.WriteLine($"  Step.Name: {step.Name}");
+            Debug.WriteLine($"  Step.Type: {step.GetType().Name}");
 
-            if (step != null)
+            var routine = GetRoutine(routineId);
+            if (routine == null)
             {
-                step.Name = name;
-                step.Description = description;
-                step.Show = show;
-                step.Type = type;
-                step.Value = value;
+                Debug.WriteLine("  FEHLER: Routine nicht gefunden!");
+                return;
+            }
+
+            Debug.WriteLine($"  Routine gefunden: {routine.Name}, Steps: {routine.Steps.Count}");
+
+            var index = routine.Steps.ToList().FindIndex(s => s.Id == step.Id);
+            if (index >= 0)
+            {
+                Debug.WriteLine($"  Step gefunden an Index {index}");
+                Debug.WriteLine($"  Alter Name: {routine.Steps[index].Name}");
+                Debug.WriteLine($"  Neuer Name: {step.Name}");
+
+                routine.Steps[index] = step;
 
                 if (!_useTestData)
                 {
                     _repository.UpdateRoutine(routine);
+                    Debug.WriteLine("  Repository.UpdateRoutine aufgerufen");
+                }
+                else
+                {
+                    Debug.WriteLine("  TestData Modus - keine Repository Speicherung");
                 }
             }
+            else
+            {
+                Debug.WriteLine("  FEHLER: Step nicht gefunden in Routine!");
+                foreach (var s in routine.Steps)
+                {
+                    Debug.WriteLine($"    Vorhandener Step: {s.Id} - {s.Name}");
+                }
+            }
+        }
+
+        // Die alte Methode darf NICHT mehr aufgerufen werden.
+        // Sie kannst du löschen oder als obsolete markieren:
+        [Obsolete("Use UpdateStep(string routineId, RoutineStep step) instead")]
+        public void UpdateStep(string routineId, string stepId, string name, string description, bool show, StepType type, string value)
+        {
+            // Alte Implementierung - wird nicht mehr verwendet
         }
 
         public void RemoveStep(string routineId, string stepId)
@@ -374,24 +446,58 @@ namespace SmartRoutine.Logic.Services
 
         public void ExecuteStep(RoutineStep step)
         {
-            switch (step.Type)
+            switch (step)
             {
-                case StepType.OpenUrl:
+                case OpenUrlStep urlStep:
+                    if (urlStep.OpenInExternBrowser)
+                    {
+                        // In interner WebView öffnen (Event auslösen)
+                        // OnOpenUrlInWebView?.Invoke(urlStep.Url);
+                    }
+                    else
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = urlStep.Url,
+                            UseShellExecute = true
+                        });
+                    }
+                    break;
+                case OpenFolderStep folderStep:
                     Process.Start(new ProcessStartInfo
                     {
-                        FileName = step.Value,
+                        FileName = folderStep.FolderPath,
                         UseShellExecute = true
                     });
                     break;
+                case OpenApplicationStep appStep:
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = appStep.ApplicationPath,
+                        Arguments = appStep.Arguments,
+                        UseShellExecute = true
+                    };
+                    if (appStep.RunAsAdmin)
+                        startInfo.Verb = "runas";
+                    Process.Start(startInfo);
+                    break;
+                default:
+                    throw new NotSupportedException($"Step type {step.GetType()} not supported");
             }
         }
 
         public bool ValidateStep(RoutineStep step)
         {
-            switch (step.Type)
+            switch (step)
             {
-                case StepType.OpenUrl:
-                    return Uri.IsWellFormedUriString(step.Value, UriKind.Absolute);
+                case OpenUrlStep urlStep:
+                    return Uri.IsWellFormedUriString(urlStep.Url, UriKind.Absolute);
+                case OpenFolderStep folderStep:
+                    return !string.IsNullOrWhiteSpace(folderStep.FolderPath) &&
+                           System.IO.Directory.Exists(folderStep.FolderPath);
+                case OpenApplicationStep appStep:
+                    return !string.IsNullOrWhiteSpace(appStep.ApplicationPath) &&
+                           System.IO.File.Exists(appStep.ApplicationPath);
                 default:
                     return true;
             }

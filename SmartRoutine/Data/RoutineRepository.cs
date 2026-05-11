@@ -20,6 +20,13 @@ namespace SmartRoutine.Data
         public RoutineRepository(string dbPath)
         {
             _dbPath = dbPath;
+
+            // Konfiguriere den Mapper für bessere Typ-Namen
+            BsonMapper.Global.RegisterType<RoutineStep>
+            (
+                serialize: (step) => step.GetType().Name,  // Speichert "OpenUrlStep"
+                deserialize: (bson) => null // Wird automatisch von LiteDB gemacht
+            );
         }
 
         // Hilfsmethode, um eine Datenbankverbindung zu öffnen

@@ -24,35 +24,65 @@ namespace SmartRoutine.Data.Models
         }
     }
 
-    public class RoutineStep
+    public abstract class RoutineStep
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public int Order { get; set; } = 0;
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool Show { get; set; } = true;
-        public StepType Type { get; set; }
-        public string Value { get; set; } = string.Empty; // URL oder Pfad
+
+        public abstract StepType Type { get; }
 
         public override string ToString()
         {
-            string result = $"{Order + 1}. {Name}";
-            System.Diagnostics.Debug.WriteLine($"ToString: {result}, Order={Order}");
-            return result;
-        }
-        public void EnsureCorrectOrder(int newOrder)
-        {
-            Order = newOrder;
+            return $"{Order + 1}. {Name}";
         }
     }
+
+    // OpenUrl Step
+    public class OpenUrlStep : RoutineStep
+    {
+        public override StepType Type => StepType.OpenUrl;
+
+        public string Url { get; set; } = string.Empty;
+        public bool OpenInExternBrowser { get; set; } = true; // false = in App, true = externer Browser
+    }
+
+    // OpenFolder Step
+    public class OpenFolderStep : RoutineStep
+    {
+        public override StepType Type => StepType.OpenFolder;
+
+        public string FolderPath { get; set; } = string.Empty;
+        public bool OpenInNewWindow { get; set; } = true;
+    }
+
+    // OpenApplication Step
+    public class OpenApplicationStep : RoutineStep
+    {
+        public override StepType Type => StepType.OpenApplication;
+
+        public string ApplicationPath { get; set; } = string.Empty;
+        public string Arguments { get; set; } = string.Empty;
+        public bool RunAsAdmin { get; set; } = false;
+        public string WorkingDirectory { get; set; } = string.Empty;
+    }
+
+    //// OpenDocument Step
+    //public class OpenDocumentStep : RoutineStep
+    //{
+    //    public override StepType Type => StepType.OpenDocument;
+
+    //    public string FilePath { get; set; } = string.Empty;
+    //    public bool OpenWithAssociatedApp { get; set; } = true;
+    //}
 
     public enum StepType
     {
         OpenUrl,
-        //OpenFolder,
-        //OpenApplication,
-        //Wait,
-        //Message
+        OpenFolder,
+        OpenApplication
     }
 
 }
