@@ -145,6 +145,26 @@ namespace SmartRoutine.Tests.UI
 
 
 
+        // CancelStep Tests
+
+        [TestMethod]
+        public void CancelStep_Click_ClosesEditorPanel()
+        {
+            _editor.LoadRoutine(_testRoutine);
+
+            var btnAddStep = GetPrivateField<Button>(_editor, "btnAddStep");
+            btnAddStep.PerformClick();
+
+            var rightTlp = GetPrivateField<TableLayoutPanel>(_editor, "rightTlp");
+            Assert.IsTrue(rightTlp.Visible); // Editor ist sichtbar
+
+            var btnCancelStep = GetPrivateField<Button>(_editor, "btnCancelStep");
+
+            btnCancelStep.PerformClick();
+
+            Assert.IsFalse(rightTlp.Visible);
+        }
+
 
         // Validation Tests
 
@@ -182,6 +202,107 @@ namespace SmartRoutine.Tests.UI
             {
                 Assert.IsTrue(true);
             }
+        }
+
+        [TestMethod]
+        public void ValidateStep_WithEmptyUrl_ReturnsFalse()
+        {
+            _editor.AutoConfirmDialogs = true;
+            _editor.LoadRoutine(_testRoutine);
+
+            var btnAddStep = GetPrivateField<Button>(_editor, "btnAddStep");
+            btnAddStep.PerformClick();
+
+            var txtStepName = GetPrivateField<TextBox>(_editor, "txtStepName");
+            txtStepName.Text = "Valid Name";
+
+            var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
+            cmbStepType.SelectedIndex = 0;
+
+            // Panel erstellen, aber URL leer lassen
+            var cmbEventMethod = GetPrivateMethod(_editor, "CmbStepType_SelectedIndexChanged");
+            cmbEventMethod.Invoke(_editor, new object[] { null, EventArgs.Empty });
+
+            var txtUrl = GetPrivateField<TextBox>(_editor, "txtUrl");
+            txtUrl.Text = ""; // Leere URL!
+
+            var validateMethod = GetPrivateMethod(_editor, "ValidateCurrentStep");
+
+            var result = (bool)validateMethod.Invoke(_editor, null);
+
+            Assert.IsFalse(result);
+        }
+
+
+        // UpdateStep Tests
+
+        [TestMethod]
+        public void UpdateStep_WithChanges_SavesModifiedStep()
+        {
+            var step = new RoutineStep { Id = "step1", Name = "Original", Order = 0, Type = StepType.OpenUrl, Value = "https://old.com" };
+            _testRoutine.Steps.Add(step);
+            _editor.LoadRoutine(_testRoutine);
+            _editor.AutoConfirmDialogs = true;
+
+            var lstSteps = GetPrivateField<StyledListBoxWithHeader>(_editor, "lstSteps");
+            lstSteps.SelectedIndex = 0; // Step auswählen
+
+            var txtStepName = GetPrivateField<TextBox>(_editor, "txtStepName");
+            txtStepName.Text = "Updated Step";
+
+            var btnSaveStep = GetPrivateField<Button>(_editor, "btnSaveStep");
+
+            _mockService.Setup(s => s.UpdateStep(It.IsAny<string>(), step.Id, "Updated Step",
+                It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<StepType>(), It.IsAny<string>()));
+
+            btnSaveStep.PerformClick();
+
+            _mockService.Verify(s => s.UpdateStep(It.IsAny<string>(), step.Id, "Updated Step",
+                It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<StepType>(), It.IsAny<string>()), Times.Once);
+        }
+
+
+        // Change StepType Tests
+
+        [TestMethod]
+        public void ChangingStepType_ShowsCorrectControls()
+        {
+            _editor.LoadRoutine(_testRoutine);
+
+            var btnAddStep = GetPrivateField<Button>(_editor, "btnAddStep");
+            btnAddStep.PerformClick();
+
+            var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
+            var stepTypeContentTlp = GetPrivateField<TableLayoutPanel>(_editor, "stepTypeContentTlp");
+
+            // OpenUrl auswählen
+            cmbStepType.SelectedIndex = 0;
+            var cmbEventMethod = GetPrivateMethod(_editor, "CmbStepType_SelectedIndexChanged");
+            cmbEventMethod.Invoke(_editor, new object[] { null, EventArgs.Empty });
+
+            //  Panel ist sichtbar
+            Assert.IsTrue(stepTypeContentTlp.Visible);
+        }
+
+
+        // ReorderSteps Tests
+
+        [TestMethod]
+        public void ReorderSteps_UpdatesStepOrders()
+        {
+            var step1 = new RoutineStep { Id = "1", Name = "Step 1", Order = 0 };
+            var step2 = new RoutineStep { Id = "2", Name = "Step 2", Order = 1 };
+            _testRoutine.Steps.Add(step1);
+            _testRoutine.Steps.Add(step2);
+            _editor.LoadRoutine(_testRoutine);
+
+            var lstSteps = GetPrivateField<StyledListBoxWithHeader>(_editor, "lstSteps");
+
+            //  ItemsReordered Event auslösen (simuliert Drag & Drop)
+            var reorderEvent = GetPrivateMethod(_editor, "LstSteps_ItemsReordered");
+            reorderEvent.Invoke(_editor, new object[] { null, EventArgs.Empty });
+
+            _mockService.Verify(s => s.UpdateRoutine(It.IsAny<Routine>()), Times.Once);
         }
 
 
