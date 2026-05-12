@@ -18,6 +18,8 @@ namespace SmartRoutine.Data.Models
         public List<RoutineStep> Steps { get; set; } = new List<RoutineStep>();
         public bool IsNew { get; set; } = false;
 
+        //public DateTime? LastExecuteAt { get; set; } 
+
         public override string ToString()
         {
             return Name;
@@ -31,6 +33,7 @@ namespace SmartRoutine.Data.Models
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool Show { get; set; } = true;
+        //public bool AutoStart { get; set; } = true;
 
         public abstract StepType Type { get; }
 
@@ -69,21 +72,21 @@ namespace SmartRoutine.Data.Models
         public string WorkingDirectory { get; set; } = string.Empty;
     }
 
-    //// OpenDocument Step
-    //public class OpenDocumentStep : RoutineStep
-    //{
-    //    public override StepType Type => StepType.OpenDocument;
+    // OpenDocument Step
+    public class OpenDocumentStep : RoutineStep
+    {
+        public override StepType Type => StepType.OpenDocument;
 
-    //    public string FilePath { get; set; } = string.Empty;
-    //    public bool OpenWithAssociatedApp { get; set; } = true;
-    //}
+        public string FilePath { get; set; } = string.Empty;
+        public bool OpenWithAssociatedApp { get; set; } = true;
+    }
 
     public enum StepType
     {
         OpenUrl,
         OpenFolder,
         OpenApplication,
-        //OpenDocument
+        OpenDocument
     }
 
 }

@@ -18,7 +18,7 @@ namespace SmartRoutine.UI.Helpers
             { StepType.OpenUrl, "Webseite öffnen" },
             { StepType.OpenFolder, "Ordner öffnen" },
             { StepType.OpenApplication, "Programm starten" },
-            // { StepType.OpenDocument, "Dokument öffnen" },
+            { StepType.OpenDocument, "Dokument öffnen" },
         };
         }
 

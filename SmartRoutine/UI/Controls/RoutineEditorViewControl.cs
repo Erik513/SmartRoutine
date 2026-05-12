@@ -77,6 +77,10 @@ namespace SmartRoutine.UI.Controls
         private TextBox txtAppArguments;
         private ToggleSwitch chkRunAsAdmin;
 
+        // OpenDocument Controls
+        private TextBox txtDocumentPath;
+        private Button btnBrowseDocument;
+
         // Footer
         private Button btnBack;
 
@@ -469,6 +473,18 @@ namespace SmartRoutine.UI.Controls
                             WorkingDirectory = appStep.WorkingDirectory
                         });
                         break;
+                    case OpenDocumentStep docStep:
+                        copy.Steps.Add(new OpenDocumentStep
+                        {
+                            Id = docStep.Id,
+                            Order = docStep.Order,
+                            Name = docStep.Name,
+                            Description = docStep.Description,
+                            Show = docStep.Show,
+                            FilePath = docStep.FilePath,
+                            OpenWithAssociatedApp = docStep.OpenWithAssociatedApp
+                        });
+                        break;
                 }
             }
 
@@ -511,6 +527,10 @@ namespace SmartRoutine.UI.Controls
                         if (origApp.ApplicationPath != currApp.ApplicationPath ||
                             origApp.Arguments != currApp.Arguments ||
                             origApp.RunAsAdmin != currApp.RunAsAdmin)
+                            return true;
+                        break;
+                    case OpenDocumentStep origDoc when curr is OpenDocumentStep currDoc:
+                        if (origDoc.FilePath != currDoc.FilePath)
                             return true;
                         break;
                 }
@@ -561,6 +581,9 @@ namespace SmartRoutine.UI.Controls
             if (txtAppArguments != null) txtAppArguments.Text = "";
             if (chkRunAsAdmin != null) chkRunAsAdmin.Checked = false;
 
+            // OpenDocument Controls
+            if (txtDocumentPath != null) txtDocumentPath.Text = "";
+
             tglStepEnabled.Checked = true;
             cmbStepType.SelectedIndex = -1;
             stepTypeContentTlp.Visible = false;
@@ -601,6 +624,9 @@ namespace SmartRoutine.UI.Controls
                     if (txtAppPath != null) txtAppPath.Text = appStep.ApplicationPath;
                     if (txtAppArguments != null) txtAppArguments.Text = appStep.Arguments;
                     if (chkRunAsAdmin != null) chkRunAsAdmin.Checked = appStep.RunAsAdmin;
+                    break;
+                case OpenDocumentStep docStep:
+                    if (txtDocumentPath != null) txtDocumentPath.Text = docStep.FilePath;
                     break;
             }
 
@@ -768,6 +794,9 @@ namespace SmartRoutine.UI.Controls
                     break;
                 case StepType.OpenApplication:
                     CreateOpenApplicationControls();
+                    break;
+                case StepType.OpenDocument: 
+                    CreateOpenDocumentControls();
                     break;
             }
         }
@@ -1001,6 +1030,56 @@ namespace SmartRoutine.UI.Controls
 
             stepTypeContentTlp.Visible = true;
         }
+        private void CreateOpenDocumentControls()
+        {
+            stepTypeContentTlp.Controls.Clear();
+            stepTypeContentTlp.RowStyles.Clear();
+            stepTypeContentTlp.ColumnCount = 2;
+            stepTypeContentTlp.RowCount = 3;
+            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label Dateipfad
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox + Browse Button
+            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Füll-Zeile
+
+            // Label Dateipfad
+            var lblPath = UIStyles.Labels.CreateNormal("Dateipfad:");
+            lblPath.Dock = DockStyle.Fill;
+            lblPath.Margin = new Padding(3, 5, 3, 3);
+
+            // TextBox Dateipfad
+            txtDocumentPath = UIStyles.TextBoxes.CreateStandard();
+            txtDocumentPath.Name = "txtDocumentPath";
+            txtDocumentPath.Dock = DockStyle.Fill;
+            txtDocumentPath.Margin = new Padding(3, 3, 3, 3);
+
+            // Browse Button
+            btnBrowseDocument = UIStyles.Buttons.CreateStandard("Durchsuchen...");
+            btnBrowseDocument.Dock = DockStyle.Fill;
+            btnBrowseDocument.Margin = new Padding(3, 3, 3, 10);
+            btnBrowseDocument.Click += (s, e) =>
+            {
+                using (var dialog = new OpenFileDialog())
+                {
+                    dialog.Filter = "Alle Dateien (*.*)|*.*";
+                    dialog.Title = "Dokument auswählen";
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        txtDocumentPath.Text = dialog.FileName;
+                    }
+                }
+            };
+
+            // Controls hinzufügen
+            stepTypeContentTlp.Controls.Add(lblPath, 0, 0);
+            stepTypeContentTlp.SetColumnSpan(lblPath, 2);
+
+            stepTypeContentTlp.Controls.Add(txtDocumentPath, 0, 1);
+            stepTypeContentTlp.Controls.Add(btnBrowseDocument, 1, 1);
+
+            stepTypeContentTlp.Visible = true;
+        }
 
         // ========== BACK BUTTON ==========
         private void BtnBack_Click(object sender, EventArgs e)
@@ -1103,15 +1182,30 @@ namespace SmartRoutine.UI.Controls
                         return false;
                     }
                     break;
+                case StepType.OpenDocument:
+                    if (string.IsNullOrWhiteSpace(txtDocumentPath?.Text))
+                    {
+                        if (showMessageBox && !AutoConfirmDialogs)
+                            MessageBox.Show("Bitte wählen Sie eine Datei aus.", "Validierung",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtDocumentPath?.Focus();
+                        return false;
+                    }
+                    if (!System.IO.File.Exists(txtDocumentPath?.Text))
+                    {
+                        if (showMessageBox && !AutoConfirmDialogs)
+                            MessageBox.Show("Die ausgewählte Datei existiert nicht.", "Validierung",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtDocumentPath?.Focus();
+                        return false;
+                    }
+                    break;
             }
 
             return true;
         }
         private void SaveCurrentStep(bool refreshList = true)
         {
-            Debug.WriteLine("=== SaveCurrentStep wurde aufgerufen ===");
-
-            // Validierung ohne MessageBox (weil schon gezeigt)
             if (!ValidateCurrentStep(false)) return;
 
             string name = txtStepName.Text.Trim();
@@ -1145,6 +1239,13 @@ namespace SmartRoutine.UI.Controls
                         ApplicationPath = txtAppPath?.Text ?? "",
                         Arguments = txtAppArguments?.Text ?? "",
                         RunAsAdmin = chkRunAsAdmin?.Checked ?? false
+                    };
+                    break;
+                case StepType.OpenDocument:
+                    step = new OpenDocumentStep
+                    {
+                        FilePath = txtDocumentPath?.Text ?? "",
+                        OpenWithAssociatedApp = true
                     };
                     break;
                 default:
