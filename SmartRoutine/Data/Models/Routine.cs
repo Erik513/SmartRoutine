@@ -33,7 +33,7 @@ namespace SmartRoutine.Data.Models
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool Show { get; set; } = true;
-        //public bool AutoStart { get; set; } = true;
+        public bool AutoStart { get; set; } = true;
 
         public abstract StepType Type { get; }
 

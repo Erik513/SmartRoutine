@@ -54,7 +54,9 @@ namespace SmartRoutine.UI.Controls
         private Label lblStepDescription;
         private TextBox txtStepDescription;
         private Label lblStepType;
+        private TableLayoutPanel stepTypeAutoStartTlp;
         private ComboBox cmbStepType;
+        private ToggleSwitch tglAutoStart;
 
         private TableLayoutPanel rightBtnsTlp;
         private Button btnSaveStep, btnCancelStep;
@@ -66,16 +68,16 @@ namespace SmartRoutine.UI.Controls
         
         // OpenURL Controls
         private TextBox txtUrl;
-        private ToggleSwitch chkOpenInExternBrowser;
+        private ToggleSwitch tglOpenInExternBrowser;
 
         // OpenFolder Controls
         private TextBox txtFolderPath;
-        private ToggleSwitch chkOpenInNewWindow;
+        private ToggleSwitch tglOpenInNewWindow;
 
         // OpenApplication Controls
         private TextBox txtAppPath;
         private TextBox txtAppArguments;
-        private ToggleSwitch chkRunAsAdmin;
+        private ToggleSwitch tglRunAsAdmin;
 
         // OpenDocument Controls
         private TextBox txtDocumentPath;
@@ -192,7 +194,7 @@ namespace SmartRoutine.UI.Controls
             rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepDescription
             rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // txtStepDescription
             rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepType
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // cmbStepType
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // cmbStepType, tglAutoStart
             rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // stepTypeContentTlp
             rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // btnSaveStep, btnCancelStep
             rightTlp.Visible = false;
@@ -202,13 +204,13 @@ namespace SmartRoutine.UI.Controls
             rightTitleTlp.Dock = DockStyle.Fill;
             rightTitleTlp.ColumnStyles.Clear();
             rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // lblStepNameTitle
-            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60)); // chkStepEnabled
+            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60)); // tglStepEnabled
 
             // Titel (lblStepNameTitle)
             lblStepNameTitle = UIStyles.Labels.CreateTitle();
             lblStepNameTitle.Dock = DockStyle.Fill;
 
-            // chkStepEnabled
+            // tglStepEnabled
             tglStepEnabled = UIStyles.ToggleSwitches.CreateStandard(true, "Schritt ist aktiviert", "Schritt ist deaktiviert");
             tglStepEnabled.Location = new Point(0, 0);
             tglStepEnabled.Anchor = AnchorStyles.None;
@@ -235,6 +237,14 @@ namespace SmartRoutine.UI.Controls
             // lblStepType
             lblStepType = UIStyles.Labels.CreateNormal("Aktion:");
             lblStepType.Dock = DockStyle.Fill;
+
+            // stepTypeAutoStartTlp
+            stepTypeAutoStartTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            stepTypeAutoStartTlp.Dock = DockStyle.Fill;
+            stepTypeAutoStartTlp.ColumnStyles.Clear();
+            stepTypeAutoStartTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // cmbStepType
+            stepTypeAutoStartTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60)); // tglAutoStart
+
             // cmbStepType
             cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
             cmbStepType.Dock = DockStyle.Fill;
@@ -244,6 +254,13 @@ namespace SmartRoutine.UI.Controls
             cmbStepType.ValueMember = "Key";
             cmbStepType.SelectedIndex = -1;
             cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
+
+            // tglAutoStart
+            tglAutoStart = UIStyles.ToggleSwitches.CreateStandard(true, "Autostart An", "Autostart Aus");
+            tglAutoStart.Location = new Point(0, 0);
+
+            stepTypeAutoStartTlp.Controls.Add(cmbStepType, 0, 0);
+            stepTypeAutoStartTlp.Controls.Add(tglAutoStart, 1, 0);
 
             // ==================================================================================================================
             // stepTypeContent
@@ -299,7 +316,7 @@ namespace SmartRoutine.UI.Controls
             rightTlp.Controls.AddRange(new Control[] {
                 rightTitleTlp, lblStepName, txtStepName,
                 lblStepDescription, txtStepDescription,
-                lblStepType, cmbStepType, stepTypeContentPanel, 
+                lblStepType, stepTypeAutoStartTlp, stepTypeContentPanel, 
                 rightBtnsTlp
             });
 
@@ -318,7 +335,6 @@ namespace SmartRoutine.UI.Controls
 
             footerPanel.Controls.AddRange(new Control[] { btnBack });
 
-            // Hinzufügen
             contentTlp.Controls.Add(leftTlp, 0, 0);
             contentTlp.Controls.Add(rightTlp, 1, 0);
 
@@ -443,6 +459,7 @@ namespace SmartRoutine.UI.Controls
                             Name = urlStep.Name,
                             Description = urlStep.Description,
                             Show = urlStep.Show,
+                            AutoStart = urlStep.AutoStart,
                             Url = urlStep.Url,
                             OpenInExternBrowser = urlStep.OpenInExternBrowser
                         });
@@ -455,6 +472,7 @@ namespace SmartRoutine.UI.Controls
                             Name = folderStep.Name,
                             Description = folderStep.Description,
                             Show = folderStep.Show,
+                            AutoStart = folderStep.AutoStart,
                             FolderPath = folderStep.FolderPath,
                             OpenInNewWindow = folderStep.OpenInNewWindow
                         });
@@ -467,6 +485,7 @@ namespace SmartRoutine.UI.Controls
                             Name = appStep.Name,
                             Description = appStep.Description,
                             Show = appStep.Show,
+                            AutoStart = appStep.AutoStart,
                             ApplicationPath = appStep.ApplicationPath,
                             Arguments = appStep.Arguments,
                             RunAsAdmin = appStep.RunAsAdmin,
@@ -481,6 +500,7 @@ namespace SmartRoutine.UI.Controls
                             Name = docStep.Name,
                             Description = docStep.Description,
                             Show = docStep.Show,
+                            AutoStart = docStep.AutoStart,
                             FilePath = docStep.FilePath,
                             OpenWithAssociatedApp = docStep.OpenWithAssociatedApp
                         });
@@ -509,7 +529,7 @@ namespace SmartRoutine.UI.Controls
                 var orig = _originalRoutine.Steps[i];
                 var curr = _currentRoutine.Steps[i];
 
-                if (orig.Order != curr.Order || orig.Name != curr.Name || orig.Description != curr.Description)
+                if (orig.Order != curr.Order || orig.Name != curr.Name || orig.Description != curr.Description || orig.AutoStart != curr.AutoStart)
                     return true;
 
                 // Step-spezifische Vergleiche
@@ -567,24 +587,25 @@ namespace SmartRoutine.UI.Controls
             lblStepNameTitle.Text = "Neuen Schritt erstellen";
             txtStepName.Text = "";
             txtStepDescription.Text = "";
+            tglStepEnabled.Checked = true;
+            tglAutoStart.Checked = true;
 
             // OpenUrl Controls
             if (txtUrl != null) txtUrl.Text = "";
-            if (chkOpenInExternBrowser != null) chkOpenInExternBrowser.Checked = true;
+            if (tglOpenInExternBrowser != null) tglOpenInExternBrowser.Checked = true;
 
             // OpenFolder Controls
             if (txtFolderPath != null) txtFolderPath.Text = "";
-            if (chkOpenInNewWindow != null) chkOpenInNewWindow.Checked = true;
+            if (tglOpenInNewWindow != null) tglOpenInNewWindow.Checked = true;
 
             // OpenApplication Controls
             if (txtAppPath != null) txtAppPath.Text = "";
             if (txtAppArguments != null) txtAppArguments.Text = "";
-            if (chkRunAsAdmin != null) chkRunAsAdmin.Checked = false;
+            if (tglRunAsAdmin != null) tglRunAsAdmin.Checked = false;
 
             // OpenDocument Controls
             if (txtDocumentPath != null) txtDocumentPath.Text = "";
 
-            tglStepEnabled.Checked = true;
             cmbStepType.SelectedIndex = -1;
             stepTypeContentTlp.Visible = false;
             _editingStep = null;
@@ -597,6 +618,7 @@ namespace SmartRoutine.UI.Controls
             txtStepName.Text = step.Name;
             txtStepDescription.Text = step.Description;
             tglStepEnabled.Checked = step.Show;
+            tglAutoStart.Checked = step.AutoStart;
 
             // StepType auswählen
             for (int i = 0; i < cmbStepType.Items.Count; i++)
@@ -614,16 +636,16 @@ namespace SmartRoutine.UI.Controls
             {
                 case OpenUrlStep urlStep:
                     if (txtUrl != null) txtUrl.Text = urlStep.Url;
-                    if (chkOpenInExternBrowser != null) chkOpenInExternBrowser.Checked = urlStep.OpenInExternBrowser;
+                    if (tglOpenInExternBrowser != null) tglOpenInExternBrowser.Checked = urlStep.OpenInExternBrowser;
                     break;
                 case OpenFolderStep folderStep:
                     if (txtFolderPath != null) txtFolderPath.Text = folderStep.FolderPath;
-                    if (chkOpenInNewWindow != null) chkOpenInNewWindow.Checked = folderStep.OpenInNewWindow;
+                    if (tglOpenInNewWindow != null) tglOpenInNewWindow.Checked = folderStep.OpenInNewWindow;
                     break;
                 case OpenApplicationStep appStep:
                     if (txtAppPath != null) txtAppPath.Text = appStep.ApplicationPath;
                     if (txtAppArguments != null) txtAppArguments.Text = appStep.Arguments;
-                    if (chkRunAsAdmin != null) chkRunAsAdmin.Checked = appStep.RunAsAdmin;
+                    if (tglRunAsAdmin != null) tglRunAsAdmin.Checked = appStep.RunAsAdmin;
                     break;
                 case OpenDocumentStep docStep:
                     if (txtDocumentPath != null) txtDocumentPath.Text = docStep.FilePath;
@@ -844,13 +866,13 @@ namespace SmartRoutine.UI.Controls
             lblInternal.Margin = new Padding(3, 5, 3, 3);
 
             // ToggleSwitch
-            chkOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(false, "Externer Browser", "In App öffnen");
-            chkOpenInExternBrowser.Name = "chkOpenInternally";
-            chkOpenInExternBrowser.Anchor = AnchorStyles.Left;
-            chkOpenInExternBrowser.Margin = new Padding(3, 3, 3, 3);
+            tglOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(false, "Externer Browser", "In App öffnen");
+            tglOpenInExternBrowser.Name = "chkOpenInternally";
+            tglOpenInExternBrowser.Anchor = AnchorStyles.Left;
+            tglOpenInExternBrowser.Margin = new Padding(3, 3, 3, 3);
 
             horizontalPanel.Controls.Add(lblInternal, 0, 0);
-            horizontalPanel.Controls.Add(chkOpenInExternBrowser, 1, 0);
+            horizontalPanel.Controls.Add(tglOpenInExternBrowser, 1, 0);
 
             // Controls hinzufügen
             stepTypeContentTlp.Controls.Add(lblUrl, 0, 0);
@@ -914,13 +936,13 @@ namespace SmartRoutine.UI.Controls
             lblOptions.Dock = DockStyle.Fill;
             lblOptions.Margin = new Padding(3, 5, 3, 3);
 
-            chkOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
-            chkOpenInNewWindow.Name = "chkOpenInNewWindow";
-            chkOpenInNewWindow.Anchor = AnchorStyles.Left;
-            chkOpenInNewWindow.Margin = new Padding(3, 3, 3, 3);
+            tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
+            tglOpenInNewWindow.Name = "chkOpenInNewWindow";
+            tglOpenInNewWindow.Anchor = AnchorStyles.Left;
+            tglOpenInNewWindow.Margin = new Padding(3, 3, 3, 3);
 
             horizontalPanel.Controls.Add(lblOptions, 0, 0);
-            horizontalPanel.Controls.Add(chkOpenInNewWindow, 1, 0);
+            horizontalPanel.Controls.Add(tglOpenInNewWindow, 1, 0);
 
             // Controls hinzufügen
             stepTypeContentTlp.Controls.Add(lblPath, 0, 0);
@@ -1004,13 +1026,13 @@ namespace SmartRoutine.UI.Controls
             lblOptions.Dock = DockStyle.Fill;
             lblOptions.Margin = new Padding(3, 5, 3, 3);
 
-            chkRunAsAdmin = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
-            chkRunAsAdmin.Name = "chkRunAsAdmin";
-            chkRunAsAdmin.Anchor = AnchorStyles.Left;
-            chkRunAsAdmin.Margin = new Padding(3, 3, 3, 3);
+            tglRunAsAdmin = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
+            tglRunAsAdmin.Name = "chkRunAsAdmin";
+            tglRunAsAdmin.Anchor = AnchorStyles.Left;
+            tglRunAsAdmin.Margin = new Padding(3, 3, 3, 3);
 
             horizontalPanel.Controls.Add(lblOptions, 0, 0);
-            horizontalPanel.Controls.Add(chkRunAsAdmin, 1, 0);
+            horizontalPanel.Controls.Add(tglRunAsAdmin, 1, 0);
 
             // Controls hinzufügen
             stepTypeContentTlp.Controls.Add(lblPath, 0, 0);
@@ -1223,14 +1245,14 @@ namespace SmartRoutine.UI.Controls
                     step = new OpenUrlStep
                     {
                         Url = txtUrl?.Text ?? "",
-                        OpenInExternBrowser = chkOpenInExternBrowser?.Checked ?? true
+                        OpenInExternBrowser = tglOpenInExternBrowser?.Checked ?? true
                     };
                     break;
                 case StepType.OpenFolder:
                     step = new OpenFolderStep
                     {
                         FolderPath = txtFolderPath?.Text ?? "",
-                        OpenInNewWindow = chkOpenInNewWindow?.Checked ?? true
+                        OpenInNewWindow = tglOpenInNewWindow?.Checked ?? true
                     };
                     break;
                 case StepType.OpenApplication:
@@ -1238,7 +1260,7 @@ namespace SmartRoutine.UI.Controls
                     {
                         ApplicationPath = txtAppPath?.Text ?? "",
                         Arguments = txtAppArguments?.Text ?? "",
-                        RunAsAdmin = chkRunAsAdmin?.Checked ?? false
+                        RunAsAdmin = tglRunAsAdmin?.Checked ?? false
                     };
                     break;
                 case StepType.OpenDocument:
@@ -1255,6 +1277,7 @@ namespace SmartRoutine.UI.Controls
             step.Name = name;
             step.Description = description;
             step.Show = show;
+            step.AutoStart = tglAutoStart.Checked;
 
             if (_editingStep != null)
             {

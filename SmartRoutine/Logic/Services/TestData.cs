@@ -29,6 +29,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_1",
                         Order = 0,
                         Name = "Wetter checken",
+                        AutoStart = false,
                         Url = "https://www.wetter.de",
                         OpenInExternBrowser = false
                     },
@@ -37,6 +38,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_2",
                         Order = 1,
                         Name = "Nachrichten lesen",
+                        AutoStart = true,
                         Url = "https://www.spiegel.de",
                         OpenInExternBrowser = true
                     },
@@ -45,6 +47,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_3",
                         Order = 2,
                         Name = "E-Mails prüfen",
+                        AutoStart = true,
                         Url = "https://mail.google.com",
                         OpenInExternBrowser = false
                     }
@@ -66,6 +69,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_4",
                         Order = 0,
                         Name = "Trello öffnen",
+                        AutoStart = true,
                         Url = "https://trello.com",
                         OpenInExternBrowser = false
                     },
@@ -74,6 +78,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_5",
                         Order = 1,
                         Name = "GitHub öffnen",
+                        AutoStart = true,
                         Url = "https://github.com",
                         OpenInExternBrowser = false
                     },
@@ -82,6 +87,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_6",
                         Order = 2,
                         Name = "Slack öffnen",
+                        AutoStart = true,
                         Url = "https://slack.com",
                         OpenInExternBrowser = false
                     }
@@ -103,6 +109,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_7",
                         Order = 0,
                         Name = "Netflix öffnen",
+                        AutoStart = true,
                         Url = "https://www.netflix.com",
                         OpenInExternBrowser = false
                     },
@@ -111,6 +118,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_8",
                         Order = 1,
                         Name = "Spotify öffnen",
+                        AutoStart = true,
                         Url = "https://www.spotify.com",
                         OpenInExternBrowser = false
                     },
@@ -119,6 +127,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_9",
                         Order = 2,
                         Name = "YouTube öffnen",
+                        AutoStart = true,
                         Url = "https://www.youtube.com",
                         OpenInExternBrowser = false
                     }
@@ -140,6 +149,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_10",
                         Order = 0,
                         Name = "Events checken",
+                        AutoStart = true,
                         Url = "https://www.eventim.de",
                         OpenInExternBrowser = false
                     },
@@ -148,6 +158,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_11",
                         Order = 1,
                         Name = "Reise planen",
+                        AutoStart = true,
                         Url = "https://www.booking.com",
                         OpenInExternBrowser = false
                     }
@@ -169,6 +180,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_12",
                         Order = 0,
                         Name = "Stack Overflow",
+                        AutoStart = true,
                         Url = "https://stackoverflow.com",
                         OpenInExternBrowser = false
                     },
@@ -177,6 +189,7 @@ namespace SmartRoutine.Logic.Services
                         Id = "test_step_13",
                         Order = 1,
                         Name = "Microsoft Docs",
+                        AutoStart = true,
                         Url = "https://docs.microsoft.com",
                         OpenInExternBrowser = false
                     },
@@ -186,6 +199,7 @@ namespace SmartRoutine.Logic.Services
                         Order = 2,
                         Name = "Projektordner öffnen",
                         Description = "Öffnet den Projektordner",
+                        AutoStart = true,
                         FolderPath = @"C:\Projects",
                         OpenInNewWindow = true
                     },
@@ -195,6 +209,7 @@ namespace SmartRoutine.Logic.Services
                         Order = 3,
                         Name = "Visual Studio starten",
                         Description = "Startet Visual Studio",
+                        AutoStart = true,
                         ApplicationPath = @"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\devenv.exe",
                         Arguments = "",
                         RunAsAdmin = false,

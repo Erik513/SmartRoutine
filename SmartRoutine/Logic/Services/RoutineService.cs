@@ -281,6 +281,7 @@ namespace SmartRoutine.Logic.Services
                         Name = urlStep.Name,
                         Description = urlStep.Description,
                         Show = urlStep.Show,
+                        AutoStart = urlStep.AutoStart,
                         Url = urlStep.Url,
                         OpenInExternBrowser = urlStep.OpenInExternBrowser
                     };
@@ -292,6 +293,7 @@ namespace SmartRoutine.Logic.Services
                         Name = folderStep.Name,
                         Description = folderStep.Description,
                         Show = folderStep.Show,
+                        AutoStart = folderStep.AutoStart,
                         FolderPath = folderStep.FolderPath,
                         OpenInNewWindow = folderStep.OpenInNewWindow
                     };
@@ -303,15 +305,29 @@ namespace SmartRoutine.Logic.Services
                         Name = appStep.Name,
                         Description = appStep.Description,
                         Show = appStep.Show,
+                        AutoStart = appStep.AutoStart,
                         ApplicationPath = appStep.ApplicationPath,
                         Arguments = appStep.Arguments,
                         RunAsAdmin = appStep.RunAsAdmin,
                         WorkingDirectory = appStep.WorkingDirectory
                     };
+                case OpenDocumentStep docStep:  // ← Neu
+                    return new OpenDocumentStep
+                    {
+                        Id = docStep.Id,
+                        Order = docStep.Order,
+                        Name = docStep.Name,
+                        Description = docStep.Description,
+                        Show = docStep.Show,
+                        AutoStart = docStep.AutoStart,
+                        FilePath = docStep.FilePath,
+                        OpenWithAssociatedApp = docStep.OpenWithAssociatedApp
+                    };
                 default:
                     throw new NotSupportedException($"Step type {original.GetType()} not supported");
             }
         }
+        
         // Steps =================================================================================
 
         public void AddStep(string routineId, RoutineStep step)
@@ -451,16 +467,16 @@ namespace SmartRoutine.Logic.Services
                 case OpenUrlStep urlStep:
                     if (urlStep.OpenInExternBrowser)
                     {
-                        // In interner WebView öffnen (Event auslösen)
-                        // OnOpenUrlInWebView?.Invoke(urlStep.Url);
-                    }
-                    else
-                    {
                         Process.Start(new ProcessStartInfo
                         {
                             FileName = urlStep.Url,
                             UseShellExecute = true
                         });
+                    }
+                    else
+                    {
+                        // In interner WebView öffnen (Event auslösen)
+                        // OnOpenUrlInWebView?.Invoke(urlStep.Url);
                     }
                     break;
                 case OpenFolderStep folderStep:
@@ -481,11 +497,20 @@ namespace SmartRoutine.Logic.Services
                         startInfo.Verb = "runas";
                     Process.Start(startInfo);
                     break;
+                case OpenDocumentStep docStep:
+                    if (System.IO.File.Exists(docStep.FilePath))
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = docStep.FilePath,
+                            UseShellExecute = true
+                        });
+                    }
+                    break;
                 default:
                     throw new NotSupportedException($"Step type {step.GetType()} not supported");
             }
         }
-
         public bool ValidateStep(RoutineStep step)
         {
             switch (step)
@@ -498,6 +523,9 @@ namespace SmartRoutine.Logic.Services
                 case OpenApplicationStep appStep:
                     return !string.IsNullOrWhiteSpace(appStep.ApplicationPath) &&
                            System.IO.File.Exists(appStep.ApplicationPath);
+                case OpenDocumentStep docStep:
+                    return !string.IsNullOrWhiteSpace(docStep.FilePath) &&
+                           System.IO.File.Exists(docStep.FilePath);
                 default:
                     return true;
             }
