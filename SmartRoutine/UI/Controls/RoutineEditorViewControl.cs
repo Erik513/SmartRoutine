@@ -250,9 +250,6 @@ namespace SmartRoutine.UI.Controls
             stepTypeContentTlp.Dock = DockStyle.Fill;
 
             stepTypeContentPanel.Controls.Add(stepTypeContentTlp);
-            // OpenURL Controls vorbereiten
-            //lblUrl = UIStyles.Labels.CreateNormal("Webseite:");
-            //lblUrl.Dock = DockStyle.Fill;
 
             txtUrl = UIStyles.TextBoxes.CreateStandard();
             txtUrl.Dock = DockStyle.Fill;
@@ -609,6 +606,13 @@ namespace SmartRoutine.UI.Controls
 
             _editingStep = step;
             SetEditorEnabled(true);
+
+            this.BeginInvoke(new Action(() =>
+            {
+                cmbStepType.PerformLayout();
+                cmbStepType.Invalidate();
+                cmbStepType.Update();
+            }));
         }
 
         private void SetEditorEnabled(bool enabled)
@@ -654,7 +658,8 @@ namespace SmartRoutine.UI.Controls
             }
             _currentRoutine.Steps = reorderedSteps;
             _routineService.UpdateRoutine(_currentRoutine);
-            RefreshStepsList(silent: true);
+            lstSteps.Invalidate();
+            lstSteps.Update();
         }
         private void BtnAddStep_Click(object sender, EventArgs e)
         {

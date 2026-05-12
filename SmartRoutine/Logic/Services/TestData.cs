@@ -204,6 +204,80 @@ namespace SmartRoutine.Logic.Services
             };
             routines.Add(devRoutine);
 
+            var testRoutine = new Routine
+            {
+                Id = "test_123",
+                Name = "Test123",
+                Order = 5,
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+                    
+                }
+            };
+            routines.Add(testRoutine);
+
+            var testRoutine1 = new Routine
+            {
+                Id = "test_234",
+                Name = "Test234",
+                Order = 6,
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+
+                }
+            };
+            routines.Add(testRoutine1);
+            var testRoutine2 = new Routine
+            {
+                Id = "test_345",
+                Name = "Test345",
+                Order = 7,
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+
+                }
+            };
+            routines.Add(testRoutine2);
+            var testRoutine3 = new Routine
+            {
+                Id = "test_456",
+                Name = "Test456",
+                Order = 8,
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+
+                }
+            };
+            routines.Add(testRoutine3);
+            var testRoutine4 = new Routine
+            {
+                Id = "test_567",
+                Name = "Test567",
+                Order = 9,
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+
+                }
+            };
+            routines.Add(testRoutine4);
+            var testRoutine5 = new Routine
+            {
+                Id = "test_678",
+                Name = "Test678",
+                Order = 10,
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>
+                {
+
+                }
+            };
+            routines.Add(testRoutine5);
+
             return routines;
         }
     }

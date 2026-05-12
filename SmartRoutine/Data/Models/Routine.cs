@@ -82,7 +82,8 @@ namespace SmartRoutine.Data.Models
     {
         OpenUrl,
         OpenFolder,
-        OpenApplication
+        OpenApplication,
+        //OpenDocument
     }
 
 }
