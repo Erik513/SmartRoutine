@@ -272,11 +272,6 @@ namespace SmartRoutine.UI.Controls
 
             stepTypeContentPanel.Controls.Add(stepTypeContentTlp);
 
-            txtUrl = UIStyles.TextBoxes.CreateStandard();
-            txtUrl.Dock = DockStyle.Fill;
-            txtUrl.TextChanged += TxtUrl_TextChanged;  // Für Live-Validierung
-            txtUrl.LostFocus += TxtUrl_LostFocus;       // Für finale Validierung
-
             // ==================================================================================================================
 
             // btnSaveStep, btnCancelStep
@@ -919,6 +914,13 @@ namespace SmartRoutine.UI.Controls
 
             // TextBox URL
             txtUrl = UIStyles.TextBoxes.CreateStandard();
+            txtUrl.Name = "txtUrl";
+            txtUrl.Dock = DockStyle.Fill;
+            txtUrl.Margin = new Padding(3, 3, 3, 10);
+
+            txtUrl.TextChanged += TxtUrl_TextChanged;
+            txtUrl.LostFocus += TxtUrl_LostFocus;
+
             // Drag & Drop für txtUrl aktivieren
             DragDropHelper.EnableTextDragDrop(txtUrl, (droppedText) =>
             {
@@ -934,9 +936,7 @@ namespace SmartRoutine.UI.Controls
                 // Setze den Cursor ans Ende
                 txtUrl.SelectionStart = txtUrl.Text.Length;
             });
-            txtUrl.Name = "txtUrl";
-            txtUrl.Dock = DockStyle.Fill;
-            txtUrl.Margin = new Padding(3, 3, 3, 10);
+
 
             // Horizontales Panel für Label + ToggleSwitch
             var horizontalPanel = new TableLayoutPanel
@@ -1274,6 +1274,17 @@ namespace SmartRoutine.UI.Controls
                         txtUrl?.Focus();
                         return false;
                     }
+                    var urlResult = _urlValidationService.ValidateAndRepairUrl(txtUrl.Text, false);
+
+                    if (!urlResult.IsValid)
+                    {
+                        if (showMessageBox && !AutoConfirmDialogs)
+                            MessageBox.Show(urlResult.ErrorMessage, "Ungültige URL",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                        txtUrl.Focus();
+                        return false;
+                    }
                     break;
                 case StepType.OpenFolder:
                     if (string.IsNullOrWhiteSpace(txtFolderPath?.Text))
@@ -1333,9 +1344,14 @@ namespace SmartRoutine.UI.Controls
             switch (selectedType)
             {
                 case StepType.OpenUrl:
+                    var urlResult = _urlValidationService.ValidateAndRepairUrl(txtUrl?.Text, false);
+
+                    if (!urlResult.IsValid)
+                        return;
+
                     step = new OpenUrlStep
                     {
-                        Url = txtUrl?.Text ?? "",
+                        Url = urlResult.RepairedUrl,
                         OpenInExternBrowser = tglOpenInExternBrowser?.Checked ?? true
                     };
                     break;
