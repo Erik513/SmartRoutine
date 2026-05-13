@@ -716,6 +716,8 @@ namespace SmartRoutine.UI.Controls
         }
         private void BtnAddStep_Click(object sender, EventArgs e)
         {
+            lstSteps.ClearSelected();
+            btnDeleteStep.Enabled = false;
             CloseEditor();
             OpenEditorForStep(null);
             txtStepName.Focus();
@@ -740,10 +742,10 @@ namespace SmartRoutine.UI.Controls
 
             RefreshStepsList(silent: true);
 
-            lstSteps.SelectedIndex = -1;
+            lstSteps.ClearSelected();
             ClearEditor();
             rightTlp.Visible = false;
-            btnDeleteStep.Enabled = _currentRoutine.Steps.Count > 0;
+            btnDeleteStep.Enabled = false;
 
             SaveChanges?.Invoke(this, _currentRoutine);
         }
