@@ -277,22 +277,6 @@ namespace SmartRoutine.UI.Controls
             txtUrl.TextChanged += TxtUrl_TextChanged;  // Für Live-Validierung
             txtUrl.LostFocus += TxtUrl_LostFocus;       // Für finale Validierung
 
-            // Drag & Drop für txtUrl aktivieren
-            DragDropHelper.EnableTextDragDrop(txtUrl, (droppedText) =>
-            {
-                // Optional: Bereinige den gedroppten Text
-                string cleanedText = droppedText.Trim();
-
-                // Setze den Text in die TextBox
-                txtUrl.Text = cleanedText;
-
-                // Führe die Validierung aus
-                TxtUrl_TextChanged(txtUrl, EventArgs.Empty);
-
-                // Setze den Cursor ans Ende
-                txtUrl.SelectionStart = txtUrl.Text.Length;
-            });
-
             // ==================================================================================================================
 
             // btnSaveStep, btnCancelStep
@@ -935,6 +919,21 @@ namespace SmartRoutine.UI.Controls
 
             // TextBox URL
             txtUrl = UIStyles.TextBoxes.CreateStandard();
+            // Drag & Drop für txtUrl aktivieren
+            DragDropHelper.EnableTextDragDrop(txtUrl, (droppedText) =>
+            {
+                // Bereinige den gedroppten Text
+                string cleanedText = droppedText.Trim();
+
+                // Setze den Text in die TextBox
+                txtUrl.Text = cleanedText;
+
+                // Führe die Validierung aus
+                TxtUrl_TextChanged(txtUrl, EventArgs.Empty);
+
+                // Setze den Cursor ans Ende
+                txtUrl.SelectionStart = txtUrl.Text.Length;
+            });
             txtUrl.Name = "txtUrl";
             txtUrl.Dock = DockStyle.Fill;
             txtUrl.Margin = new Padding(3, 3, 3, 10);
