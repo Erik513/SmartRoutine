@@ -151,11 +151,11 @@
     <Compile Include="UI\Controls\StyledListBox.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="UI\Controls\StyledListBoxWithHeader.cs">
+    <Compile Include="UI\Controls\StyledListBoxControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="UI\Controls\StyledListBoxWithHeader.Designer.cs">
-      <DependentUpon>StyledListBoxWithHeader.cs</DependentUpon>
+    <Compile Include="UI\Controls\StyledListBoxControl.Designer.cs">
+      <DependentUpon>StyledListBoxControl.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Controls\TitleBarControl.cs">
       <SubType>Component</SubType>

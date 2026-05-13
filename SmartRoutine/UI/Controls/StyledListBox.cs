@@ -29,9 +29,24 @@ namespace SmartRoutine.UI.Controls
         private int _dragInsertPosition = -1;
 
         public event EventHandler ItemsReordered;
+        
+        private bool _allowReorder = true;
 
-        public StyledListBox()
+        public bool AllowReorder
         {
+            get => _allowReorder;
+            set
+            {
+                _allowReorder = value;
+                AllowDrop = value;
+                Invalidate();
+            }
+        }
+
+        public StyledListBox(bool allowReorder = false)
+        {
+            _allowReorder = allowReorder;
+
             this.DrawMode = DrawMode.OwnerDrawFixed;
             this.ItemHeight = _itemHeight;
             this.BackColor = UIStyles.Colors.BackgroundDark;
@@ -45,7 +60,7 @@ namespace SmartRoutine.UI.Controls
                          ControlStyles.AllPaintingInWmPaint, true);
             this.UpdateStyles();
 
-            this.AllowDrop = true;
+            this.AllowDrop = _allowReorder;
         }
 
         public int ItemHeightCustom
@@ -70,12 +85,15 @@ namespace SmartRoutine.UI.Controls
             {
                 if (_hoverIndex != index)
                 {
+                    int oldHoverIndex = _hoverIndex;
                     _hoverIndex = index;
-                    Invalidate();
+
+                    InvalidateItem(oldHoverIndex);
+                    InvalidateItem(_hoverIndex);
                 }
             }
 
-            if (e.Button == MouseButtons.Left && !_isDragging && _dragIndex != -1)
+            if (_allowReorder && e.Button == MouseButtons.Left && !_isDragging && _dragIndex != -1)
             {
                 if (Math.Abs(e.X - _dragStartPoint.X) > SystemInformation.DragSize.Width ||
                     Math.Abs(e.Y - _dragStartPoint.Y) > SystemInformation.DragSize.Height)
@@ -88,30 +106,35 @@ namespace SmartRoutine.UI.Controls
             base.OnMouseMove(e);
         }
 
+        private void InvalidateItem(int index)
+        {
+            if (index < 0 || index >= Items.Count)
+                return;
+
+            Invalidate(GetItemRectangle(index));
+        }
+
         protected override void OnMouseDown(MouseEventArgs e)
         {
             int index = IndexFromPoint(e.Location);
-            bool isVScrollVisible = IsVerticalScrollBarVisible();
 
-            if (index != -1)
+            if (_allowReorder && index != -1)
             {
                 Rectangle itemRect = GetItemRectangle(index);
-                Rectangle dragRect = GetDragHandleRectangle(itemRect, isVScrollVisible);
+                Rectangle dragRect = GetDragHandleRectangle(itemRect, IsVerticalScrollBarVisible());
 
-                // dragRect enthält bereits das Padding (links +5, rechts +5)
-                // Also einfach prüfen ob der Punkt im Rechteck liegt
                 if (dragRect.Contains(e.Location))
                 {
                     _dragIndex = index;
                     _dragStartPoint = e.Location;
-                    this.SelectedIndex = index;
+                    SelectedIndex = index;
                     return;
                 }
             }
 
             if (index == -1)
             {
-                this.ClearSelected();
+                ClearSelected();
                 _dragIndex = -1;
                 return;
             }
@@ -130,6 +153,11 @@ namespace SmartRoutine.UI.Controls
 
         protected override void OnDragOver(DragEventArgs drgevent)
         {
+            if (!_allowReorder)
+            {
+                drgevent.Effect = DragDropEffects.None;
+                return;
+            }
             Point point = PointToClient(new Point(drgevent.X, drgevent.Y));
             int targetIndex = IndexFromPoint(point);
             int newInsertPosition = -1;
@@ -195,6 +223,13 @@ namespace SmartRoutine.UI.Controls
 
         protected override void OnDragDrop(DragEventArgs drgevent)
         {
+            if (!_allowReorder)
+            {
+                _isDragging = false;
+                _dragIndex = -1;
+                _dragInsertPosition = -1;
+                return;
+            }
             if (_dragIndex != -1 && _dragInsertPosition != -1)
             {
                 int targetPos = _dragInsertPosition;
@@ -280,14 +315,16 @@ namespace SmartRoutine.UI.Controls
         {
             if (!_isDragging)
             {
+                int oldHoverIndex = _hoverIndex;
                 _hoverIndex = -1;
-                Invalidate();
+                InvalidateItem(oldHoverIndex);
             }
             else
             {
                 _dragInsertPosition = -1;
                 Invalidate();
             }
+
             base.OnMouseLeave(e);
         }
 
@@ -320,20 +357,24 @@ namespace SmartRoutine.UI.Controls
 
             bool isVScrollVisible = IsVerticalScrollBarVisible();
 
-            // WICHTIG: Verwende die gleiche Methode wie im Hit-Test
-            Rectangle dragRect = GetDragHandleRectangle(rect, isVScrollVisible);
+            Rectangle dragRect = Rectangle.Empty;
 
-            // Drag-Handle zeichnen
-            DrawDragHandle(e.Graphics, dragRect);
+            if (_allowReorder)
+            {
+                dragRect = GetDragHandleRectangle(rect, isVScrollVisible);
+                DrawDragHandle(e.Graphics, dragRect);
+            }
 
             // Text-Bereich berechnen (rechts neben dem Drag-Handle)
             int textRightMargin = 12;
             int textLeftMargin = 8;
 
+            int reservedDragWidth = _allowReorder ? dragRect.Width : 0;
+
             Rectangle textRect = new Rectangle(
                 rect.X + textLeftMargin,
                 rect.Y,
-                rect.Width - dragRect.Width - textLeftMargin - textRightMargin - (isVScrollVisible ? SystemInformation.VerticalScrollBarWidth : 0),
+                rect.Width - reservedDragWidth - textLeftMargin - textRightMargin - (isVScrollVisible ? SystemInformation.VerticalScrollBarWidth : 0),
                 rect.Height
             );
 

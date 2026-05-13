@@ -21,7 +21,7 @@ namespace SmartRoutine.UI.Controls
         private readonly IRoutineService _routineService;
         private Routine _selectedRoutine;
 
-        private StyledListBoxWithHeader lstRoutines;
+        private StyledListBoxControl lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
 
         public RoutinesViewControl(IRoutineService routineService)
@@ -58,11 +58,12 @@ namespace SmartRoutine.UI.Controls
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
             mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            // ========== OBERE ZEILE: StyledListBoxWithHeader ==========
-            lstRoutines = new StyledListBoxWithHeader("Meine Routinen", ContentAlignment.MiddleCenter)
+            // ========== OBERE ZEILE: StyledListBoxControl ==========
+            lstRoutines = new StyledListBoxControl(title: "Meine Routinen", showHeader: true, allowReorder: true, ContentAlignment.MiddleCenter)
             {
                 Dock = DockStyle.Fill,
-                ItemHeightCustom = 35
+                ItemHeightCustom = 35,
+                Visible = true
             };
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
             lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;

@@ -38,7 +38,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel leftRoutineTitleTlp;
         private Label lblRoutineName;
         private TextBox txtRoutineName;
-        private StyledListBoxWithHeader lstSteps;
+        private StyledListBoxControl lstSteps;
         //private ListBox lstSteps;
 
         private TableLayoutPanel leftBtnsTlp;
@@ -153,7 +153,7 @@ namespace SmartRoutine.UI.Controls
             leftRoutineTitleTlp.Controls.Add(txtRoutineName, 1, 0);
 
             // Mitte
-            lstSteps = new StyledListBoxWithHeader("Schritte", ContentAlignment.MiddleCenter)
+            lstSteps = new StyledListBoxControl(title: "Schritte", showHeader: true, allowReorder: true, textAlign: ContentAlignment.MiddleCenter)
             {
                 Dock = DockStyle.Fill,
                 ItemHeightCustom = 35,

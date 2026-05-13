@@ -5,7 +5,7 @@ using SmartRoutine.UI.Helpers;
 
 namespace SmartRoutine.UI.Controls
 {
-    public partial class StyledListBoxWithHeader : UserControl
+    public partial class StyledListBoxControl : UserControl
     {
         private Panel headerPanel;
         private Label lblTitle;
@@ -21,20 +21,24 @@ namespace SmartRoutine.UI.Controls
         public event EventHandler SelectedIndexChanged;
         public event EventHandler ItemsReordered;
 
-        public StyledListBoxWithHeader()
+        public StyledListBoxControl()
         {
-            InitializeControl();
+            InitializeControl(showHeader: false, allowReorder: false);
 
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
               ControlStyles.AllPaintingInWmPaint |
               ControlStyles.ResizeRedraw, true);
             this.UpdateStyles();
         }
-        public StyledListBoxWithHeader(string title, ContentAlignment textAlign = ContentAlignment.MiddleLeft) : this()
+        public StyledListBoxControl(string title = "", bool showHeader = false, bool allowReorder = false, ContentAlignment textAlign = ContentAlignment.MiddleLeft)
         {
             _title = title;
+
+            InitializeControl(showHeader, allowReorder);
+
             lblTitle.Text = title;
             lblTitle.TextAlign = textAlign;
+            headerPanel.Visible = showHeader && !string.IsNullOrWhiteSpace(title);
 
             // Padding anpassen bei Linksbündig vs. Zentriert
             if (textAlign == ContentAlignment.MiddleLeft)
@@ -51,17 +55,17 @@ namespace SmartRoutine.UI.Controls
             }
         }
 
-        private void InitializeControl()
+        private void InitializeControl(bool showHeader, bool allowReorder)
         {
             this.Dock = DockStyle.Fill;
             this.BackColor = Color.Transparent;
 
-            // Header Panel
             headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
                 Height = _headerHeight,
-                BackColor = _headerBackColor
+                BackColor = _headerBackColor,
+                Visible = showHeader
             };
 
             lblTitle = new Label
@@ -77,8 +81,7 @@ namespace SmartRoutine.UI.Controls
 
             headerPanel.Controls.Add(lblTitle);
 
-            // ListBox
-            listBox = new StyledListBox
+            listBox = new StyledListBox(allowReorder)
             {
                 Dock = DockStyle.Fill,
                 MinimumSize = new Size(0, 50)

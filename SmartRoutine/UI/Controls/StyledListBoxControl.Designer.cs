@@ -1,6 +1,6 @@
 ﻿namespace SmartRoutine.UI.Controls
 {
-    partial class StyledListBoxWithHeader
+    partial class StyledListBoxControl
     {
         /// <summary> 
         /// Required designer variable.
