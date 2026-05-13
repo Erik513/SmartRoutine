@@ -71,14 +71,34 @@ namespace SmartRoutine.UI
             _routinesView.NewRoutineClicked += (s, routine) => ShowEditorView(routine);
             _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine);
             _routinesView.DeleteRoutineClicked += (s, routine) => DeleteRoutine(routine);
-            _routinesView.StartRoutineClicked += (s, routine) => StartRoutine(routine);
+            _routinesView.StartRoutineClicked += (s, routine) =>
+            {
+                ExecuteFullRoutine(routine);
+            };
             contentPanel.Controls.Add(_routinesView);
 
             var urlValidationService = new UrlValidationService();
             _editorView = new RoutineEditorViewControl(_routineService, urlValidationService);
             _editorView.BackToRoutinesClicked += (s, e) => ShowRoutinesView();
             _editorView.SaveChanges += (s, routine) => SaveRoutine(routine);
+
             contentPanel.Controls.Add(_editorView);
+        }
+
+        private void ExecuteFullRoutine(Routine routine)
+        {
+            if (routine == null || routine.Steps.Count == 0)
+            {
+                MessageBox.Show("Diese Routine enthält keine Schritte.", "Info",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var executionForm = new ExecutionForm(routine, (step) =>
+            {
+                (_routineService as RoutineService)?.ExecuteStep(step);
+            });
+            executionForm.ShowDialog(this);
         }
 
         private void SaveRoutine(Routine routine)
@@ -127,8 +147,18 @@ namespace SmartRoutine.UI
 
         private void StartRoutine(Routine routine)
         {
-            MessageBox.Show("Start-Funktion wird später implementiert.", "Info",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (routine == null || routine.Steps.Count == 0)
+            {
+                MessageBox.Show("Diese Routine enthält keine Schritte.", "Info",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var executionForm = new ExecutionForm(routine, (step) =>
+            {
+                _routineService.ExecuteStep(step);
+            });
+            executionForm.ShowDialog(this);
         }
 
 

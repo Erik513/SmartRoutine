@@ -59,7 +59,7 @@ namespace SmartRoutine.UI.Controls
         private ToggleSwitch tglAutoStart;
 
         private TableLayoutPanel rightBtnsTlp;
-        private Button btnSaveStep, btnCancelStep;
+        private Button btnSaveStep, btnCancelStep, btnExecuteStep;
 
         // Controls based on StepType
         // StepTypeContent
@@ -196,7 +196,7 @@ namespace SmartRoutine.UI.Controls
             rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepType
             rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // cmbStepType, tglAutoStart
             rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // stepTypeContentTlp
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // btnSaveStep, btnCancelStep
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 45)); // btnSaveStep, btnCancelStep
             rightTlp.Visible = false;
 
             // rightTitleTlp
@@ -296,22 +296,27 @@ namespace SmartRoutine.UI.Controls
             // ==================================================================================================================
 
             // btnSaveStep, btnCancelStep
-            rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(3, 1);
             rightBtnsTlp.Dock = DockStyle.Fill;
 
-            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾 Schritt speichern", "", new Size(155, 35));
+            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾 Schritt speichern", "", new Size(120, 35));
             btnSaveStep.Click += BtnSaveStep_Click;
 
-            btnCancelStep = UIStyles.Buttons.CreateStandard("✖ Abbrechen", "", new Size(155, 35));
+            btnCancelStep = UIStyles.Buttons.CreateStandard("✖ Abbrechen", "", new Size(120, 35));
             btnCancelStep.Click += BtnCancelStep_Click;
+
+            btnExecuteStep = UIStyles.Buttons.CreateStandard("▶ Ausführen", "", new Size(120, 35));
+            btnExecuteStep.Click += BtnExecuteStep_Click;
 
             rightBtnsTlp.ColumnStyles.Clear();
             rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnSaveStep.Width));
             rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnCancelStep.Width));
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnExecuteStep.Width));
             rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             rightBtnsTlp.Controls.Add(btnSaveStep, 0, 0);
             rightBtnsTlp.Controls.Add(btnCancelStep, 1, 0);
+            rightBtnsTlp.Controls.Add(btnExecuteStep, 2, 0);
 
             rightTlp.Controls.AddRange(new Control[] {
                 rightTitleTlp, lblStepName, txtStepName,
@@ -792,6 +797,88 @@ namespace SmartRoutine.UI.Controls
             rightTlp.Visible = false;
             btnDeleteStep.Enabled = lstSteps.Items.Count > 0 && lstSteps.SelectedIndex >= 0;
         }
+        private void BtnExecuteStep_Click(object sender, EventArgs e)
+        {
+            if (_editingStep == null) return;
+
+            // Prüfe auf ungespeicherte Änderungen
+            if (HasUnsavedChanges())
+            {
+                var result = AskToSaveChanges();
+
+                if (result == DialogResult.Yes)
+                {
+                    if (!ValidateCurrentStep(true)) return;
+                    SaveCurrentStep(refreshList: false);
+                }
+                else if (result == DialogResult.Cancel)
+                {
+                    return;
+                }
+            }
+
+            bool shouldOpenExecutionForm =
+                _editingStep is OpenUrlStep urlStep && !urlStep.OpenInExternBrowser;
+
+            if (shouldOpenExecutionForm)
+            {
+                var executionForm = new ExecutionForm(_currentRoutine, _editingStep, (step) =>
+                {
+                    _routineService.ExecuteStep(step);
+                });
+
+                executionForm.ShowDialog(this);
+            }
+            else
+            {
+                _routineService.ExecuteStep(_editingStep);
+            }
+        }
+
+        private bool HasUnsavedChanges()
+        {
+            if (_editingStep == null) return false;
+
+            if (_editingStep.Name != txtStepName.Text.Trim()) return true;
+            if (_editingStep.Description != txtStepDescription.Text.Trim()) return true;
+            if (_editingStep.Show != tglStepEnabled.Checked) return true;
+            if (_editingStep.AutoStart != tglAutoStart.Checked) return true;
+
+            var currentType = (StepType)cmbStepType.SelectedValue;
+            if (_editingStep.Type != currentType) return true;
+
+            switch (_editingStep)
+            {
+                case OpenUrlStep urlStep:
+                    if (urlStep.Url != txtUrl?.Text) return true;
+                    if (urlStep.OpenInExternBrowser != tglOpenInExternBrowser?.Checked) return true;
+                    break;
+                case OpenFolderStep folderStep:
+                    if (folderStep.FolderPath != txtFolderPath?.Text) return true;
+                    if (folderStep.OpenInNewWindow != tglOpenInNewWindow?.Checked) return true;
+                    break;
+                case OpenApplicationStep appStep:
+                    if (appStep.ApplicationPath != txtAppPath?.Text) return true;
+                    if (appStep.Arguments != txtAppArguments?.Text) return true;
+                    if (appStep.RunAsAdmin != tglRunAsAdmin?.Checked) return true;
+                    break;
+                case OpenDocumentStep docStep:
+                    if (docStep.FilePath != txtDocumentPath?.Text) return true;
+                    break;
+            }
+
+            return false;
+        }
+
+        private DialogResult AskToSaveChanges()
+        {
+            return MessageBox.Show(
+                "Möchten Sie die Änderungen vor der Ausführung speichern?",
+                "Änderungen speichern",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question);
+        }
+
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
         {
             stepTypeContentTlp.Controls.Clear();
@@ -1301,6 +1388,8 @@ namespace SmartRoutine.UI.Controls
             if (refreshList)
             {
                 RefreshStepsList(silent: false);
+                var parentForm = this.FindForm();
+                ToastForm.ShowToast($"✓ Schritt '{step.Name}' gespeichert", parentForm);
             }
         }
         private void SaveCurrentRoutine()

@@ -124,8 +124,13 @@ namespace SmartRoutine.UI.Controls
             btnStartRoutine.Dock = DockStyle.Fill;
             btnStartRoutine.Margin = new Padding(5, 5, 5, 5);
             btnStartRoutine.Enabled = true;
-            btnStartRoutine.Click += (s, e) => StartRoutineClicked?.Invoke(s, _selectedRoutine);
-
+            btnStartRoutine.Click += (s, e) =>
+            {
+                if (_selectedRoutine != null)
+                {
+                    StartRoutineClicked?.Invoke(s, _selectedRoutine);
+                }
+            };
 
             // Buttons im 2x2 Layout platzieren
             buttonPanel.Controls.Add(btnNewRoutine, 0, 0);

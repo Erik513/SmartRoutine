@@ -11,6 +11,8 @@ namespace SmartRoutine.Logic.Interfaces
 {
     public interface IRoutineService
     {
+        event Action<string> OpenUrlInWebView;
+
         List<Routine> GetAllRoutines();
         Routine GetRoutine(string id);
         void CreateRoutine(string name);

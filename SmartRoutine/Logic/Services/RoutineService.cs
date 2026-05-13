@@ -465,52 +465,76 @@ namespace SmartRoutine.Logic.Services
             switch (step)
             {
                 case OpenUrlStep urlStep:
-                    if (urlStep.OpenInExternBrowser)
-                    {
-                        Process.Start(new ProcessStartInfo
-                        {
-                            FileName = urlStep.Url,
-                            UseShellExecute = true
-                        });
-                    }
-                    else
-                    {
-                        // In interner WebView öffnen (Event auslösen)
-                        // OnOpenUrlInWebView?.Invoke(urlStep.Url);
-                    }
+                    ExecuteOpenUrl(urlStep);
                     break;
                 case OpenFolderStep folderStep:
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = folderStep.FolderPath,
-                        UseShellExecute = true
-                    });
+                    ExecuteOpenFolder(folderStep);
                     break;
                 case OpenApplicationStep appStep:
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = appStep.ApplicationPath,
-                        Arguments = appStep.Arguments,
-                        UseShellExecute = true
-                    };
-                    if (appStep.RunAsAdmin)
-                        startInfo.Verb = "runas";
-                    Process.Start(startInfo);
+                    ExecuteOpenApplication(appStep);
                     break;
                 case OpenDocumentStep docStep:
-                    if (System.IO.File.Exists(docStep.FilePath))
-                    {
-                        Process.Start(new ProcessStartInfo
-                        {
-                            FileName = docStep.FilePath,
-                            UseShellExecute = true
-                        });
-                    }
+                    ExecuteOpenDocument(docStep);
                     break;
                 default:
                     throw new NotSupportedException($"Step type {step.GetType()} not supported");
             }
         }
+        public event Action<string> OpenUrlInWebView;
+
+        private void ExecuteOpenUrl(OpenUrlStep step)
+        {
+            if (step.OpenInExternBrowser)
+            {
+                // Externer Browser
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = step.Url,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                // Interne WebView - Event auslösen
+                // Prüfe ob jemand das Event abonniert hat
+                OpenUrlInWebView?.Invoke(step.Url);
+            }
+        }
+
+        private void ExecuteOpenFolder(OpenFolderStep step)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = step.FolderPath,
+                UseShellExecute = true
+            });
+        }
+
+        private void ExecuteOpenApplication(OpenApplicationStep step)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = step.ApplicationPath,
+                Arguments = step.Arguments,
+                UseShellExecute = true
+            };
+            if (step.RunAsAdmin)
+                startInfo.Verb = "runas";
+            Process.Start(startInfo);
+        }
+
+        private void ExecuteOpenDocument(OpenDocumentStep step)
+        {
+            if (System.IO.File.Exists(step.FilePath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = step.FilePath,
+                    UseShellExecute = true
+                });
+            }
+        }
+
         public bool ValidateStep(RoutineStep step)
         {
             switch (step)
