@@ -1,9 +1,9 @@
 ﻿using Microsoft.Web.WebView2.WinForms;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
 using SmartRoutine.UI.Helpers;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -15,9 +15,7 @@ namespace SmartRoutine.UI
         private readonly Routine _routine;
         private readonly RoutineStep _specificStep;
         private readonly Action<RoutineStep> _onStepExecute;
-
-        private List<RoutineStep> _stepsToExecute;
-        private int _currentStepIndex = -1;
+        private RoutineExecutionSession _session;
 
         // WebView für interne URL-Anzeige
         private WebView2 _webView;
@@ -29,8 +27,6 @@ namespace SmartRoutine.UI
         private Label _infoLabel;
         private Button _prevBtn, _nextBtn, _executeBtn;
         private ToolTip _toolTip;
-
-        private readonly HashSet<string> _executedStepIds = new HashSet<string>();
 
         // Konstruktor für komplette Routine
         public ExecutionForm(Routine routine, Action<RoutineStep> onExecute) : this()
@@ -48,7 +44,7 @@ namespace SmartRoutine.UI
             _routine = routine;
             _specificStep = step;
             _onStepExecute = onExecute;
-            this.Text = $"Routine: {step.Name}";
+            this.Text = $"Routine: {routine.Name}";
             InitializeExecution();
         }
 
@@ -69,25 +65,13 @@ namespace SmartRoutine.UI
 
         private void InitializeExecution()
         {
-            if (_specificStep != null)
-            {
-                _stepsToExecute = new List<RoutineStep> { _specificStep };
-            }
-            else
-            {
-                _stepsToExecute = _routine.Steps
-                    .Where(s => s.Show)
-                    .OrderBy(s => s.Order)
-                    .ToList();
-            }
+            _session = new RoutineExecutionSession(_routine, _specificStep);
 
-            if (_stepsToExecute.Count == 0)
+            if (!_session.HasSteps)
             {
                 ShowNoStepsMessage();
                 return;
             }
-
-            _currentStepIndex = 0;
 
             // TitleBar
             var titleBar = new TitleBarControl(this.Text);
@@ -201,7 +185,7 @@ namespace SmartRoutine.UI
             navPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
 
             _prevBtn = CreateFooterButton("◀", "Vorheriger Schritt");
-            _prevBtn.Click += (s, e) => NavigateToStep(_currentStepIndex - 1);
+            _prevBtn.Click += (s, e) => NavigateToPreviousStep();
 
             _executeBtn = CreateFooterButton("➜", "Schritt ausführen");
             _executeBtn.BackColor = UIStyles.Colors.Green;
@@ -209,8 +193,7 @@ namespace SmartRoutine.UI
             _executeBtn.Click += (s, e) => ExecuteCurrentStep();
 
             _nextBtn = CreateFooterButton("▶", "Nächster Schritt");
-            _nextBtn.Click += (s, e) => NavigateToStep(_currentStepIndex + 1);
-
+            _nextBtn.Click += (s, e) => NavigateToNextStep();
             navPanel.Controls.Add(_prevBtn, 0, 0);
             navPanel.Controls.Add(_executeBtn, 1, 0);
             navPanel.Controls.Add(_nextBtn, 2, 0);
@@ -250,20 +233,15 @@ namespace SmartRoutine.UI
 
         private void LoadCurrentStep()
         {
-            if (_currentStepIndex < 0 || _currentStepIndex >= _stepsToExecute.Count) return;
+            var currentStep = _session.CurrentStep;
 
-            var currentStep = _stepsToExecute[_currentStepIndex];
-
-            // Footer aktualisieren
-            _stepCounterLabel.Text = $"{_currentStepIndex + 1}/{_stepsToExecute.Count}";
+            _stepCounterLabel.Text = _session.StepCounterText;
             _stepNameLabel.Text = currentStep.Name;
 
-            // Navigation Buttons aktualisieren
-            _prevBtn.Enabled = _currentStepIndex > 0;
-            _nextBtn.Enabled = _currentStepIndex < _stepsToExecute.Count - 1;
-            
-            bool alreadyExecuted = _executedStepIds.Contains(currentStep.Id);
-            bool canExecuteManually = !currentStep.AutoStart || alreadyExecuted;
+            _prevBtn.Enabled = _session.CanGoPrevious;
+            _nextBtn.Enabled = _session.CanGoNext;
+
+            bool canExecuteManually = _session.CanExecuteCurrentStepManually;
 
             _executeBtn.Enabled = canExecuteManually;
             _executeBtn.BackColor = canExecuteManually
@@ -274,14 +252,14 @@ namespace SmartRoutine.UI
                 ? UIStyles.Colors.White
                 : UIStyles.Colors.TextSecondary;
 
-            // Content laden
             LoadStepContent(currentStep);
 
-            if (currentStep.AutoStart && !alreadyExecuted)
+            if (_session.ShouldAutoExecuteCurrentStep)
             {
                 ExecuteCurrentStep();
             }
         }
+
 
         private void LoadStepContent(RoutineStep step)
         {
@@ -323,8 +301,7 @@ namespace SmartRoutine.UI
 
         private void ShowStepInfo()
         {
-            if (_currentStepIndex < 0 || _currentStepIndex >= _stepsToExecute.Count) return;
-            var step = _stepsToExecute[_currentStepIndex];
+            var step = _session.CurrentStep;
 
             var info = $"Name: {step.Name}\n";
             info += $"Beschreibung: {(string.IsNullOrEmpty(step.Description) ? "Keine" : step.Description)}\n";
@@ -369,19 +346,24 @@ namespace SmartRoutine.UI
             return "Unbekannt";
         }
 
-        private void NavigateToStep(int newIndex)
+        private void NavigateToPreviousStep()
         {
-            if (newIndex < 0 || newIndex >= _stepsToExecute.Count) return;
-            _currentStepIndex = newIndex;
+            _session.GoPrevious();
+            LoadCurrentStep();
+        }
+
+        private void NavigateToNextStep()
+        {
+            _session.GoNext();
             LoadCurrentStep();
         }
 
         private void ExecuteCurrentStep()
         {
-            var step = _stepsToExecute[_currentStepIndex];
+            var step = _session.CurrentStep;
 
             _onStepExecute?.Invoke(step);
-            _executedStepIds.Add(step.Id);
+            _session.MarkCurrentStepExecuted();
 
             if (step is OpenUrlStep urlStep && !urlStep.OpenInExternBrowser)
             {

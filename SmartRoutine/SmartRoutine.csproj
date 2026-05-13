@@ -114,6 +114,7 @@
     <Compile Include="Data\RoutineRepository.cs" />
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
+    <Compile Include="Logic\Services\RoutineExecutionSession.cs" />
     <Compile Include="Logic\Services\TestData.cs" />
     <Compile Include="UI\ExecutionForm.cs">
       <SubType>Form</SubType>
