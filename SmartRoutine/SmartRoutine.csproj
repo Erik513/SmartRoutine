@@ -116,6 +116,12 @@
     <Compile Include="Data\Models\Routine.cs" />
     <Compile Include="Logic\Services\RoutineExecutionSession.cs" />
     <Compile Include="Logic\Services\TestData.cs" />
+    <Compile Include="UI\Controls\InfoPopupForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Controls\InfoPopupForm.Designer.cs">
+      <DependentUpon>InfoPopupForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\ExecutionForm.cs">
       <SubType>Form</SubType>
     </Compile>

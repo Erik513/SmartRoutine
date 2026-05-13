@@ -305,7 +305,7 @@ namespace SmartRoutine.UI.Controls
             btnCancelStep = UIStyles.Buttons.CreateStandard("✖ Abbrechen", "", new Size(120, 35));
             btnCancelStep.Click += BtnCancelStep_Click;
 
-            btnExecuteStep = UIStyles.Buttons.CreateStandard("▶ Ausführen", "", new Size(120, 35));
+            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶ Ausführen", "", new Size(120, 35));
             btnExecuteStep.Click += BtnExecuteStep_Click;
 
             rightBtnsTlp.ColumnStyles.Clear();
@@ -748,6 +748,9 @@ namespace SmartRoutine.UI.Controls
             btnDeleteStep.Enabled = false;
 
             SaveChanges?.Invoke(this, _currentRoutine);
+
+            var parentForm = this.FindForm();
+            ToastForm.ShowToast($"✓ Schritt '{stepToDelete.Name}' gelöscht", parentForm);
         }
 
 

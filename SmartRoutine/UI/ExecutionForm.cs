@@ -27,6 +27,7 @@ namespace SmartRoutine.UI
         private Label _infoLabel;
         private Button _prevBtn, _nextBtn, _executeBtn;
         private ToolTip _toolTip;
+        private InfoPopupForm _infoPopup;
 
         // Konstruktor für komplette Routine
         public ExecutionForm(Routine routine, Action<RoutineStep> onExecute) : this()
@@ -52,6 +53,7 @@ namespace SmartRoutine.UI
         {
             ConfigureForm();
             _toolTip = new ToolTip();
+            _infoPopup = new InfoPopupForm();
         }
 
         private void ConfigureForm()
@@ -145,6 +147,7 @@ namespace SmartRoutine.UI
             };
 
             _infoLabel.MouseEnter += (s, e) => ShowStepInfo();
+            _infoLabel.MouseLeave += (s, e) => _infoPopup.Hide();
             _toolTip.SetToolTip(_infoLabel, "Schritt-Details anzeigen");
 
             _stepCounterLabel = new Label
@@ -303,47 +306,7 @@ namespace SmartRoutine.UI
         {
             var step = _session.CurrentStep;
 
-            var info = $"Name: {step.Name}\n";
-            info += $"Beschreibung: {(string.IsNullOrEmpty(step.Description) ? "Keine" : step.Description)}\n";
-            info += $"Typ: {GetStepTypeName(step)}\n";
-            info += $"AutoStart: {(step.AutoStart ? "Ja" : "Nein")}\n";
-
-            if (step is OpenUrlStep urlStep)
-            {
-                info += $"\nURL: {urlStep.Url}";
-                info += $"\nÖffnen in: {(urlStep.OpenInExternBrowser ? "Externer Browser" : "Interne App")}";
-            }
-            else if (step is OpenFolderStep folderStep)
-            {
-                info += $"\nPfad: {folderStep.FolderPath}";
-            }
-            else if (step is OpenApplicationStep appStep)
-            {
-                info += $"\nPfad: {appStep.ApplicationPath}";
-                if (!string.IsNullOrEmpty(appStep.Arguments))
-                    info += $"\nArgumente: {appStep.Arguments}";
-                info += $"\nAls Admin: {(appStep.RunAsAdmin ? "Ja" : "Nein")}";
-            }
-            else if (step is OpenDocumentStep docStep)
-            {
-                info += $"\nDatei: {docStep.FilePath}";
-            }
-
-            // ToolTip für Info-Label setzen (erscheint bei Hover)
-            _toolTip.SetToolTip(_infoLabel, info);
-        }
-
-        private string GetStepTypeName(RoutineStep step)
-        {
-            if (step is OpenUrlStep)
-                return "Webseite öffnen";
-            if (step is OpenFolderStep)
-                return "Ordner öffnen";
-            if (step is OpenApplicationStep)
-                return "Anwendung starten";
-            if (step is OpenDocumentStep)
-                return "Dokument öffnen";
-            return "Unbekannt";
+            _infoPopup.ShowInfo(step.Description, _infoLabel);
         }
 
         private void NavigateToPreviousStep()
