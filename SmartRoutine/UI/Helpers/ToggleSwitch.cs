@@ -67,13 +67,26 @@ namespace SmartRoutine.UI.Helpers
         public ToggleSwitch()
         {
             this.Size = new Size(45, 25);
+
+            SetStyle(
+                ControlStyles.UserPaint |
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.ResizeRedraw |
+                ControlStyles.SupportsTransparentBackColor,
+                true);
+
             this.DoubleBuffered = true;
             this.Cursor = Cursors.Hand;
 
-            _toolTip = new ToolTip();
-            _toolTip.InitialDelay = 500;
-            _toolTip.ReshowDelay = 100;
-            _toolTip.AutoPopDelay = 5000;
+            this.BackColor = Color.Transparent;
+
+            _toolTip = new ToolTip
+            {
+                InitialDelay = 500,
+                ReshowDelay = 100,
+                AutoPopDelay = 5000
+            };
         }
 
         private void UpdateToolTip()
@@ -194,6 +207,27 @@ namespace SmartRoutine.UI.Helpers
             using (var pen = new Pen(UIStyles.Colors.BorderMedium, 1))
             {
                 e.Graphics.DrawEllipse(pen, knobX, y + 2, knobSize, knobSize);
+            }
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs pevent)
+        {
+            if (Parent != null && BackColor == Color.Transparent)
+            {
+                var state = pevent.Graphics.Save();
+
+                pevent.Graphics.TranslateTransform(-Left, -Top);
+
+                var rect = new Rectangle(Parent.Location, Parent.Size);
+
+                InvokePaintBackground(Parent, new PaintEventArgs(pevent.Graphics, rect));
+                InvokePaint(Parent, new PaintEventArgs(pevent.Graphics, rect));
+
+                pevent.Graphics.Restore(state);
+            }
+            else
+            {
+                base.OnPaintBackground(pevent);
             }
         }
 

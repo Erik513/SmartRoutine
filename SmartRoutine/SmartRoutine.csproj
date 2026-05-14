@@ -137,6 +137,12 @@
     <Compile Include="UI\Controls\InfoPopupForm.Designer.cs">
       <DependentUpon>InfoPopupForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\Controls\StyledPropertyTable.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\Controls\StyledPropertyTable.Designer.cs">
+      <DependentUpon>StyledPropertyTable.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\ExecutionForm.cs">
       <SubType>Form</SubType>
     </Compile>

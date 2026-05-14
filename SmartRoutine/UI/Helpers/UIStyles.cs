@@ -412,9 +412,7 @@ namespace SmartRoutine.UI.Helpers
                 {
                     Dock = DockStyle.Fill,
                     BackColor = Colors.BackgroundDark,
-                    BorderStyle = BorderStyle.None,
-                    Padding = new Padding(20, 10, 20, 10),
-                    Margin = new Padding(0)
+                    BorderStyle = BorderStyle.None
                 };
             }
 
@@ -422,8 +420,9 @@ namespace SmartRoutine.UI.Helpers
             {
                 return new Panel
                 {
+                    Dock = DockStyle.Fill,
                     BackColor = Colors.BackgroundMedium,
-                    BorderStyle = BorderStyle.FixedSingle
+                    BorderStyle = BorderStyle.None
                 };
             }
 
@@ -471,7 +470,8 @@ namespace SmartRoutine.UI.Helpers
                     Checked = checkedState,
                     Size = new Size(45, 25),
                     ToolTipTextChecked = tooltipChecked,
-                    ToolTipTextUnchecked = tooltipUnchecked
+                    ToolTipTextUnchecked = tooltipUnchecked,
+                    BackColor = Colors.Transparent
                 };
             }
 
@@ -482,7 +482,8 @@ namespace SmartRoutine.UI.Helpers
                     Checked = checkedState,
                     Size = new Size(35, 20),
                     ToolTipTextChecked = tooltipChecked,
-                    ToolTipTextUnchecked = tooltipUnchecked
+                    ToolTipTextUnchecked = tooltipUnchecked,
+                    BackColor = Colors.Transparent
                 };
             }
 
@@ -493,7 +494,8 @@ namespace SmartRoutine.UI.Helpers
                     Checked = checkedState,
                     Size = new Size(55, 30),
                     ToolTipTextChecked = tooltipChecked,
-                    ToolTipTextUnchecked = tooltipUnchecked
+                    ToolTipTextUnchecked = tooltipUnchecked,
+                    BackColor = Colors.Transparent
                 };
             }
         }
@@ -506,6 +508,15 @@ namespace SmartRoutine.UI.Helpers
                     ColumnCount = columnCount,
                     RowCount = rowCount,
                     BackColor = Colors.BackgroundMediumElevated
+                };
+            }
+            public static TableLayoutPanel CreateDark(int columnCount, int rowCount)
+            {
+                return new TableLayoutPanel
+                {
+                    ColumnCount = columnCount,
+                    RowCount = rowCount,
+                    BackColor = Colors.BackgroundDark
                 };
             }
         }

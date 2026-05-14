@@ -39,32 +39,28 @@ namespace SmartRoutine.UI.Controls
         private Label lblRoutineName;
         private TextBox txtRoutineName;
         private StyledListBoxControl lstSteps;
-        //private ListBox lstSteps;
-
-        private TableLayoutPanel leftBtnsTlp;
-        private Button btnAddStep, btnDeleteStep;
 
         // Rechte Seite
         private TableLayoutPanel rightTlp;
         private TableLayoutPanel rightTitleTlp;
+        private Button btnExecuteStep;
         private Label lblStepNameTitle;
         private ToggleSwitch tglStepEnabled;
-        private Label lblStepName;
+
+        private StyledPropertyTable editorBaseTable;
         private TextBox txtStepName;
-        private Label lblStepDescription;
         private TextBox txtStepDescription;
-        private Label lblStepType;
-        private TableLayoutPanel stepTypeAutoStartTlp;
         private ComboBox cmbStepType;
         private ToggleSwitch tglAutoStart;
 
+        private StyledPropertyTable editorOptionsTable;
+        
+        private Panel rightFillPanel;
+        
         private TableLayoutPanel rightBtnsTlp;
-        private Button btnSaveStep, btnCancelStep, btnExecuteStep;
+        private Button btnSaveStep, btnCancelStep;
 
         // Controls based on StepType
-        // StepTypeContent
-        private Panel stepTypeContentPanel;
-        private TableLayoutPanel stepTypeContentTlp;
         
         // OpenURL Controls
         private TextBox txtUrl;
@@ -84,6 +80,7 @@ namespace SmartRoutine.UI.Controls
         private Button btnBrowseDocument;
 
         // Footer
+        private Button btnAddStep, btnDeleteStep;
         private Label lblLastExecution;
         private Button btnBack;
 
@@ -119,29 +116,27 @@ namespace SmartRoutine.UI.Controls
             mainTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
             mainTlp.Dock = DockStyle.Fill;
             mainTlp.RowStyles.Clear();
-            mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));  // Inhalt
-            mainTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));  // Footer
+            mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            mainTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
 
-            // ========== INHALT (Linke + Rechte Seite) ==========
+            // ========== INHALT ==========
             contentTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
             contentTlp.Dock = DockStyle.Fill;
             contentTlp.ColumnStyles.Clear();
-            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));  // Linke Seite 40%
-            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));  // Rechte Seite 60%
+            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
+            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
 
-            // ----- LINKE SEITE -----
-            leftTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 3);
+            // ========== LINKE SEITE ==========
+            leftTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
             leftTlp.Dock = DockStyle.Fill;
             leftTlp.RowStyles.Clear();
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
 
-            // Oben
             leftRoutineTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
             leftRoutineTitleTlp.Dock = DockStyle.Fill;
             leftRoutineTitleTlp.ColumnStyles.Clear();
-            leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); 
+            leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
             lblRoutineName = UIStyles.Labels.CreateTitle("Routinenname:");
@@ -153,112 +148,64 @@ namespace SmartRoutine.UI.Controls
             leftRoutineTitleTlp.Controls.Add(lblRoutineName, 0, 0);
             leftRoutineTitleTlp.Controls.Add(txtRoutineName, 1, 0);
 
-            // Mitte
-            lstSteps = new StyledListBoxControl(title: "Schritte", showHeader: true, allowReorder: true, textAlign: ContentAlignment.MiddleCenter)
+            lstSteps = new StyledListBoxControl(
+                title: "Meine Schritte",
+                showHeader: true,
+                allowReorder: true,
+                textAlign: ContentAlignment.MiddleCenter)
             {
                 Dock = DockStyle.Fill,
                 ItemHeightCustom = 35,
-                Visible = true,
+                Visible = true
             };
+
             lstSteps.IsItemDisabled = item => item is RoutineStep step && !step.Show;
             lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
             lstSteps.ItemsReordered += LstSteps_ItemsReordered;
 
-            // Unten
-            leftBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
-            leftBtnsTlp.Dock = DockStyle.Fill;
-
-            btnAddStep = UIStyles.Buttons.CreatePrimary("+ Schritt hinzufügen", "", new Size(155, 35));
-            btnAddStep.Click += BtnAddStep_Click;
-
-            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑 Löschen", "", new Size(155, 35));
-            btnDeleteStep.Click += BtnDeleteStep_Click;
-            btnDeleteStep.Enabled = false;
-
-            leftBtnsTlp.ColumnStyles.Clear();
-            leftBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnAddStep.Width));
-            leftBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnDeleteStep.Width));
-
-            leftBtnsTlp.Controls.Add(btnAddStep, 0, 0);
-            leftBtnsTlp.Controls.Add(btnDeleteStep, 1, 0);
-
-            leftTlp.Controls.AddRange(new Control[] {
-                leftRoutineTitleTlp, lstSteps, leftBtnsTlp
-            });
+            leftTlp.Controls.Add(leftRoutineTitleTlp, 0, 0);
+            leftTlp.Controls.Add(lstSteps, 0, 1);
 
             // ----- RECHTE SEITE -----
-            rightTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 9);
+            rightTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 5);
             rightTlp.Dock = DockStyle.Fill;
             rightTlp.RowStyles.Clear();
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // lblStepNameTitle
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepName
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // txtStepName
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepDescription
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // txtStepDescription
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // lblStepType
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // cmbStepType, tglAutoStart
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // stepTypeContentTlp
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 45)); // btnSaveStep, btnCancelStep
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));   // Titel
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Basis-Tabelle
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Optionen-Tabelle
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));   // Füllbereich
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));   // Buttons
             rightTlp.Visible = false;
 
-            // rightTitleTlp
-            rightTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(3, 1);
+            // ========== ROW 1: TITLE ==========
+            rightTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
             rightTitleTlp.Dock = DockStyle.Fill;
             rightTitleTlp.ColumnStyles.Clear();
 
-            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120)); // btnExecuteStep
-            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));  // lblStepNameTitle
-            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));   // tglStepEnabled
+            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
 
-            // btnExecuteStep
-            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶ Ausführen", "", new Size(110, 30));
-            btnExecuteStep.Dock = DockStyle.Fill;
-            btnExecuteStep.Margin = new Padding(0, 3, 8, 3);
-            btnExecuteStep.Click += BtnExecuteStep_Click;
+            tglStepEnabled = UIStyles.ToggleSwitches.CreateStandard(
+                true,
+                "Schritt ist aktiviert",
+                "Schritt ist deaktiviert");
 
-            // lblStepNameTitle
-            lblStepNameTitle = UIStyles.Labels.CreateTitle();
-            lblStepNameTitle.Dock = DockStyle.Fill;
-
-            // tglStepEnabled
-            tglStepEnabled = UIStyles.ToggleSwitches.CreateStandard(true, "Schritt ist aktiviert", "Schritt ist deaktiviert");
-            tglStepEnabled.Location = new Point(0, 0);
             tglStepEnabled.Anchor = AnchorStyles.None;
 
-            rightTitleTlp.Controls.Add(btnExecuteStep, 0, 0);
-            rightTitleTlp.Controls.Add(lblStepNameTitle, 1, 0);
-            rightTitleTlp.Controls.Add(tglStepEnabled, 2, 0);
+            rightTitleTlp.Controls.Add(tglStepEnabled, 1, 0);
 
-            // lblStepName
-            lblStepName = UIStyles.Labels.CreateNormal("Name:");
-            lblStepName.Dock = DockStyle.Fill;
+            // ========== EDITOR CONTROLS ==========
+            lblStepNameTitle = UIStyles.Labels.CreateTitle();
 
-            // txtStepName
             txtStepName = UIStyles.TextBoxes.CreateStandard();
             txtStepName.Dock = DockStyle.Fill;
 
-            // lblStepDescription
-            lblStepDescription = UIStyles.Labels.CreateNormal("Beschreibung:");
-            lblStepDescription.Dock = DockStyle.Fill;
-
-            // txtStepDescription
             txtStepDescription = UIStyles.TextBoxes.CreateStandard();
             txtStepDescription.Dock = DockStyle.Fill;
 
-            // lblStepType
-            lblStepType = UIStyles.Labels.CreateNormal("Aktion:");
-            lblStepType.Dock = DockStyle.Fill;
-
-            // stepTypeAutoStartTlp
-            stepTypeAutoStartTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
-            stepTypeAutoStartTlp.Dock = DockStyle.Fill;
-            stepTypeAutoStartTlp.ColumnStyles.Clear();
-            stepTypeAutoStartTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // cmbStepType
-            stepTypeAutoStartTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60)); // tglAutoStart
-
-            // cmbStepType
             cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
             cmbStepType.Dock = DockStyle.Fill;
+
             var stepTypes = StepTypeHelper.GetStepTypeListWithEmpty();
             cmbStepType.DataSource = stepTypes;
             cmbStepType.DisplayMember = "Value";
@@ -266,73 +213,130 @@ namespace SmartRoutine.UI.Controls
             cmbStepType.SelectedIndex = -1;
             cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
 
-            // tglAutoStart
-            tglAutoStart = UIStyles.ToggleSwitches.CreateStandard(true, "Autostart An", "Autostart Aus");
-            tglAutoStart.Location = new Point(0, 0);
+            tglAutoStart = UIStyles.ToggleSwitches.CreateStandard(
+                true,
+                "Autostart An",
+                "Autostart Aus");
 
-            stepTypeAutoStartTlp.Controls.Add(cmbStepType, 0, 0);
-            stepTypeAutoStartTlp.Controls.Add(tglAutoStart, 1, 0);
+            tglAutoStart.Anchor = AnchorStyles.Left;
 
-            // ==================================================================================================================
-            // stepTypeContent
-            stepTypeContentPanel = UIStyles.Panels.CreateMedium();
-            stepTypeContentPanel.Dock = DockStyle.Fill;
+            // ========== ROW 2: BASE TABLE ==========
+            editorBaseTable = new StyledPropertyTable
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true
+            };
+            BuildBaseEditorTable();
 
-            stepTypeContentTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 1);
-            stepTypeContentTlp.Dock = DockStyle.Fill;
+            // ========== ROW 3: OPTIONS TABLE ==========
+            editorOptionsTable = new StyledPropertyTable
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true
+            };
 
-            stepTypeContentPanel.Controls.Add(stepTypeContentTlp);
+            BuildOptionsEditorTable();
 
-            // ==================================================================================================================
+            // ========== ROW 4: FILL PANEL ==========
+            rightFillPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = UIStyles.Colors.BackgroundMediumElevated,
+                Margin = new Padding(0)
+            };
 
-            // btnSaveStep, btnCancelStep
-            rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(3, 1);
+            // ========== ROW 5: BUTTONS ==========
+            rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(4, 1);
             rightBtnsTlp.Dock = DockStyle.Fill;
+            rightBtnsTlp.ColumnStyles.Clear();
 
-            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾 Schritt speichern", "", new Size(155, 35));
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Spacer links
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155)); // Execute
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155)); // Save
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155)); // Cancel
+
+            // Execute
+            btnExecuteStep = UIStyles.Buttons.CreateGreen(
+                "▶ Ausführen",
+                "",
+                new Size(155, 35));
+
+            btnExecuteStep.Click += BtnExecuteStep_Click;
+
+            // Save
+            btnSaveStep = UIStyles.Buttons.CreatePrimary(
+                "💾 Speichern",
+                "",
+                new Size(155, 35));
+
             btnSaveStep.Click += BtnSaveStep_Click;
 
-            btnCancelStep = UIStyles.Buttons.CreatePrimary("✖ Abbrechen", "", new Size(155, 35));
+            // Cancel
+            btnCancelStep = UIStyles.Buttons.CreatePrimary(
+                "✖ Abbrechen",
+                "",
+                new Size(155, 35));
+
             btnCancelStep.Click += BtnCancelStep_Click;
 
-            rightBtnsTlp.ColumnStyles.Clear();
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // leerer Platz links
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnSaveStep.Width));
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnCancelStep.Width));
+            // Hinzufügen
+            rightBtnsTlp.Controls.Add(btnExecuteStep, 1, 0);
+            rightBtnsTlp.Controls.Add(btnSaveStep, 2, 0);
+            rightBtnsTlp.Controls.Add(btnCancelStep, 3, 0);
 
-            rightBtnsTlp.Controls.Add(btnSaveStep, 1, 0);
-            rightBtnsTlp.Controls.Add(btnCancelStep, 2, 0);
-
-            rightTlp.Controls.AddRange(new Control[] {
-                rightTitleTlp, lblStepName, txtStepName,
-                lblStepDescription, txtStepDescription,
-                lblStepType, stepTypeAutoStartTlp, stepTypeContentPanel, 
-                rightBtnsTlp
-            });
+            // ========== RIGHT TLP ZUSAMMENBAU ==========
+            rightTlp.Controls.Add(rightTitleTlp, 0, 0);
+            rightTlp.Controls.Add(editorBaseTable, 0, 1);
+            rightTlp.Controls.Add(editorOptionsTable, 0, 2);
+            rightTlp.Controls.Add(rightFillPanel, 0, 3);
+            rightTlp.Controls.Add(rightBtnsTlp, 0, 4);
 
             // ========== FOOTER ==========
             var footerPanel = UIStyles.Panels.CreateDark();
             footerPanel.Dock = DockStyle.Fill;
 
+            var footerTlp = UIStyles.TableLayoutPanels.CreateDark(4, 1);
+            footerTlp.Dock = DockStyle.Fill;
+            footerTlp.Padding = new Padding(0);
+            footerTlp.ColumnStyles.Clear();
+            footerTlp.RowStyles.Clear();
+
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170)); // Add
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 165)); // Delete
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));  // LastExecution
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120)); // Back
+
+            footerTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            btnAddStep = UIStyles.Buttons.CreatePrimary("+ Schritt hinzufügen", "", new Size(155, 35));
+            btnAddStep.Dock = DockStyle.Fill;
+            btnAddStep.Margin = new Padding(10, 10, 5, 10);
+            btnAddStep.Click += BtnAddStep_Click;
+
+            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑 Löschen", "", new Size(155, 35));
+            btnDeleteStep.Dock = DockStyle.Fill;
+            btnDeleteStep.Margin = new Padding(5, 10, 10, 10);
+            btnDeleteStep.Click += BtnDeleteStep_Click;
+            btnDeleteStep.Enabled = false;
+
             lblLastExecution = UIStyles.Labels.CreateMuted();
-            lblLastExecution.AutoSize = true;
-            lblLastExecution.Location = new Point(20, 18);
+            lblLastExecution.Dock = DockStyle.Fill;
+            lblLastExecution.Margin = new Padding(15, 0, 10, 0);
             lblLastExecution.TextAlign = ContentAlignment.MiddleLeft;
 
             btnBack = UIStyles.Buttons.CreateStandard("← Zurück", "", new Size(100, 35));
-            btnBack.Location = new Point(footerPanel.Width - 120, 12);
-            btnBack.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnBack.Dock = DockStyle.Fill;
+            btnBack.Margin = new Padding(10, 10, 10, 10);
             btnBack.Click += BtnBack_Click;
 
-            footerPanel.Controls.AddRange(new Control[] { lblLastExecution, btnBack });
-            footerPanel.Resize += (s, e) =>
-            {
-                lblLastExecution.Location = new Point(
-                    20,
-                    (footerPanel.ClientSize.Height - lblLastExecution.Height) / 2
-                );
-            };
+            footerTlp.Controls.Add(btnAddStep, 0, 0);
+            footerTlp.Controls.Add(btnDeleteStep, 1, 0);
+            footerTlp.Controls.Add(lblLastExecution, 2, 0);
+            footerTlp.Controls.Add(btnBack, 3, 0);
 
+            footerPanel.Controls.Add(footerTlp);
+
+            // ========== ZUSAMMENBAU ==========
             contentTlp.Controls.Add(leftTlp, 0, 0);
             contentTlp.Controls.Add(rightTlp, 1, 0);
 
@@ -341,9 +345,55 @@ namespace SmartRoutine.UI.Controls
 
             this.Controls.Add(mainTlp);
 
-            // Initial Zustand
             SetEditorEnabled(false);
         }
+
+        private void BuildBaseEditorTable()
+        {
+            if (editorBaseTable == null)
+                return;
+
+            editorBaseTable.ClearRows();
+
+            editorBaseTable.AddSection(lblStepNameTitle.Text);
+            editorBaseTable.AddRow("Name", txtStepName);
+            editorBaseTable.AddRow("Beschreibung", txtStepDescription);
+            editorBaseTable.AddRow("Aktion", cmbStepType);
+            editorBaseTable.AddRow("Autostart", tglAutoStart);
+        }
+
+        private void BuildOptionsEditorTable()
+        {
+            if (editorOptionsTable == null)
+                return;
+
+            editorOptionsTable.ClearRows();
+
+            if (!(cmbStepType.SelectedValue is StepType selectedType))
+                return;
+
+            editorOptionsTable.AddSection("Optionen");
+
+            switch (selectedType)
+            {
+                case StepType.OpenUrl:
+                    CreateOpenUrlControls();
+                    break;
+
+                case StepType.OpenFolder:
+                    CreateOpenFolderControls();
+                    break;
+
+                case StepType.OpenApplication:
+                    CreateOpenApplicationControls();
+                    break;
+
+                case StepType.OpenDocument:
+                    CreateOpenDocumentControls();
+                    break;
+            }
+        }
+
 
         // ========== PUBLIC METHODS ==========
         public void LoadRoutine(Routine routine)
@@ -587,37 +637,25 @@ namespace SmartRoutine.UI.Controls
 
         private void ClearEditor()
         {
-            lblStepNameTitle.Text = "Neuen Schritt erstellen";
             txtStepName.Text = "";
             txtStepDescription.Text = "";
             tglStepEnabled.Checked = true;
             tglAutoStart.Checked = true;
 
-            // OpenUrl Controls
-            if (txtUrl != null) txtUrl.Text = "";
-            if (tglOpenInExternBrowser != null) tglOpenInExternBrowser.Checked = true;
-
-            // OpenFolder Controls
-            if (txtFolderPath != null) txtFolderPath.Text = "";
-            if (tglOpenInNewWindow != null) tglOpenInNewWindow.Checked = true;
-
-            // OpenApplication Controls
-            if (txtAppPath != null) txtAppPath.Text = "";
-            if (txtAppArguments != null) txtAppArguments.Text = "";
-            if (tglRunAsAdmin != null) tglRunAsAdmin.Checked = false;
-
-            // OpenDocument Controls
-            if (txtDocumentPath != null) txtDocumentPath.Text = "";
-
             cmbStepType.SelectedIndex = -1;
-            stepTypeContentTlp.Visible = false;
+
+            lblStepNameTitle.Text = "Neuen Schritt erstellen";
+            BuildBaseEditorTable();
+            BuildOptionsEditorTable();
+
             _editingStep = null;
             SetEditorEnabled(false);
         }
 
         private void LoadStepToEditor(RoutineStep step)
         {
-            lblStepNameTitle.Text = $"{step.Name} bearbeiten";
+            lblStepNameTitle.Text = $"Schritt bearbeiten";
+            BuildBaseEditorTable();
             txtStepName.Text = step.Name;
             txtStepDescription.Text = step.Description;
             tglStepEnabled.Checked = step.Show;
@@ -633,6 +671,7 @@ namespace SmartRoutine.UI.Controls
                     break;
                 }
             }
+            BuildOptionsEditorTable();
 
             // Step-spezifische Werte laden
             switch (step)
@@ -668,15 +707,17 @@ namespace SmartRoutine.UI.Controls
 
         private void SetEditorEnabled(bool enabled)
         {
-            foreach (Control control in rightTlp.Controls)
-            {
-                control.Enabled = enabled;
-            }
-            // stepTypeContentTlp Controls manuell aktivieren/deaktivieren
-            foreach (Control control in stepTypeContentTlp.Controls)
-            {
-                control.Enabled = enabled;
-            }
+            if (rightTitleTlp != null)
+                rightTitleTlp.Enabled = enabled;
+
+            if (editorBaseTable != null)
+                editorBaseTable.Enabled = enabled;
+
+            if (editorOptionsTable != null)
+                editorOptionsTable.Enabled = enabled;
+
+            if (rightBtnsTlp != null)
+                rightBtnsTlp.Enabled = enabled;
         }
 
         // ========== STEP EVENT HANDLER ==========
@@ -752,7 +793,6 @@ namespace SmartRoutine.UI.Controls
         }
 
 
-
         // ========== STEP LIST METHODS ==========
         private void RefreshStepsList(bool silent = false)
         {
@@ -781,7 +821,6 @@ namespace SmartRoutine.UI.Controls
             if (!silent)
                 Debug.WriteLine($"RefreshStepsList: {orderedSteps.Count} Schritte geladen");
         }
-
 
         private void BtnSaveStep_Click(object sender, EventArgs e)
         {
@@ -884,142 +923,61 @@ namespace SmartRoutine.UI.Controls
 
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
         {
-            stepTypeContentTlp.Controls.Clear();
-            stepTypeContentTlp.RowStyles.Clear();
-            stepTypeContentTlp.ColumnStyles.Clear();
-
-            if (cmbStepType.SelectedIndex == -1)
-            {
-                stepTypeContentTlp.Visible = false;
-                return;
-            }
-
-            var selectedType = (StepType)cmbStepType.SelectedValue;
-
-            switch (selectedType)
-            {
-                case StepType.OpenUrl:
-                    CreateOpenUrlControls();
-                    break;
-                case StepType.OpenFolder:
-                    CreateOpenFolderControls();
-                    break;
-                case StepType.OpenApplication:
-                    CreateOpenApplicationControls();
-                    break;
-                case StepType.OpenDocument: 
-                    CreateOpenDocumentControls();
-                    break;
-            }
+            BuildOptionsEditorTable();
         }
 
         private void CreateOpenUrlControls()
         {
-            stepTypeContentTlp.Controls.Clear();
-            stepTypeContentTlp.RowStyles.Clear();
-            stepTypeContentTlp.ColumnCount = 1;
-            stepTypeContentTlp.RowCount = 4;  // 4 Zeilen (keine extra Füllzeile mehr)
-            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label URL
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox URL
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Horizontale Reihe (Label + Toggle)
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Füll-Zeile
-
-            // Label URL
-            var lblUrl = UIStyles.Labels.CreateNormal("URL:");
-            lblUrl.Dock = DockStyle.Fill;
-            lblUrl.Margin = new Padding(3, 5, 3, 3);
-
-            // TextBox URL
             txtUrl = UIStyles.TextBoxes.CreateStandard();
             txtUrl.Name = "txtUrl";
-            txtUrl.Dock = DockStyle.Fill;
-            txtUrl.Margin = new Padding(3, 3, 3, 10);
 
             txtUrl.TextChanged += TxtUrl_TextChanged;
             txtUrl.LostFocus += TxtUrl_LostFocus;
 
-            // Drag & Drop für txtUrl aktivieren
-            DragDropHelper.EnableTextDragDrop(txtUrl, (droppedText) =>
+            DragDropHelper.EnableTextDragDrop(txtUrl, droppedText =>
             {
-                // Bereinige den gedroppten Text
                 string cleanedText = droppedText.Trim();
 
-                // Setze den Text in die TextBox
                 txtUrl.Text = cleanedText;
-
-                // Führe die Validierung aus
                 TxtUrl_TextChanged(txtUrl, EventArgs.Empty);
-
-                // Setze den Cursor ans Ende
                 txtUrl.SelectionStart = txtUrl.Text.Length;
             });
 
+            tglOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(
+                false,
+                "Externer Browser",
+                "In App öffnen");
 
-            // Horizontales Panel für Label + ToggleSwitch
-            var horizontalPanel = new TableLayoutPanel
+            tglOpenInExternBrowser.Name = "tglOpenInternally";
+            tglOpenInExternBrowser.Anchor = AnchorStyles.Left;
+
+            editorOptionsTable.AddRow("URL", txtUrl);
+            editorOptionsTable.AddRow("Öffnen in", tglOpenInExternBrowser);
+        }
+
+        private void CreateOpenFolderControls()
+        {
+            txtFolderPath = UIStyles.TextBoxes.CreateStandard();
+            txtFolderPath.Name = "txtFolderPath";
+
+            var folderPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 1,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink
+                BackColor = Color.Transparent,
+                Margin = new Padding(0)
             };
-            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            horizontalPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            // Label
-            var lblInternal = UIStyles.Labels.CreateNormal("Öffnen in (App/Browser):");
-            lblInternal.Dock = DockStyle.Fill;
-            lblInternal.Margin = new Padding(3, 5, 3, 3);
+            folderPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            folderPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
 
-            // ToggleSwitch
-            tglOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(false, "Externer Browser", "In App öffnen");
-            tglOpenInExternBrowser.Name = "chkOpenInternally";
-            tglOpenInExternBrowser.Anchor = AnchorStyles.Left;
-            tglOpenInExternBrowser.Margin = new Padding(3, 3, 3, 3);
-
-            horizontalPanel.Controls.Add(lblInternal, 0, 0);
-            horizontalPanel.Controls.Add(tglOpenInExternBrowser, 1, 0);
-
-            // Controls hinzufügen
-            stepTypeContentTlp.Controls.Add(lblUrl, 0, 0);
-            stepTypeContentTlp.Controls.Add(txtUrl, 0, 1);
-            stepTypeContentTlp.Controls.Add(horizontalPanel, 0, 2);
-
-            stepTypeContentTlp.Visible = true;
-        }
-        private void CreateOpenFolderControls()
-        {
-            stepTypeContentTlp.Controls.Clear();
-            stepTypeContentTlp.RowStyles.Clear();
-            stepTypeContentTlp.ColumnCount = 2;
-            stepTypeContentTlp.RowCount = 4;
-            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
-
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label Ordnerpfad
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox + Browse Button
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Horizontale Reihe (Label + Toggle)
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Füll-Zeile
-
-            // Label Ordnerpfad
-            var lblPath = UIStyles.Labels.CreateNormal("Ordnerpfad:");
-            lblPath.Dock = DockStyle.Fill;
-            lblPath.Margin = new Padding(3, 5, 3, 3);
-
-            // TextBox Ordnerpfad
-            txtFolderPath = UIStyles.TextBoxes.CreateStandard();
-            txtFolderPath.Name = "txtFolderPath";
             txtFolderPath.Dock = DockStyle.Fill;
-            txtFolderPath.Margin = new Padding(3, 3, 3, 3);
 
-            // Browse Button
             var btnBrowse = UIStyles.Buttons.CreateStandard("Durchsuchen...");
             btnBrowse.Dock = DockStyle.Fill;
-            btnBrowse.Margin = new Padding(3, 3, 3, 10);
+            btnBrowse.Margin = new Padding(5, 0, 0, 0);
+
             btnBrowse.Click += (s, e) =>
             {
                 using (var dialog = new FolderBrowserDialog())
@@ -1029,173 +987,97 @@ namespace SmartRoutine.UI.Controls
                 }
             };
 
-            // Horizontales Panel für Label + ToggleSwitch
-            var horizontalPanel = new TableLayoutPanel
+            folderPanel.Controls.Add(txtFolderPath, 0, 0);
+            folderPanel.Controls.Add(btnBrowse, 1, 0);
+
+            tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
+            tglOpenInNewWindow.Name = "tglOpenInNewWindow";
+            tglOpenInNewWindow.Anchor = AnchorStyles.Left;
+
+            editorOptionsTable.AddRow("Ordnerpfad", folderPanel);
+            editorOptionsTable.AddRow("Neues Fenster", tglOpenInNewWindow);
+        }
+
+
+        private void CreateOpenApplicationControls()
+        {
+            txtAppPath = UIStyles.TextBoxes.CreateStandard();
+            txtAppPath.Name = "txtAppPath";
+
+            var appPathPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 1,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink
+                BackColor = Color.Transparent,
+                Margin = new Padding(0)
             };
-            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            horizontalPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            var lblOptions = UIStyles.Labels.CreateNormal("Im neuen Fenster öffnen:");
-            lblOptions.Dock = DockStyle.Fill;
-            lblOptions.Margin = new Padding(3, 5, 3, 3);
+            appPathPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            appPathPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
 
-            tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
-            tglOpenInNewWindow.Name = "chkOpenInNewWindow";
-            tglOpenInNewWindow.Anchor = AnchorStyles.Left;
-            tglOpenInNewWindow.Margin = new Padding(3, 3, 3, 3);
-
-            horizontalPanel.Controls.Add(lblOptions, 0, 0);
-            horizontalPanel.Controls.Add(tglOpenInNewWindow, 1, 0);
-
-            // Controls hinzufügen
-            stepTypeContentTlp.Controls.Add(lblPath, 0, 0);
-            stepTypeContentTlp.SetColumnSpan(lblPath, 2);
-
-            stepTypeContentTlp.Controls.Add(txtFolderPath, 0, 1);
-            stepTypeContentTlp.Controls.Add(btnBrowse, 1, 1);
-
-            stepTypeContentTlp.Controls.Add(horizontalPanel, 0, 2);
-            stepTypeContentTlp.SetColumnSpan(horizontalPanel, 2);
-
-            stepTypeContentTlp.Visible = true;
-        }
-        private void CreateOpenApplicationControls()
-        {
-            stepTypeContentTlp.Controls.Clear();
-            stepTypeContentTlp.RowStyles.Clear();
-            stepTypeContentTlp.ColumnCount = 2;
-            stepTypeContentTlp.RowCount = 6;
-            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
-
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label Programmpfad
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox + Browse Button
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label Argumente
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox Argumente
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Horizontale Reihe (Label + Toggle)
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Füll-Zeile
-
-            // Label Programmpfad
-            var lblPath = UIStyles.Labels.CreateNormal("Programmpfad:");
-            lblPath.Dock = DockStyle.Fill;
-            lblPath.Margin = new Padding(3, 5, 3, 3);
-
-            // TextBox Programmpfad
-            txtAppPath = UIStyles.TextBoxes.CreateStandard();
-            txtAppPath.Name = "txtAppPath";
             txtAppPath.Dock = DockStyle.Fill;
-            txtAppPath.Margin = new Padding(3, 3, 3, 3);
 
-            // Browse Button
             var btnBrowse = UIStyles.Buttons.CreateStandard("Durchsuchen...");
             btnBrowse.Dock = DockStyle.Fill;
-            btnBrowse.Margin = new Padding(3, 3, 3, 10);
+            btnBrowse.Margin = new Padding(5, 0, 0, 0);
+
             btnBrowse.Click += (s, e) =>
             {
                 using (var dialog = new OpenFileDialog())
                 {
                     dialog.Filter = "Anwendungen (*.exe)|*.exe|Alle Dateien (*.*)|*.*";
+
                     if (dialog.ShowDialog() == DialogResult.OK)
                         txtAppPath.Text = dialog.FileName;
                 }
             };
 
-            // Label Argumente
-            var lblArgs = UIStyles.Labels.CreateNormal("Argumente:");
-            lblArgs.Dock = DockStyle.Fill;
-            lblArgs.Margin = new Padding(3, 5, 3, 3);
+            appPathPanel.Controls.Add(txtAppPath, 0, 0);
+            appPathPanel.Controls.Add(btnBrowse, 1, 0);
 
-            // TextBox Argumente
             txtAppArguments = UIStyles.TextBoxes.CreateStandard();
             txtAppArguments.Name = "txtAppArguments";
-            txtAppArguments.Dock = DockStyle.Fill;
-            txtAppArguments.Margin = new Padding(3, 3, 3, 10);
-            txtAppArguments.Multiline = false;
 
-            // Horizontales Panel für Label + ToggleSwitch
-            var horizontalPanel = new TableLayoutPanel
+            tglRunAsAdmin = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
+            tglRunAsAdmin.Name = "tglRunAsAdmin";
+            tglRunAsAdmin.Anchor = AnchorStyles.Left;
+
+            editorOptionsTable.AddRow("Programmpfad", appPathPanel);
+            editorOptionsTable.AddRow("Argumente", txtAppArguments);
+            editorOptionsTable.AddRow("Als Admin", tglRunAsAdmin);
+        }
+
+        private void CreateOpenDocumentControls()
+        {
+            txtDocumentPath = UIStyles.TextBoxes.CreateStandard();
+            txtDocumentPath.Name = "txtDocumentPath";
+
+            var documentPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 1,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink
+                BackColor = Color.Transparent,
+                Margin = new Padding(0)
             };
-            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            horizontalPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            horizontalPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            var lblOptions = UIStyles.Labels.CreateNormal("Als Admin ausführen:");
-            lblOptions.Dock = DockStyle.Fill;
-            lblOptions.Margin = new Padding(3, 5, 3, 3);
+            documentPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            documentPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
 
-            tglRunAsAdmin = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
-            tglRunAsAdmin.Name = "chkRunAsAdmin";
-            tglRunAsAdmin.Anchor = AnchorStyles.Left;
-            tglRunAsAdmin.Margin = new Padding(3, 3, 3, 3);
-
-            horizontalPanel.Controls.Add(lblOptions, 0, 0);
-            horizontalPanel.Controls.Add(tglRunAsAdmin, 1, 0);
-
-            // Controls hinzufügen
-            stepTypeContentTlp.Controls.Add(lblPath, 0, 0);
-            stepTypeContentTlp.SetColumnSpan(lblPath, 2);
-
-            stepTypeContentTlp.Controls.Add(txtAppPath, 0, 1);
-            stepTypeContentTlp.Controls.Add(btnBrowse, 1, 1);
-
-            stepTypeContentTlp.Controls.Add(lblArgs, 0, 2);
-            stepTypeContentTlp.SetColumnSpan(lblArgs, 2);
-
-            stepTypeContentTlp.Controls.Add(txtAppArguments, 0, 3);
-            stepTypeContentTlp.SetColumnSpan(txtAppArguments, 2);
-
-            stepTypeContentTlp.Controls.Add(horizontalPanel, 0, 4);
-            stepTypeContentTlp.SetColumnSpan(horizontalPanel, 2);
-
-            stepTypeContentTlp.Visible = true;
-        }
-        private void CreateOpenDocumentControls()
-        {
-            stepTypeContentTlp.Controls.Clear();
-            stepTypeContentTlp.RowStyles.Clear();
-            stepTypeContentTlp.ColumnCount = 2;
-            stepTypeContentTlp.RowCount = 3;
-            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            stepTypeContentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
-
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Label Dateipfad
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // TextBox + Browse Button
-            stepTypeContentTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Füll-Zeile
-
-            // Label Dateipfad
-            var lblPath = UIStyles.Labels.CreateNormal("Dateipfad:");
-            lblPath.Dock = DockStyle.Fill;
-            lblPath.Margin = new Padding(3, 5, 3, 3);
-
-            // TextBox Dateipfad
-            txtDocumentPath = UIStyles.TextBoxes.CreateStandard();
-            txtDocumentPath.Name = "txtDocumentPath";
             txtDocumentPath.Dock = DockStyle.Fill;
-            txtDocumentPath.Margin = new Padding(3, 3, 3, 3);
 
-            // Browse Button
             btnBrowseDocument = UIStyles.Buttons.CreateStandard("Durchsuchen...");
             btnBrowseDocument.Dock = DockStyle.Fill;
-            btnBrowseDocument.Margin = new Padding(3, 3, 3, 10);
+            btnBrowseDocument.Margin = new Padding(5, 0, 0, 0);
+
             btnBrowseDocument.Click += (s, e) =>
             {
                 using (var dialog = new OpenFileDialog())
                 {
                     dialog.Filter = "Alle Dateien (*.*)|*.*";
                     dialog.Title = "Dokument auswählen";
+
                     if (dialog.ShowDialog() == DialogResult.OK)
                     {
                         txtDocumentPath.Text = dialog.FileName;
@@ -1203,16 +1085,11 @@ namespace SmartRoutine.UI.Controls
                 }
             };
 
-            // Controls hinzufügen
-            stepTypeContentTlp.Controls.Add(lblPath, 0, 0);
-            stepTypeContentTlp.SetColumnSpan(lblPath, 2);
+            documentPanel.Controls.Add(txtDocumentPath, 0, 0);
+            documentPanel.Controls.Add(btnBrowseDocument, 1, 0);
 
-            stepTypeContentTlp.Controls.Add(txtDocumentPath, 0, 1);
-            stepTypeContentTlp.Controls.Add(btnBrowseDocument, 1, 1);
-
-            stepTypeContentTlp.Visible = true;
+            editorOptionsTable.AddRow("Dateipfad", documentPanel);
         }
-
         // ========== BACK BUTTON ==========
         private void BtnBack_Click(object sender, EventArgs e)
         {
