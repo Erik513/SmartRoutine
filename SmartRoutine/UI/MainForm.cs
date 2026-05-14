@@ -45,7 +45,7 @@ namespace SmartRoutine.UI
             this.FormBorderStyle = FormBorderStyle.None;
             this.BackColor = UIStyles.Colors.BackgroundDark;
             this.MinimumSize = MINIMUM_WINDOW_SIZE;
-            this.Size = DEFAULT_WINDOW_SIZE;
+            this.Size = MINIMUM_WINDOW_SIZE;
             this.CenterToScreen();
         }
 

@@ -49,7 +49,7 @@ namespace SmartRoutine.UI.Controls
             var mainLayout = new TableLayoutPanel
             {
                 Anchor = AnchorStyles.None,
-                Size = new Size((int)(this.Width * 0.6), (int)(this.Height * 0.6)),
+                Size = new Size((int)(this.Width * 0.85), (int)(this.Height * 0.85)),
                 BackColor = Color.Transparent,
                 ColumnCount = 1,
                 RowCount = 2
@@ -172,8 +172,8 @@ namespace SmartRoutine.UI.Controls
 
         private void CenterControls(TableLayoutPanel mainLayout)
         {
-            int newWidth = (int)(this.Width * 0.6);
-            int newHeight = (int)(this.Height * 0.6);
+            int newWidth = this.Width - 160;
+            int newHeight = this.Height - 160;
 
             mainLayout.Size = new Size(newWidth, newHeight);
             mainLayout.Location = new Point(
