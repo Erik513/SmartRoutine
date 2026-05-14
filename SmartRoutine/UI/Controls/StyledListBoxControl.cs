@@ -34,6 +34,12 @@ namespace SmartRoutine.UI.Controls
             remove => listBox.MouseLeave -= value;
         }
 
+        public Func<object, bool> IsItemDisabled
+        {
+            get => listBox.IsItemDisabled;
+            set => listBox.IsItemDisabled = value;
+        }
+
         public StyledListBoxControl()
         {
             InitializeControl(showHeader: false, allowReorder: false);

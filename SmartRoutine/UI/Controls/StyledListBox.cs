@@ -42,6 +42,21 @@ namespace SmartRoutine.UI.Controls
                 Invalidate();
             }
         }
+        private Color _disabledForeColor = UIStyles.Colors.TextDisabled;
+        private Color _disabledBackColor = UIStyles.Colors.BackgroundDarkElevated;
+        public Func<object, bool> IsItemDisabled { get; set; }
+
+        public Color DisabledForeColor
+        {
+            get => _disabledForeColor;
+            set { _disabledForeColor = value; Invalidate(); }
+        }
+
+        public Color DisabledBackColor
+        {
+            get => _disabledBackColor;
+            set { _disabledBackColor = value; Invalidate(); }
+        }
 
         public StyledListBox(bool allowReorder = false)
         {
@@ -334,7 +349,12 @@ namespace SmartRoutine.UI.Controls
 
             Rectangle rect = new Rectangle(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height);
 
+            object item = Items[e.Index];
+            string itemText = item?.ToString() ?? "";
+            bool isDisabled = IsItemDisabled?.Invoke(item) == true;
+
             Color backColor;
+
             if ((e.State & DrawItemState.Selected) != 0 && !_isDragging)
             {
                 backColor = _selectedBackColor;
@@ -343,9 +363,15 @@ namespace SmartRoutine.UI.Controls
             {
                 backColor = _hoverBackColor;
             }
+            else if (isDisabled)
+            {
+                backColor = _disabledBackColor;
+            }
             else
             {
-                backColor = e.Index % 2 == 0 ? _itemBackColor : Color.FromArgb(_itemBackColor.R - 5, _itemBackColor.G - 5, _itemBackColor.B - 5);
+                backColor = e.Index % 2 == 0
+                    ? _itemBackColor
+                    : Color.FromArgb(_itemBackColor.R - 5, _itemBackColor.G - 5, _itemBackColor.B - 5);
             }
 
             using (var brush = new SolidBrush(backColor))
@@ -353,7 +379,20 @@ namespace SmartRoutine.UI.Controls
                 e.Graphics.FillRectangle(brush, rect);
             }
 
-            Color textColor = ((e.State & DrawItemState.Selected) != 0 && !_isDragging) ? _selectedForeColor : _itemForeColor;
+            Color textColor;
+
+            if ((e.State & DrawItemState.Selected) != 0 && !_isDragging)
+            {
+                textColor = _selectedForeColor;
+            }
+            else if (isDisabled)
+            {
+                textColor = _disabledForeColor;
+            }
+            else
+            {
+                textColor = _itemForeColor;
+            }
 
             bool isVScrollVisible = IsVerticalScrollBarVisible();
 
@@ -365,10 +404,8 @@ namespace SmartRoutine.UI.Controls
                 DrawDragHandle(e.Graphics, dragRect);
             }
 
-            // Text-Bereich berechnen (rechts neben dem Drag-Handle)
             int textRightMargin = 12;
             int textLeftMargin = 8;
-
             int reservedDragWidth = _allowReorder ? dragRect.Width : 0;
 
             Rectangle textRect = new Rectangle(
@@ -378,10 +415,6 @@ namespace SmartRoutine.UI.Controls
                 rect.Height
             );
 
-            // Text
-            object item = Items[e.Index];
-            string itemText = item?.ToString() ?? "";
-
             using (var textBrush = new SolidBrush(textColor))
             {
                 var format = new StringFormat
@@ -390,12 +423,12 @@ namespace SmartRoutine.UI.Controls
                     LineAlignment = StringAlignment.Center,
                     Trimming = StringTrimming.EllipsisCharacter
                 };
+
                 e.Graphics.DrawString(itemText, this.Font, textBrush, textRect, format);
             }
 
             base.OnDrawItem(e);
         }
-
         protected override void WndProc(ref Message m)
         {
             base.WndProc(ref m);

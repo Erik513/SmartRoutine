@@ -160,6 +160,7 @@ namespace SmartRoutine.UI.Controls
                 ItemHeightCustom = 35,
                 Visible = true,
             };
+            lstSteps.IsItemDisabled = item => item is RoutineStep step && !step.Show;
             lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
             lstSteps.ItemsReordered += LstSteps_ItemsReordered;
 
