@@ -236,6 +236,34 @@ namespace SmartRoutine.UI.Helpers
 
                 return button;
             }
+            public static Button CreateIconButton(string text, int size = 32)
+            {
+                var button = new Button
+                {
+                    Text = text,
+                    Width = size,
+                    Height = size,
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.FromArgb(40, 255, 255, 255),
+                    ForeColor = Colors.TextPrimary,
+                    Font = new Font("Segoe UI Emoji", 11),
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(4)
+                };
+
+                button.FlatAppearance.BorderSize = 0;
+                button.FlatAppearance.MouseOverBackColor = Color.FromArgb(70, 255, 255, 255);
+                button.FlatAppearance.MouseDownBackColor = Color.FromArgb(90, 255, 255, 255);
+
+                button.Resize += (s, e) =>
+                {
+                    var path = new System.Drawing.Drawing2D.GraphicsPath();
+                    path.AddEllipse(0, 0, button.Width, button.Height);
+                    button.Region = new Region(path);
+                };
+
+                return button;
+            }
 
             private static void SetupDisabledStyle(Button button, Color enabledBackColor, Color enabledForeColor, Color disabledBackColor, Color disabledForeColor)
             {

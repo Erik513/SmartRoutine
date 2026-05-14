@@ -55,7 +55,7 @@ namespace SmartRoutine.UI
             ConfigureForm();
             _toolTip = new ToolTip();
             _infoPopup = new InfoPopupForm();
-
+            
             Shown += (s, e) =>
             {
                 if (!string.IsNullOrEmpty(_pendingToastMessage))
@@ -77,6 +77,8 @@ namespace SmartRoutine.UI
 
         private void InitializeExecution()
         {
+            _session = new RoutineExecutionSession(_routine, _specificStep);
+
             // TitleBar
             var titleBar = new TitleBarControl(this.Text);
             this.Controls.Add(titleBar);
@@ -238,8 +240,6 @@ namespace SmartRoutine.UI
 
         private void LoadCurrentStep()
         {
-            _session = new RoutineExecutionSession(_routine, _specificStep);
-
             var currentStep = _session.CurrentStep;
 
             _stepCounterLabel.Text = _session.StepCounterText;
@@ -259,6 +259,7 @@ namespace SmartRoutine.UI
                 ? UIStyles.Colors.White
                 : UIStyles.Colors.TextSecondary;
 
+            StopWebViewAudio();
             LoadStepContent(currentStep);
 
             if (_session.ShouldAutoExecuteCurrentStep)
@@ -267,7 +268,21 @@ namespace SmartRoutine.UI
             }
         }
 
+        private void StopWebViewAudio()
+        {
+            if (_webView?.CoreWebView2 == null)
+                return;
 
+            try
+            {
+                _webView.CoreWebView2.Stop();
+                _webView.CoreWebView2.Navigate("about:blank");
+            }
+            catch
+            {
+                // WebView ist evtl. gerade noch nicht bereit oder schon disposed
+            }
+        }
         private void LoadStepContent(RoutineStep step)
         {
             _contentPanel.Controls.Clear();
@@ -370,6 +385,34 @@ namespace SmartRoutine.UI
             if (step is OpenDocumentStep docStep)
                 return $"✓ Geöffnet: {System.IO.Path.GetFileName(docStep.FilePath)}";
             return $"✓ {step.Name} ausgeführt";
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            StopAndDisposeWebView();
+            base.OnFormClosing(e);
+        }
+
+        private void StopAndDisposeWebView()
+        {
+            if (_webView == null)
+                return;
+
+            try
+            {
+                if (_webView.CoreWebView2 != null)
+                {
+                    _webView.CoreWebView2.Stop();
+                    _webView.CoreWebView2.Navigate("about:blank");
+                }
+
+                _webView.Dispose();
+                _webView = null;
+            }
+            catch
+            {
+                // Falls WebView beim Schließen schon disposed ist
+            }
         }
     }
 }
