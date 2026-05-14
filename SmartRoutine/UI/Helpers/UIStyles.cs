@@ -382,9 +382,10 @@ namespace SmartRoutine.UI.Helpers
             {
                 return new Panel
                 {
-                    BackColor = Colors.PrimaryDarkDark,
+                    Dock = DockStyle.Fill,
+                    BackColor = Colors.BackgroundDark,
                     BorderStyle = BorderStyle.None,
-                    Padding = new Padding(0),
+                    Padding = new Padding(20, 10, 20, 10),
                     Margin = new Padding(0)
                 };
             }
@@ -395,6 +396,17 @@ namespace SmartRoutine.UI.Helpers
                 {
                     BackColor = Colors.BackgroundMedium,
                     BorderStyle = BorderStyle.FixedSingle
+                };
+            }
+
+            public static Panel CreateTransparent()
+            {
+                return new Panel
+                {
+                    BackColor = Color.Transparent,
+                    BorderStyle = BorderStyle.None,
+                    Padding = new Padding(0),
+                    Margin = new Padding(0)
                 };
             }
         }
@@ -480,9 +492,10 @@ namespace SmartRoutine.UI.Helpers
                     ToolTipTitle = text,
                     BackColor = Colors.BackgroundMedium,
                     ForeColor = Colors.TextPrimary,
-                    AutoPopDelay = 5000,
-                    InitialDelay = 500,
-                    ReshowDelay = 100,
+
+                    AutoPopDelay = 10000,
+                    InitialDelay = 1000,
+                    ReshowDelay = 300,
                     UseAnimation = true,
                     UseFading = true
                 };

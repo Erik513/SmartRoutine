@@ -98,7 +98,6 @@ namespace SmartRoutine.UI
         {
             if (owner == null) return;
 
-            // Vorherige Toast schließen
             if (_currentToast != null && !_currentToast.IsDisposed)
             {
                 _currentToast.Close();
@@ -107,10 +106,12 @@ namespace SmartRoutine.UI
             _currentToast = new ToastForm();
             _currentToast._messageLabel.Text = message;
 
-            _currentToast.Location = new Point(
-                owner.Location.X + (owner.Width / 2) - (_currentToast.Width / 2),
-                owner.Location.Y + (int)(owner.Height * 0.75) - (_currentToast.Height / 2)
-            );
+            var position = owner.PointToScreen(new Point(
+                (owner.ClientSize.Width - _currentToast.Width) / 2,
+                (int)(owner.ClientSize.Height * 0.75) - (_currentToast.Height / 2)
+            ));
+
+            _currentToast.Location = position;
 
             _currentToast._closeTimer.Start();
             _currentToast.Show(owner);

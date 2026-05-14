@@ -15,10 +15,9 @@ namespace SmartRoutine.Data.Models
         public int Order { get; set; } = 0;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
+        public DateTime? LastExecutionAt { get; set; }
         public List<RoutineStep> Steps { get; set; } = new List<RoutineStep>();
         public bool IsNew { get; set; } = false;
-
-        //public DateTime? LastExecutionAt { get; set; } 
 
         public override string ToString()
         {

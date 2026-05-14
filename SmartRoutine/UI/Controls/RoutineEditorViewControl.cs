@@ -84,6 +84,7 @@ namespace SmartRoutine.UI.Controls
         private Button btnBrowseDocument;
 
         // Footer
+        private Label lblLastExecution;
         private Button btnBack;
 
         public RoutineEditorViewControl(IRoutineService routineService, IUrlValidationService urlValidationService)
@@ -200,13 +201,21 @@ namespace SmartRoutine.UI.Controls
             rightTlp.Visible = false;
 
             // rightTitleTlp
-            rightTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            rightTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(3, 1);
             rightTitleTlp.Dock = DockStyle.Fill;
             rightTitleTlp.ColumnStyles.Clear();
-            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // lblStepNameTitle
-            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60)); // tglStepEnabled
 
-            // Titel (lblStepNameTitle)
+            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120)); // btnExecuteStep
+            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));  // lblStepNameTitle
+            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));   // tglStepEnabled
+
+            // btnExecuteStep
+            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶ Ausführen", "", new Size(110, 30));
+            btnExecuteStep.Dock = DockStyle.Fill;
+            btnExecuteStep.Margin = new Padding(0, 3, 8, 3);
+            btnExecuteStep.Click += BtnExecuteStep_Click;
+
+            // lblStepNameTitle
             lblStepNameTitle = UIStyles.Labels.CreateTitle();
             lblStepNameTitle.Dock = DockStyle.Fill;
 
@@ -215,8 +224,9 @@ namespace SmartRoutine.UI.Controls
             tglStepEnabled.Location = new Point(0, 0);
             tglStepEnabled.Anchor = AnchorStyles.None;
 
-            rightTitleTlp.Controls.Add(lblStepNameTitle, 0, 0);
-            rightTitleTlp.Controls.Add(tglStepEnabled, 1, 0);
+            rightTitleTlp.Controls.Add(btnExecuteStep, 0, 0);
+            rightTitleTlp.Controls.Add(lblStepNameTitle, 1, 0);
+            rightTitleTlp.Controls.Add(tglStepEnabled, 2, 0);
 
             // lblStepName
             lblStepName = UIStyles.Labels.CreateNormal("Name:");
@@ -278,24 +288,19 @@ namespace SmartRoutine.UI.Controls
             rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(3, 1);
             rightBtnsTlp.Dock = DockStyle.Fill;
 
-            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾 Schritt speichern", "", new Size(120, 35));
+            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾 Schritt speichern", "", new Size(155, 35));
             btnSaveStep.Click += BtnSaveStep_Click;
 
-            btnCancelStep = UIStyles.Buttons.CreateStandard("✖ Abbrechen", "", new Size(120, 35));
+            btnCancelStep = UIStyles.Buttons.CreatePrimary("✖ Abbrechen", "", new Size(155, 35));
             btnCancelStep.Click += BtnCancelStep_Click;
 
-            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶ Ausführen", "", new Size(120, 35));
-            btnExecuteStep.Click += BtnExecuteStep_Click;
-
             rightBtnsTlp.ColumnStyles.Clear();
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // leerer Platz links
             rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnSaveStep.Width));
             rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnCancelStep.Width));
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, btnExecuteStep.Width));
-            rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            rightBtnsTlp.Controls.Add(btnSaveStep, 0, 0);
-            rightBtnsTlp.Controls.Add(btnCancelStep, 1, 0);
-            rightBtnsTlp.Controls.Add(btnExecuteStep, 2, 0);
+            rightBtnsTlp.Controls.Add(btnSaveStep, 1, 0);
+            rightBtnsTlp.Controls.Add(btnCancelStep, 2, 0);
 
             rightTlp.Controls.AddRange(new Control[] {
                 rightTitleTlp, lblStepName, txtStepName,
@@ -305,19 +310,27 @@ namespace SmartRoutine.UI.Controls
             });
 
             // ========== FOOTER ==========
-            var footerPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundDark,
-                Padding = new Padding(20, 10, 20, 10)
-            };
+            var footerPanel = UIStyles.Panels.CreateDark();
+            footerPanel.Dock = DockStyle.Fill;
+
+            lblLastExecution = UIStyles.Labels.CreateMuted();
+            lblLastExecution.AutoSize = true;
+            lblLastExecution.Location = new Point(20, 18);
+            lblLastExecution.TextAlign = ContentAlignment.MiddleLeft;
 
             btnBack = UIStyles.Buttons.CreateStandard("← Zurück", "", new Size(100, 35));
             btnBack.Location = new Point(footerPanel.Width - 120, 12);
             btnBack.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnBack.Click += BtnBack_Click;
 
-            footerPanel.Controls.AddRange(new Control[] { btnBack });
+            footerPanel.Controls.AddRange(new Control[] { lblLastExecution, btnBack });
+            footerPanel.Resize += (s, e) =>
+            {
+                lblLastExecution.Location = new Point(
+                    20,
+                    (footerPanel.ClientSize.Height - lblLastExecution.Height) / 2
+                );
+            };
 
             contentTlp.Controls.Add(leftTlp, 0, 0);
             contentTlp.Controls.Add(rightTlp, 1, 0);
@@ -338,6 +351,10 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine = DeepCopy(routine ?? new Routine());
 
             txtRoutineName.Text = _currentRoutine.Name;
+            lblLastExecution.Text =
+                _currentRoutine.LastExecutionAt.HasValue
+                    ? $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
+                    : "";
 
             lstSteps.SelectedIndex = -1;
             rightTlp.Visible = false;
@@ -428,6 +445,7 @@ namespace SmartRoutine.UI.Controls
                 Order = original.Order,
                 CreatedAt = original.CreatedAt,
                 UpdatedAt = original.UpdatedAt,
+                LastExecutionAt = original.LastExecutionAt,
                 Steps = new List<RoutineStep>()
             };
 

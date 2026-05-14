@@ -21,6 +21,19 @@ namespace SmartRoutine.UI.Controls
         public event EventHandler SelectedIndexChanged;
         public event EventHandler ItemsReordered;
 
+        public Control InnerListBox => listBox;
+        public new event MouseEventHandler MouseMove
+        {
+            add => listBox.MouseMove += value;
+            remove => listBox.MouseMove -= value;
+        }
+
+        public new event EventHandler MouseLeave
+        {
+            add => listBox.MouseLeave += value;
+            remove => listBox.MouseLeave -= value;
+        }
+
         public StyledListBoxControl()
         {
             InitializeControl(showHeader: false, allowReorder: false);
@@ -53,6 +66,11 @@ namespace SmartRoutine.UI.Controls
             {
                 lblTitle.Padding = new Padding(0, 0, 10, 0);
             }
+        }
+
+        public int IndexFromPoint(Point point)
+        {
+            return listBox.IndexFromPoint(point);
         }
 
         private void InitializeControl(bool showHeader, bool allowReorder)

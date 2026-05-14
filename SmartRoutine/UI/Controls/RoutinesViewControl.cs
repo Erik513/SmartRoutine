@@ -24,6 +24,9 @@ namespace SmartRoutine.UI.Controls
         private StyledListBoxControl lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
 
+        private ToolTip _routineToolTip = UIStyles.ToolTips.CreateToolTip();
+        private int _lastHoveredRoutineIndex = -1;
+
         public RoutinesViewControl(IRoutineService routineService)
         {
             _routineService = routineService;
@@ -67,6 +70,8 @@ namespace SmartRoutine.UI.Controls
             };
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
             lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
+            lstRoutines.MouseMove += LstRoutines_MouseMove;
+            lstRoutines.MouseLeave += LstRoutines_MouseLeave;
             mainLayout.Controls.Add(lstRoutines, 0, 0);
 
             // ========== UNTERE ZEILE: Button Panel (4x1 Layout) ==========
@@ -232,6 +237,35 @@ namespace SmartRoutine.UI.Controls
             if (!string.IsNullOrEmpty(selectedId) && lstRoutines.SelectedIndex == -1)
                 SelectRoutineById(selectedId);
         }
+
+        private void LstRoutines_MouseMove(object sender, MouseEventArgs e)
+        {
+            int index = lstRoutines.IndexFromPoint(e.Location);
+
+            if (index == _lastHoveredRoutineIndex)
+                return;
+
+            _lastHoveredRoutineIndex = index;
+
+            if (index < 0 || index >= lstRoutines.Items.Count)
+            {
+                _routineToolTip.SetToolTip(lstRoutines.InnerListBox, "");
+                return;
+            }
+
+            if (lstRoutines.Items[index] is Routine routine)
+            {
+                string text = $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(routine.LastExecutionAt)}";
+                _routineToolTip.SetToolTip(lstRoutines.InnerListBox, text);
+            }
+        }
+
+        private void LstRoutines_MouseLeave(object sender, EventArgs e)
+        {
+            _lastHoveredRoutineIndex = -1;
+            _routineToolTip.SetToolTip(lstRoutines.InnerListBox, "");
+        }
+
         private void SelectRoutineById(string routineId)
         {
             if (string.IsNullOrEmpty(routineId)) return;

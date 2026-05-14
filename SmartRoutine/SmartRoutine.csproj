@@ -129,6 +129,7 @@
       <DependentUpon>ExecutionForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Helpers\AppSettings.cs" />
+    <Compile Include="UI\Helpers\DateTimeHelper.cs" />
     <Compile Include="UI\Helpers\DragDropHelper.cs" />
     <Compile Include="Logic\Interfaces\IUrlValidationService.cs" />
     <Compile Include="Logic\Services\UrlValidationService.cs" />

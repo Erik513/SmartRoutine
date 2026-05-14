@@ -28,6 +28,7 @@ namespace SmartRoutine.UI
         private Button _prevBtn, _nextBtn, _executeBtn;
         private ToolTip _toolTip;
         private InfoPopupForm _infoPopup;
+        private string _pendingToastMessage;
 
         // Konstruktor für komplette Routine
         public ExecutionForm(Routine routine, Action<RoutineStep> onExecute) : this()
@@ -54,6 +55,15 @@ namespace SmartRoutine.UI
             ConfigureForm();
             _toolTip = new ToolTip();
             _infoPopup = new InfoPopupForm();
+
+            Shown += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(_pendingToastMessage))
+                {
+                    ToastForm.ShowToast(_pendingToastMessage, this);
+                    _pendingToastMessage = null;
+                }
+            };
         }
 
         private void ConfigureForm()
@@ -228,6 +238,8 @@ namespace SmartRoutine.UI
 
         private void LoadCurrentStep()
         {
+            _session = new RoutineExecutionSession(_routine, _specificStep);
+
             var currentStep = _session.CurrentStep;
 
             _stepCounterLabel.Text = _session.StepCounterText;
@@ -330,7 +342,21 @@ namespace SmartRoutine.UI
             _executeBtn.ForeColor = UIStyles.Colors.White;
 
             string message = GetSuccessMessage(step);
-            ToastForm.ShowToast(message, this);
+            ShowToastWhenReady(message);
+        }
+
+        private void ShowToastWhenReady(string message)
+        {
+            if (!IsHandleCreated || !Visible)
+            {
+                _pendingToastMessage = message;
+                return;
+            }
+
+            BeginInvoke(new Action(() =>
+            {
+                ToastForm.ShowToast(message, this);
+            }));
         }
 
         private string GetSuccessMessage(RoutineStep step)
