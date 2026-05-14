@@ -67,14 +67,6 @@ namespace SmartRoutine.UI
 
         private void InitializeExecution()
         {
-            _session = new RoutineExecutionSession(_routine, _specificStep);
-
-            if (!_session.HasSteps)
-            {
-                ShowNoStepsMessage();
-                return;
-            }
-
             // TitleBar
             var titleBar = new TitleBarControl(this.Text);
             this.Controls.Add(titleBar);
@@ -352,30 +344,6 @@ namespace SmartRoutine.UI
             if (step is OpenDocumentStep docStep)
                 return $"✓ Geöffnet: {System.IO.Path.GetFileName(docStep.FilePath)}";
             return $"✓ {step.Name} ausgeführt";
-        }
-
-        private void ShowNoStepsMessage()
-        {
-            var titleBar = new TitleBarControl(this.Text);
-            this.Controls.Add(titleBar);
-
-            var panel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(5, titleBar.Height + 5, 5, 5),
-                BackColor = UIStyles.Colors.BackgroundMedium
-            };
-
-            var label = new Label
-            {
-                Text = "Keine Schritte zum Ausführen vorhanden.",
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                Font = new Font("Segoe UI", 14)
-            };
-            panel.Controls.Add(label);
-            this.Controls.Add(panel);
         }
     }
 }

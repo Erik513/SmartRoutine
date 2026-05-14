@@ -93,6 +93,18 @@ namespace SmartRoutine.UI
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
+            var session = new RoutineExecutionSession(routine);
+
+            if (!session.HasExecutableSteps)
+            {
+                MessageBox.Show(
+                    "Alle Schritte dieser Routine sind derzeit deaktiviert.",
+                    "Routine nicht ausführbar",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                return;
+            }
 
             var executionForm = new ExecutionForm(routine, (step) =>
             {

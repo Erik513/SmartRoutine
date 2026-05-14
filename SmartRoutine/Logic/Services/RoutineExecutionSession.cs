@@ -15,7 +15,7 @@ namespace SmartRoutine.Logic.Services
 
         public int StepCount => _steps.Count;
 
-        public bool HasSteps => _steps.Count > 0;
+        public bool HasExecutableSteps => _steps.Count > 0;
 
         public bool CanGoPrevious => CurrentIndex > 0;
 

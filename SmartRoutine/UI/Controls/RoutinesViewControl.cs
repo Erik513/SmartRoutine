@@ -76,7 +76,7 @@ namespace SmartRoutine.UI.Controls
                 BackColor = Color.Transparent,
                 ColumnCount = 4,
                 RowCount = 1,
-                AutoSize = true,           // Automatische Größenanpassung
+                AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink
             };
 

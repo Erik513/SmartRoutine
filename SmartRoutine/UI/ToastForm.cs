@@ -107,11 +107,9 @@ namespace SmartRoutine.UI
             _currentToast = new ToastForm();
             _currentToast._messageLabel.Text = message;
 
-            int margin = 20;
-
             _currentToast.Location = new Point(
-                owner.Location.X + owner.Width - _currentToast.Width - margin,
-                owner.Location.Y + owner.Height - _currentToast.Height - margin
+                owner.Location.X + (owner.Width / 2) - (_currentToast.Width / 2),
+                owner.Location.Y + (int)(owner.Height * 0.75) - (_currentToast.Height / 2)
             );
 
             _currentToast._closeTimer.Start();
