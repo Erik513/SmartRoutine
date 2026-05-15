@@ -77,22 +77,15 @@ namespace SmartRoutine.UI.Forms
 
         private void BuildLayout()
         {
-            var rootPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMedium
-            };
+            var rootPanel = UIStyles.Panels.CreateMedium();
 
-            var mainTlp = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 2,
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                Padding = new Padding(0),
-                Margin = new Padding(0)
-            };
+            var mainTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
+            mainTlp.Dock = DockStyle.Fill;
+            mainTlp.BackColor = UIStyles.Colors.BackgroundMedium;
+            mainTlp.Padding = new Padding(0);
+            mainTlp.Margin = new Padding(0);
 
+            mainTlp.RowStyles.Clear();
             mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
 
@@ -104,26 +97,18 @@ namespace SmartRoutine.UI.Forms
             ContentPanel.Controls.Clear();
             ContentPanel.Controls.Add(rootPanel);
         }
-
         private Control CreateContentPanel()
         {
-            var panel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                Padding = new Padding(28, 20, 28, 10)
-            };
+            var panel = UIStyles.Panels.CreateMedium();
+            panel.Padding = new Padding(28, 20, 28, 10);
 
-            var messageLabel = new Label
-            {
-                Text = _message,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                Font = UIStyles.Fonts.Normal,
-                BackColor = Color.Transparent,
-                AutoEllipsis = false
-            };
+            var messageLabel = UIStyles.Labels.CreateNormal(_message);
+            messageLabel.Dock = DockStyle.Fill;
+            messageLabel.TextAlign = ContentAlignment.MiddleCenter;
+            messageLabel.ForeColor = UIStyles.Colors.TextPrimary;
+            messageLabel.Font = UIStyles.Fonts.Normal;
+            messageLabel.BackColor = Color.Transparent;
+            messageLabel.AutoEllipsis = false;
 
             panel.Controls.Add(messageLabel);
 
@@ -132,20 +117,18 @@ namespace SmartRoutine.UI.Forms
 
         private Control CreateButtonPanel()
         {
-            var buttonPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                RowCount = 1,
-                Padding = new Padding(12, 12, 28, 18),
-                Margin = new Padding(0)
-            };
+            var buttonPanel = UIStyles.TableLayoutPanels.CreateStandard(1, 1);
+            buttonPanel.Dock = DockStyle.Fill;
+            buttonPanel.BackColor = UIStyles.Colors.BackgroundMedium;
+            buttonPanel.Padding = new Padding(12, 12, 28, 18);
+            buttonPanel.Margin = new Padding(0);
 
             var buttonInfos = GetButtons();
 
             buttonPanel.ColumnCount = buttonInfos.Length + 1;
             buttonPanel.ColumnStyles.Clear();
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            buttonPanel.RowStyles.Clear();
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             for (int i = 0; i < buttonInfos.Length; i++)
@@ -158,7 +141,6 @@ namespace SmartRoutine.UI.Forms
 
             return buttonPanel;
         }
-
         private Button CreateDialogButton(string text, DialogResult result)
         {
             Button button;

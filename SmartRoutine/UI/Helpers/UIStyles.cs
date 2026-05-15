@@ -165,7 +165,7 @@ namespace SmartRoutine.UI.Helpers
                     Padding = new Padding(0),
                     TextAlign = ContentAlignment.MiddleCenter
                 };
-                button.FlatAppearance.BorderSize = 1;
+                button.FlatAppearance.BorderSize = 0;
                 button.FlatAppearance.BorderColor = Colors.BorderDark;
                 button.FlatAppearance.MouseOverBackColor = Colors.Primary;
                 button.FlatAppearance.MouseDownBackColor = Colors.PrimaryLight;
