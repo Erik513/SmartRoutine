@@ -1,9 +1,7 @@
 ﻿using LiteDB;
 using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Data.Models;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace SmartRoutine.Data
 {
@@ -24,7 +22,7 @@ namespace SmartRoutine.Data
             // Konfiguriere den Mapper für bessere Typ-Namen
             BsonMapper.Global.RegisterType<RoutineStep>
             (
-                serialize: (step) => step.GetType().Name,  // Speichert "OpenUrlStep"
+                serialize: (step) => step.GetType().Name,
                 deserialize: (bson) => null // Wird automatisch von LiteDB gemacht
             );
         }
@@ -32,7 +30,7 @@ namespace SmartRoutine.Data
         // Hilfsmethode, um eine Datenbankverbindung zu öffnen
         private LiteDatabase OpenDatabase()
         {
-            // 'connection=true' ist wichtig, damit BsonMapper automatisch Ihre Eigenschaften mapped
+            // 'connection=shared' ist wichtig, damit BsonMapper automatisch Ihre Eigenschaften mapped
             return new LiteDatabase($"Filename={_dbPath}; connection=shared");
         }
 
@@ -54,7 +52,7 @@ namespace SmartRoutine.Data
             using (var db = OpenDatabase())
             {
                 var col = db.GetCollection<Routine>("routines");
-                col.Insert(routine); // Die ID wird automatisch vergeben
+                col.Insert(routine);
             }
         }
 
@@ -84,15 +82,6 @@ namespace SmartRoutine.Data
                 return db.GetCollection<Routine>("routines")
                          .FindById(routineId);
             }
-        }
-
-        // Die SaveRoutines-Methode wird mit LiteDB nicht mehr benötigt.
-        // Sie können sie aus dem Interface entfernen oder leer lassen.
-        public void SaveRoutines(List<Routine> routines)
-        {
-            // Wird nicht mehr benötigt, da jede Änderung direkt gespeichert wird.
-            // Sie können die Methode aus Ihrem Interface IRoutineRepository entfernen.
-            throw new NotImplementedException("Use AddRoutine, UpdateRoutine, and DeleteRoutine instead.");
         }
     }
 }

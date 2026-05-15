@@ -515,7 +515,7 @@ namespace SmartRoutine.UI.Controls
                             Show = urlStep.Show,
                             AutoStart = urlStep.AutoStart,
                             Url = urlStep.Url,
-                            OpenInExternBrowser = urlStep.OpenInExternBrowser
+                            OpenInExternalBrowser = urlStep.OpenInExternalBrowser
                         });
                         break;
                     case OpenFolderStep folderStep:
@@ -590,7 +590,7 @@ namespace SmartRoutine.UI.Controls
                 switch (orig)
                 {
                     case OpenUrlStep origUrl when curr is OpenUrlStep currUrl:
-                        if (origUrl.Url != currUrl.Url || origUrl.OpenInExternBrowser != currUrl.OpenInExternBrowser)
+                        if (origUrl.Url != currUrl.Url || origUrl.OpenInExternalBrowser != currUrl.OpenInExternalBrowser)
                             return true;
                         break;
                     case OpenFolderStep origFolder when curr is OpenFolderStep currFolder:
@@ -679,7 +679,7 @@ namespace SmartRoutine.UI.Controls
             {
                 case OpenUrlStep urlStep:
                     if (txtUrl != null) txtUrl.Text = urlStep.Url;
-                    if (tglOpenInExternBrowser != null) tglOpenInExternBrowser.Checked = urlStep.OpenInExternBrowser;
+                    if (tglOpenInExternBrowser != null) tglOpenInExternBrowser.Checked = urlStep.OpenInExternalBrowser;
                     break;
                 case OpenFolderStep folderStep:
                     if (txtFolderPath != null) txtFolderPath.Text = folderStep.FolderPath;
@@ -865,7 +865,7 @@ namespace SmartRoutine.UI.Controls
             }
 
             bool shouldOpenExecutionForm =
-                _editingStep is OpenUrlStep urlStep && !urlStep.OpenInExternBrowser;
+                _editingStep is OpenUrlStep urlStep && !urlStep.OpenInExternalBrowser;
 
             if (shouldOpenExecutionForm)
             {
@@ -898,7 +898,7 @@ namespace SmartRoutine.UI.Controls
             {
                 case OpenUrlStep urlStep:
                     if (urlStep.Url != txtUrl?.Text) return true;
-                    if (urlStep.OpenInExternBrowser != tglOpenInExternBrowser?.Checked) return true;
+                    if (urlStep.OpenInExternalBrowser != tglOpenInExternBrowser?.Checked) return true;
                     break;
                 case OpenFolderStep folderStep:
                     if (folderStep.FolderPath != txtFolderPath?.Text) return true;
@@ -1328,7 +1328,7 @@ namespace SmartRoutine.UI.Controls
                     step = new OpenUrlStep
                     {
                         Url = urlResult.RepairedUrl,
-                        OpenInExternBrowser = tglOpenInExternBrowser?.Checked ?? true
+                        OpenInExternalBrowser = tglOpenInExternBrowser?.Checked ?? true
                     };
                     break;
                 case StepType.OpenFolder:

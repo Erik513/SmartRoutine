@@ -341,7 +341,7 @@ namespace SmartRoutine.UI.Forms
             _onStepExecute?.Invoke(step);
             _session.MarkCurrentStepExecuted();
 
-            if (step is OpenUrlStep urlStep && !urlStep.OpenInExternBrowser)
+            if (step is OpenUrlStep urlStep && !urlStep.OpenInExternalBrowser)
             {
                 ShowWebView(urlStep.Url);
             }

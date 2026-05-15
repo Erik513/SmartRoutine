@@ -1,10 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SmartRoutine.Data.Models
 {
@@ -48,7 +43,7 @@ namespace SmartRoutine.Data.Models
         public override StepType Type => StepType.OpenUrl;
 
         public string Url { get; set; } = string.Empty;
-        public bool OpenInExternBrowser { get; set; } = true; // false = in App, true = externer Browser
+        public bool OpenInExternalBrowser { get; set; } = true; // false = in App, true = externer Browser
     }
 
     // OpenFolder Step

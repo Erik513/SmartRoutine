@@ -153,14 +153,14 @@ namespace SmartRoutine.Tests
             var routine = service.GetAllRoutines().First();
 
             // Alten Step hinzufügen
-            var oldStep = new OpenUrlStep { Name = "Old Step", Order = 0, Url = "oldurl", OpenInExternBrowser = true };
+            var oldStep = new OpenUrlStep { Name = "Old Step", Order = 0, Url = "oldurl", OpenInExternalBrowser = true };
             service.AddStep(routine.Id, oldStep);
 
             // Neuen Step erstellen
             routine.Name = "Updated Name";
             routine.Steps = new List<RoutineStep>
             {
-                new OpenUrlStep { Id = "new1", Name = "New Step", Order = 0, Url = "newurl", OpenInExternBrowser = false }
+                new OpenUrlStep { Id = "new1", Name = "New Step", Order = 0, Url = "newurl", OpenInExternalBrowser = false }
             };
             service.UpdateRoutine(routine);
 
@@ -356,7 +356,7 @@ namespace SmartRoutine.Tests
             service.CreateRoutine("Test Routine");
             var routine = service.GetAllRoutines().First();
 
-            var step = new OpenUrlStep { Name = "Step 1", Description = "Description", Url = "https://example.com", OpenInExternBrowser = true };
+            var step = new OpenUrlStep { Name = "Step 1", Description = "Description", Url = "https://example.com", OpenInExternalBrowser = true };
             service.AddStep(routine.Id, step);
 
             var updatedRoutine = service.GetRoutine(routine.Id);
@@ -378,7 +378,7 @@ namespace SmartRoutine.Tests
             service.CreateRoutine("Test");
             var routine = service.GetAllRoutines().First();
 
-            var urlStep = new OpenUrlStep { Name = "URL Step", Url = "https://example.com", OpenInExternBrowser = true };
+            var urlStep = new OpenUrlStep { Name = "URL Step", Url = "https://example.com", OpenInExternalBrowser = true };
             var folderStep = new OpenFolderStep { Name = "Folder Step", FolderPath = @"C:\Test", OpenInNewWindow = true };
             var appStep = new OpenApplicationStep { Name = "App Step", ApplicationPath = "notepad.exe", Arguments = "test.txt", RunAsAdmin = false };
 
@@ -410,7 +410,7 @@ namespace SmartRoutine.Tests
             service.CreateRoutine("Test Routine");
             var routine = service.GetAllRoutines().First();
 
-            var originalStep = new OpenUrlStep { Id = "step1", Name = "Original", Url = "oldurl", OpenInExternBrowser = true };
+            var originalStep = new OpenUrlStep { Id = "step1", Name = "Original", Url = "oldurl", OpenInExternalBrowser = true };
             service.AddStep(routine.Id, originalStep);
 
             var updatedStep = new OpenUrlStep
@@ -420,7 +420,7 @@ namespace SmartRoutine.Tests
                 Description = "New Desc",
                 Show = false,
                 Url = "newurl",
-                OpenInExternBrowser = false
+                OpenInExternalBrowser = false
             };
             service.UpdateStep(routine.Id, updatedStep);
 
@@ -429,7 +429,7 @@ namespace SmartRoutine.Tests
             Assert.AreEqual("New Desc", resultStep.Description);
             Assert.IsFalse(resultStep.Show);
             Assert.AreEqual("newurl", resultStep.Url);
-            Assert.IsFalse(resultStep.OpenInExternBrowser);
+            Assert.IsFalse(resultStep.OpenInExternalBrowser);
         }
 
         [TestMethod]

@@ -32,7 +32,7 @@ namespace SmartRoutine.Logic.Services
                         Show = true,
                         AutoStart = false,
                         Url = "https://www.example.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -43,7 +43,7 @@ namespace SmartRoutine.Logic.Services
                         Show = true,
                         AutoStart = true,
                         Url = "https://www.wikipedia.org",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -54,7 +54,7 @@ namespace SmartRoutine.Logic.Services
                         Show = true,
                         AutoStart = true,
                         Url = "https://www.github.com",
-                        OpenInExternBrowser = true
+                        OpenInExternalBrowser = true
                     },
                     new OpenUrlStep
                     {
@@ -65,7 +65,7 @@ namespace SmartRoutine.Logic.Services
                         Show = false,
                         AutoStart = true,
                         Url = "https://www.google.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenFolderStep
                     {
@@ -201,7 +201,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Wetter checken",
                         AutoStart = false,
                         Url = "https://www.wetter.de",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -210,7 +210,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Nachrichten lesen",
                         AutoStart = true,
                         Url = "https://www.spiegel.de",
-                        OpenInExternBrowser = true
+                        OpenInExternalBrowser = true
                     },
                     new OpenUrlStep
                     {
@@ -219,7 +219,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "E-Mails prüfen",
                         AutoStart = true,
                         Url = "https://mail.google.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     }
                 }
             };
@@ -241,7 +241,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Trello öffnen",
                         AutoStart = true,
                         Url = "https://trello.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -250,7 +250,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "GitHub öffnen",
                         AutoStart = true,
                         Url = "https://github.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -259,7 +259,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Slack öffnen",
                         AutoStart = true,
                         Url = "https://slack.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     }
                 }
             };
@@ -281,7 +281,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Netflix öffnen",
                         AutoStart = true,
                         Url = "https://www.netflix.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -290,7 +290,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Spotify öffnen",
                         AutoStart = true,
                         Url = "https://www.spotify.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -299,7 +299,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "YouTube öffnen",
                         AutoStart = true,
                         Url = "https://www.youtube.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     }
                 }
             };
@@ -321,7 +321,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Events checken",
                         AutoStart = true,
                         Url = "https://www.eventim.de",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -330,7 +330,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Reise planen",
                         AutoStart = true,
                         Url = "https://www.booking.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     }
                 }
             };
@@ -352,7 +352,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Stack Overflow",
                         AutoStart = true,
                         Url = "https://stackoverflow.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenUrlStep
                     {
@@ -361,7 +361,7 @@ namespace SmartRoutine.Logic.Services
                         Name = "Microsoft Docs",
                         AutoStart = true,
                         Url = "https://docs.microsoft.com",
-                        OpenInExternBrowser = false
+                        OpenInExternalBrowser = false
                     },
                     new OpenFolderStep
                     {

@@ -107,7 +107,7 @@ namespace SmartRoutine.Logic.Services
                 {
                     Debug.WriteLine($"    Step: {step.Name}, Typ: {step.GetType().Name}");
                     if (step is OpenUrlStep urlStep)
-                        Debug.WriteLine($"      Url: {urlStep.Url}, OpenInternally: {urlStep.OpenInExternBrowser}");
+                        Debug.WriteLine($"      Url: {urlStep.Url}, OpenInternally: {urlStep.OpenInExternalBrowser}");
                 }
             }
 
@@ -292,7 +292,7 @@ namespace SmartRoutine.Logic.Services
                         Show = urlStep.Show,
                         AutoStart = urlStep.AutoStart,
                         Url = urlStep.Url,
-                        OpenInExternBrowser = urlStep.OpenInExternBrowser
+                        OpenInExternalBrowser = urlStep.OpenInExternalBrowser
                     };
                 case OpenFolderStep folderStep:
                     return new OpenFolderStep
@@ -493,7 +493,7 @@ namespace SmartRoutine.Logic.Services
 
         private void ExecuteOpenUrl(OpenUrlStep step)
         {
-            if (step.OpenInExternBrowser)
+            if (step.OpenInExternalBrowser)
             {
                 // Externer Browser
                 Process.Start(new ProcessStartInfo
