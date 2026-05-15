@@ -1,6 +1,5 @@
 ﻿using SmartRoutine.Logic.Interfaces;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -30,23 +29,13 @@ namespace SmartRoutine.Logic.Services
 
         public (bool IsValid, string RepairedUrl, string ErrorMessage) ValidateAndRepairUrl(string url, bool allowEmpty = false)
         {
-            // DEBUG: Zeige den genauen Inhalt der URL
-            //System.Diagnostics.Debug.WriteLine($"URLValidator received: '{url}'");
-            //System.Diagnostics.Debug.WriteLine($"URL length: {url?.Length ?? 0}");
-
-            if (url != null)
-            {
-                // Debug Infos
-                //System.Diagnostics.Debug.WriteLine($"URL char codes: {string.Join(", ", url.Select(c => (int)c))}");
-            }
-
             // Leere URLs sind optional erlaubt
             if (string.IsNullOrWhiteSpace(url))
             {
                 if (allowEmpty)
                     return (true, url, null);
                 else
-                    return (false, url, "URL cannot be empty.");
+                    return (false, url, "Die URL darf nicht leer sein.");
             }
 
             string trimmed = url.Trim();
@@ -97,7 +86,7 @@ namespace SmartRoutine.Logic.Services
                         if (uri.Scheme.Equals(scheme, StringComparison.OrdinalIgnoreCase))
                             return true;
                     }
-                    return true;
+                    return SupportedSchemes.Any(s => uri.Scheme.Equals(s, StringComparison.OrdinalIgnoreCase));
                 }
             }
             catch
@@ -154,12 +143,6 @@ namespace SmartRoutine.Logic.Services
                 trimmed = CorrectProtocolTypos(trimmed);
             }
 
-            // 6. Füge fehlendes www. hinzu wenn nötig
-            if (ShouldAddWww(trimmed))
-            {
-                trimmed = AddWwwPrefix(trimmed);
-            }
-
             return trimmed;
         }
 
@@ -168,16 +151,16 @@ namespace SmartRoutine.Logic.Services
         private static string BuildErrorMessage(string url)
         {
             if (url.Contains(" "))
-                return "URLs should not contain spaces. Please remove spaces or encode them with %20.";
+                return "URLs sollten keine Leerzeichen enthalten.";
 
             if (url.Contains("@") && !url.Contains("mailto:"))
-                return "This looks like an email address. Use 'mailto:email@example.com' format.";
+                return "Das sieht nach einer E-Mail-Adresse aus. Verwende das Format „mailto:email@example.com“.";
 
             if (url.Contains("\\") && !url.StartsWith("file://"))
-                return "This looks like a Windows file path. Use 'file:///C:/path/to/file' format.";
+                return "Das sieht nach einem Windows-Dateipfad aus. Verwende das Format „file:///C:/Pfad/zur/Datei“.";
 
-            return $"The entered text is not a valid URL.\n\nEntered: {url}\n\n" +
-                   "Valid URL examples:\n" +
+            return $"Der eingegebene Text ist keine gültige URL.\n\nEingetragen: {url}\n\n" +
+                   "Beispiele für gültige URLs:\n" +
                    "• https://example.com\n" +
                    "• http://192.168.1.1\n" +
                    "• mailto:user@example.com\n" +
@@ -279,23 +262,6 @@ namespace SmartRoutine.Logic.Services
                 return "http://" + url.Substring("http:".Length);
 
             return url;
-        }
-
-        private static bool ShouldAddWww(string url)
-        {
-            if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
-                !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            string withoutProtocol = url.Contains("://")
-                ? url.Substring(url.IndexOf("://") + 3)
-                : url;
-
-            return !withoutProtocol.StartsWith("www.", StringComparison.OrdinalIgnoreCase) &&
-                   !withoutProtocol.Contains("/") &&
-                   withoutProtocol.Contains('.') &&
-                   !withoutProtocol.Any(c => char.IsDigit(c)) &&
-                   !withoutProtocol.Contains("localhost");
         }
 
         private static string AddWwwPrefix(string url)

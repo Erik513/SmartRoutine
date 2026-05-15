@@ -11,7 +11,7 @@ namespace SmartRoutine.Logic.Services
 
         public int CurrentIndex { get; private set; } = 0;
 
-        public RoutineStep CurrentStep => _steps[CurrentIndex];
+        public RoutineStep CurrentStep => HasExecutableSteps ? _steps[CurrentIndex] : null;
 
         public int StepCount => _steps.Count;
 
@@ -21,13 +21,14 @@ namespace SmartRoutine.Logic.Services
 
         public bool CanGoNext => CurrentIndex < _steps.Count - 1;
 
-        public bool CurrentStepWasExecuted => _executedStepIds.Contains(CurrentStep.Id);
+        public bool CurrentStepWasExecuted =>
+            CurrentStep != null && _executedStepIds.Contains(CurrentStep.Id);
 
         public bool ShouldAutoExecuteCurrentStep =>
-            CurrentStep.AutoStart && !CurrentStepWasExecuted;
+            CurrentStep != null && CurrentStep.AutoStart && !CurrentStepWasExecuted;
 
         public bool CanExecuteCurrentStepManually =>
-            !CurrentStep.AutoStart || CurrentStepWasExecuted;
+            CurrentStep != null && (!CurrentStep.AutoStart || CurrentStepWasExecuted);
 
         public string StepCounterText => $"{CurrentIndex + 1}/{_steps.Count}";
 
@@ -39,10 +40,10 @@ namespace SmartRoutine.Logic.Services
             }
             else
             {
-                _steps = routine.Steps
+                _steps = routine?.Steps?
                     .Where(s => s.Show)
                     .OrderBy(s => s.Order)
-                    .ToList();
+                    .ToList() ?? new List<RoutineStep>();
             }
         }
 

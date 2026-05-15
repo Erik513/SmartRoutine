@@ -35,7 +35,7 @@ namespace SmartRoutine.Tests
         private RoutineService CreateService()
         {
             var repo = new InMemoryRepository();
-            return new RoutineService(repo, false); // false = KEINE TestData!
+            return new RoutineService(repo, false); // false = KEINE TestDataFactory!
         }
 
         [TestMethod]

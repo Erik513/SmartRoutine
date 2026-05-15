@@ -1,12 +1,12 @@
 ﻿using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
+using SmartRoutine.Logic.TestData;
 using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 
 namespace SmartRoutine.Logic.Services
 {
@@ -15,7 +15,6 @@ namespace SmartRoutine.Logic.Services
         private readonly IRoutineRepository _repository;
         private List<Routine> _testRoutines;
         private bool _useTestData = AppSettings.UseTestData;
-        private TestData _testDataService;
 
         public bool UseTestData
         {
@@ -48,7 +47,7 @@ namespace SmartRoutine.Logic.Services
 
         private void LoadTestData()
         {
-            var testData = new TestData();
+            var testData = new TestDataFactory();
             _testRoutines = testData.GetTestRoutines();
         }
 
@@ -82,33 +81,19 @@ namespace SmartRoutine.Logic.Services
 
         public Routine GetRoutine(string id)
         {
-            Debug.WriteLine($"=== SERVICE GetRoutine: {id} ===");
-
             Routine routine;
             if (_useTestData)
             {
                 routine = _testRoutines?.FirstOrDefault(r => r.Id == id);
-                Debug.WriteLine($"  TestData Modus, Routine gefunden: {routine != null}");
             }
             else
             {
                 routine = _repository.LoadRoutines().FirstOrDefault(r => r.Id == id);
-                Debug.WriteLine($"  Repository Modus, Routine gefunden: {routine != null}");
             }
 
             if (routine != null && routine.Steps != null && routine.Steps.Any())
             {
-                Debug.WriteLine($"  Steps vor Sortierung: {string.Join(", ", routine.Steps.Select(s => s.Name))}");
                 routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
-                Debug.WriteLine($"  Steps nach Sortierung: {string.Join(", ", routine.Steps.Select(s => s.Name))}");
-
-                // Zeige Step-Typen an
-                foreach (var step in routine.Steps)
-                {
-                    Debug.WriteLine($"    Step: {step.Name}, Typ: {step.GetType().Name}");
-                    if (step is OpenUrlStep urlStep)
-                        Debug.WriteLine($"      Url: {urlStep.Url}, OpenInternally: {urlStep.OpenInExternalBrowser}");
-                }
             }
 
             return routine;
@@ -358,56 +343,22 @@ namespace SmartRoutine.Logic.Services
 
         public void UpdateStep(string routineId, RoutineStep step)
         {
-            Debug.WriteLine($"=== SERVICE UpdateStep ===");
-            Debug.WriteLine($"  RoutineId: {routineId}");
-            Debug.WriteLine($"  Step.Id: {step.Id}");
-            Debug.WriteLine($"  Step.Name: {step.Name}");
-            Debug.WriteLine($"  Step.Type: {step.GetType().Name}");
-
             var routine = GetRoutine(routineId);
             if (routine == null)
             {
-                Debug.WriteLine("  FEHLER: Routine nicht gefunden!");
                 return;
             }
-
-            Debug.WriteLine($"  Routine gefunden: {routine.Name}, Steps: {routine.Steps.Count}");
 
             var index = routine.Steps.ToList().FindIndex(s => s.Id == step.Id);
             if (index >= 0)
             {
-                Debug.WriteLine($"  Step gefunden an Index {index}");
-                Debug.WriteLine($"  Alter Name: {routine.Steps[index].Name}");
-                Debug.WriteLine($"  Neuer Name: {step.Name}");
-
                 routine.Steps[index] = step;
 
                 if (!_useTestData)
                 {
                     _repository.UpdateRoutine(routine);
-                    Debug.WriteLine("  Repository.UpdateRoutine aufgerufen");
-                }
-                else
-                {
-                    Debug.WriteLine("  TestData Modus - keine Repository Speicherung");
                 }
             }
-            else
-            {
-                Debug.WriteLine("  FEHLER: Step nicht gefunden in Routine!");
-                foreach (var s in routine.Steps)
-                {
-                    Debug.WriteLine($"    Vorhandener Step: {s.Id} - {s.Name}");
-                }
-            }
-        }
-
-        // Die alte Methode darf NICHT mehr aufgerufen werden.
-        // Sie kannst du löschen oder als obsolete markieren:
-        [Obsolete("Use UpdateStep(string routineId, RoutineStep step) instead")]
-        public void UpdateStep(string routineId, string stepId, string name, string description, bool show, StepType type, string value)
-        {
-            // Alte Implementierung - wird nicht mehr verwendet
         }
 
         public void RemoveStep(string routineId, string stepId)
@@ -471,6 +422,8 @@ namespace SmartRoutine.Logic.Services
 
         public void ExecuteStep(RoutineStep step)
         {
+            if (step == null)
+                return;
             switch (step)
             {
                 case OpenUrlStep urlStep:
@@ -524,7 +477,7 @@ namespace SmartRoutine.Logic.Services
             var startInfo = new ProcessStartInfo
             {
                 FileName = step.ApplicationPath,
-                Arguments = step.Arguments,
+                Arguments = step.Arguments ?? string.Empty,
                 UseShellExecute = true
             };
             if (step.RunAsAdmin)
