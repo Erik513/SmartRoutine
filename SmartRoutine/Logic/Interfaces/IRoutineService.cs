@@ -15,7 +15,7 @@ namespace SmartRoutine.Logic.Interfaces
 
         List<Routine> GetAllRoutines();
         Routine GetRoutine(string id);
-        void CreateRoutine(string name);
+        Routine CreateRoutine(string name);
         void UpdateRoutine(Routine routine);
         void DeleteRoutine(string id);
 

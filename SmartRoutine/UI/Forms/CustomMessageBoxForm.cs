@@ -70,7 +70,7 @@ namespace SmartRoutine.UI.Forms
             StartPosition = FormStartPosition.CenterParent;
             ShowInTaskbar = false;
 
-            Size = new Size(560, 260);
+            Size = new Size(500, 220);
             MinimumSize = Size;
             MaximumSize = Size;
         }

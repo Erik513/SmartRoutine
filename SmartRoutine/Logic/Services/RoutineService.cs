@@ -114,31 +114,40 @@ namespace SmartRoutine.Logic.Services
             return routine;
         }
 
-        public void CreateRoutine(string name)
+        public Routine CreateRoutine(string name)
         {
             if (_useTestData)
             {
+                int maxOrder = _testRoutines.Count > 0 ? _testRoutines.Max(r => r.Order) : -1;
+
                 var newRoutine = new Routine
                 {
                     Id = Guid.NewGuid().ToString(),
                     Name = name,
-                    Order = _testRoutines.Count,
+                    Order = maxOrder + 1,
                     CreatedAt = DateTime.Now,
                     Steps = new List<RoutineStep>(),
                 };
+
                 _testRoutines.Add(newRoutine);
+                return newRoutine;
             }
             else
             {
                 var routines = _repository.LoadRoutines();
                 int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
+
                 var routine = new Routine
                 {
+                    Id = Guid.NewGuid().ToString(),
                     Name = name,
                     Order = maxOrder + 1,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                    Steps = new List<RoutineStep>()
                 };
+
                 _repository.AddRoutine(routine);
+                return routine;
             }
         }
 

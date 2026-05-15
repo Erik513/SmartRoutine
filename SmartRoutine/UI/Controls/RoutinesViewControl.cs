@@ -102,18 +102,16 @@ namespace SmartRoutine.UI.Controls
             btnNewRoutine.Margin = new Padding(5, 5, 5, 5);
             btnNewRoutine.Click += (s, e) =>
             {
-                // Finde die nächste verfügbare Nummer
                 int nextNumber = GetNextRoutineNumber();
                 string newRoutineName = $"Meine Routine {nextNumber}";
 
-                // Neue Routine erstellen
-                _routineService.CreateRoutine(newRoutineName);
-                var newRoutine = _routineService.GetAllRoutines().LastOrDefault();
-                if (newRoutine != null)
-                {
-                    newRoutine.IsNew = true;
-                    NewRoutineClicked?.Invoke(s, newRoutine);
-                }
+                var newRoutine = _routineService.CreateRoutine(newRoutineName);
+                newRoutine.IsNew = true;
+
+                LoadRoutines();
+                SelectRoutine(newRoutine);
+
+                NewRoutineClicked?.Invoke(s, newRoutine);
             };
 
             btnEditRoutine = UIStyles.Buttons.CreatePrimary("✎ Bearbeiten", "", new Size(0, 0));
