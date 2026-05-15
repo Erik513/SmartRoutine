@@ -34,7 +34,8 @@ namespace SmartRoutine.UI.Forms
                 title: "SmartRoutine",
                 showMinimize: true,
                 showMaximize: true,
-                showClose: true)
+                showClose: true, 
+                allowWindowSnapAndMaximize: true)
         {
             _routineService = routineService
                 ?? throw new ArgumentNullException(nameof(routineService));

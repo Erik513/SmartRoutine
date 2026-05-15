@@ -27,7 +27,6 @@ namespace SmartRoutine.UI.Controls
             get => lblTitle.Text;
             set => lblTitle.Text = value;
         }
-
         public Image IconImage
         {
             get => picIcon.Image;
@@ -38,13 +37,11 @@ namespace SmartRoutine.UI.Controls
                 UpdateLayout();
             }
         }
-
         public ContentAlignment TitleTextAlign
         {
             get => lblTitle.TextAlign;
             set => lblTitle.TextAlign = value;
         }
-
         public bool ShowMinimizeButton
         {
             get => btnMinimize.Visible;
@@ -54,7 +51,6 @@ namespace SmartRoutine.UI.Controls
                 UpdateLayout();
             }
         }
-
         public bool ShowMaximizeButton
         {
             get => btnMaximize.Visible;
@@ -64,7 +60,6 @@ namespace SmartRoutine.UI.Controls
                 UpdateLayout();
             }
         }
-
         public bool ShowCloseButton
         {
             get => btnClose.Visible;
@@ -74,15 +69,17 @@ namespace SmartRoutine.UI.Controls
                 UpdateLayout();
             }
         }
-
+        private readonly bool _allowWindowSnapAndMaximize;
         public TitleBarControl(
             Image icon = null,
             string title = "SmartRoutine",
             ContentAlignment titleTextAlign = ContentAlignment.MiddleCenter,
             bool showMinimizeButton = true,
             bool showMaximizeButton = true,
-            bool showCloseButton = true)
+            bool showCloseButton = true,
+            bool allowWindowSnapAndMaximize = true)
         {
+            _allowWindowSnapAndMaximize = allowWindowSnapAndMaximize;
             Height = TITLE_BAR_HEIGHT;
             Dock = DockStyle.Top;
             BackColor = UIStyles.Colors.BackgroundBlack;
@@ -147,11 +144,11 @@ namespace SmartRoutine.UI.Controls
         {
             DisposeDragHandle();
 
-            titleBarDragHandle = new FormDragHandle(this);
-            titleLabelDragHandle = new FormDragHandle(lblTitle);
+            titleBarDragHandle = new FormDragHandle(this, _allowWindowSnapAndMaximize);
+            titleLabelDragHandle = new FormDragHandle(lblTitle, _allowWindowSnapAndMaximize);
 
             if (picIcon != null)
-                iconDragHandle = new FormDragHandle(picIcon);
+                iconDragHandle = new FormDragHandle(picIcon, _allowWindowSnapAndMaximize);
         }
 
         private void RunWhenHandleReady(Action action)

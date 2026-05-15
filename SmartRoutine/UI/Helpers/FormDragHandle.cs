@@ -22,10 +22,14 @@ namespace SmartRoutine.UI.Helpers
         private Point _mouseDownPosition;
 
         private bool _isRestoringFromMaximized;
+        public bool AllowWindowSnapAndMaximize { get; set; } = true;
 
-        public FormDragHandle(Control control)
+        public FormDragHandle(Control control, bool allowWindowSnapAndMaximize = true)
         {
             DragHandle = control ?? throw new ArgumentNullException(nameof(control));
+            AllowWindowSnapAndMaximize = allowWindowSnapAndMaximize;
+
+
             DragHandle.MouseUp += DragHandle_MouseUp;
             DragHandle.MouseDown += OnMouseDown;
             DragHandle.MouseMove += OnMouseMove;
@@ -49,7 +53,11 @@ namespace SmartRoutine.UI.Helpers
             // Doppelklick
             if (e.Clicks == 2)
             {
-                ToggleMaximize(form);
+                if (AllowWindowSnapAndMaximize)
+                {
+                    ToggleMaximize(form);
+                }
+
                 return;
             }
 
@@ -77,6 +85,9 @@ namespace SmartRoutine.UI.Helpers
 
             if (form.WindowState == FormWindowState.Maximized)
             {
+                if (!AllowWindowSnapAndMaximize)
+                    return;
+
                 if (_isRestoringFromMaximized)
                     return;
 
@@ -148,6 +159,9 @@ namespace SmartRoutine.UI.Helpers
 
         private void SnapToTopIfNeeded(Form form)
         {
+            if (!AllowWindowSnapAndMaximize)
+                return;
+
             if (form == null || form.WindowState == FormWindowState.Maximized)
                 return;
 
@@ -194,9 +208,9 @@ namespace SmartRoutine.UI.Helpers
             form.Location = new Point(centerX, centerY);
         }
 
-        public static FormDragHandle Create(Control control)
+        public static FormDragHandle Create(Control control, bool allowWindowSnapAndMaximize = true)
         {
-            return new FormDragHandle(control);
+            return new FormDragHandle(control, allowWindowSnapAndMaximize);
         }
 
         public void Dispose()
@@ -214,9 +228,9 @@ namespace SmartRoutine.UI.Helpers
 
     public static class FormDragExtensions
     {
-        public static FormDragHandle MakeDragHandle(this Control control)
+        public static FormDragHandle MakeDragHandle(this Control control, bool allowWindowSnapAndMaximize = true)
         {
-            return new FormDragHandle(control);
+            return new FormDragHandle(control, allowWindowSnapAndMaximize );
         }
     }
 }

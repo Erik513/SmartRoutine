@@ -56,7 +56,8 @@ namespace SmartRoutine.UI.Forms
                 title: title,
                 showMinimize: false,
                 showMaximize: false,
-                showClose: true)
+                showClose: true,
+                allowWindowSnapAndMaximize: false)
         {
             _message = message;
             _buttons = buttons;
