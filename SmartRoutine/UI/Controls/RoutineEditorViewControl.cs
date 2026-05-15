@@ -1,6 +1,7 @@
 ﻿using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
+using SmartRoutine.UI.Forms;
 using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
@@ -770,8 +771,12 @@ namespace SmartRoutine.UI.Controls
 
             if (!shouldDelete)
             {
-                shouldDelete = MessageBox.Show($"Schritt '{stepToDelete.Name}' wirklich löschen?",
-                    "Bestätigen", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+                shouldDelete = CustomMessageBox.Show(
+                    $"Schritt '{stepToDelete.Name}' wirklich löschen?",
+                    "Bestätigen",
+                    CustomMessageBoxButtons.YesNo,
+                    CustomMessageBoxIcon.Question,
+                    FindForm()) == DialogResult.Yes;
             }
 
             if (!shouldDelete) return;
@@ -914,11 +919,12 @@ namespace SmartRoutine.UI.Controls
 
         private DialogResult AskToSaveChanges()
         {
-            return MessageBox.Show(
+            return CustomMessageBox.Show(
                 "Möchten Sie die Änderungen vor der Ausführung speichern?",
                 "Änderungen speichern",
-                MessageBoxButtons.YesNoCancel,
-                MessageBoxIcon.Question);
+                CustomMessageBoxButtons.YesNoCancel,
+                CustomMessageBoxIcon.Question,
+                FindForm());
         }
 
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
@@ -1113,8 +1119,15 @@ namespace SmartRoutine.UI.Controls
             if (string.IsNullOrWhiteSpace(routineName))
             {
                 if (!AutoConfirmDialogs)
-                    MessageBox.Show("Bitte geben Sie einen Namen für die Routine ein.", "Validierung",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                {
+                    CustomMessageBox.Show(
+                        "Bitte geben Sie einen Namen für die Routine ein.",
+                        "Validierung",
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Warning,
+                        FindForm());
+                }
+
                 txtRoutineName.Focus();
                 return false;
             }
@@ -1128,8 +1141,15 @@ namespace SmartRoutine.UI.Controls
             if (nameExists)
             {
                 if (!AutoConfirmDialogs)
-                    MessageBox.Show($"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
-                        "Validierung", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                {
+                    CustomMessageBox.Show(
+                        $"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
+                        "Validierung",
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Warning,
+                        FindForm());
+                }
+
                 txtRoutineName.Focus();
                 txtRoutineName.SelectAll();
                 return false;
@@ -1142,8 +1162,15 @@ namespace SmartRoutine.UI.Controls
             if (string.IsNullOrWhiteSpace(txtStepName.Text))
             {
                 if (showMessageBox && !AutoConfirmDialogs)
-                    MessageBox.Show("Bitte geben Sie einen Namen für den Schritt ein.", "Validierung",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                {
+                    CustomMessageBox.Show(
+                        "Bitte geben Sie einen Namen für den Schritt ein.",
+                        "Validierung",
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Warning,
+                        FindForm());
+                }
+
                 txtStepName.Focus();
                 return false;
             }
@@ -1151,8 +1178,15 @@ namespace SmartRoutine.UI.Controls
             if (cmbStepType.SelectedIndex == -1)
             {
                 if (showMessageBox && !AutoConfirmDialogs)
-                    MessageBox.Show("Bitte wählen Sie einen Aktionstyp aus.", "Validierung",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                {
+                    CustomMessageBox.Show(
+                        "Bitte wählen Sie einen Aktionstyp aus.",
+                        "Validierung",
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Warning,
+                        FindForm());
+                }
+
                 cmbStepType.Focus();
                 return false;
             }
@@ -1165,57 +1199,103 @@ namespace SmartRoutine.UI.Controls
                     if (string.IsNullOrWhiteSpace(txtUrl?.Text))
                     {
                         if (showMessageBox && !AutoConfirmDialogs)
-                            MessageBox.Show("Bitte geben Sie eine URL ein.", "Validierung",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        {
+                            CustomMessageBox.Show(
+                                "Bitte geben Sie eine URL ein.",
+                                "Validierung",
+                                CustomMessageBoxButtons.OK,
+                                CustomMessageBoxIcon.Warning,
+                                FindForm());
+                        }
+
                         txtUrl?.Focus();
                         return false;
                     }
+
                     var urlResult = _urlValidationService.ValidateAndRepairUrl(txtUrl.Text, false);
 
                     if (!urlResult.IsValid)
                     {
                         if (showMessageBox && !AutoConfirmDialogs)
-                            MessageBox.Show(urlResult.ErrorMessage, "Ungültige URL",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        {
+                            CustomMessageBox.Show(
+                                urlResult.ErrorMessage,
+                                "Ungültige URL",
+                                CustomMessageBoxButtons.OK,
+                                CustomMessageBoxIcon.Warning,
+                                FindForm());
+                        }
 
                         txtUrl.Focus();
                         return false;
                     }
                     break;
+
                 case StepType.OpenFolder:
                     if (string.IsNullOrWhiteSpace(txtFolderPath?.Text))
                     {
                         if (showMessageBox && !AutoConfirmDialogs)
-                            MessageBox.Show("Bitte geben Sie einen Ordnerpfad ein.", "Validierung",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        {
+                            CustomMessageBox.Show(
+                                "Bitte geben Sie einen Ordnerpfad ein.",
+                                "Validierung",
+                                CustomMessageBoxButtons.OK,
+                                CustomMessageBoxIcon.Warning,
+                                FindForm());
+                        }
+
                         txtFolderPath?.Focus();
                         return false;
                     }
                     break;
+
                 case StepType.OpenApplication:
                     if (string.IsNullOrWhiteSpace(txtAppPath?.Text))
                     {
                         if (showMessageBox && !AutoConfirmDialogs)
-                            MessageBox.Show("Bitte geben Sie einen Programmpfad ein.", "Validierung",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        {
+                            CustomMessageBox.Show(
+                                "Bitte geben Sie einen Programmpfad ein.",
+                                "Validierung",
+                                CustomMessageBoxButtons.OK,
+                                CustomMessageBoxIcon.Warning,
+                                FindForm());
+                        }
+
                         txtAppPath?.Focus();
                         return false;
                     }
                     break;
+
                 case StepType.OpenDocument:
                     if (string.IsNullOrWhiteSpace(txtDocumentPath?.Text))
                     {
                         if (showMessageBox && !AutoConfirmDialogs)
-                            MessageBox.Show("Bitte wählen Sie eine Datei aus.", "Validierung",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        {
+                            CustomMessageBox.Show(
+                                "Bitte wählen Sie eine Datei aus.",
+                                "Validierung",
+                                CustomMessageBoxButtons.OK,
+                                CustomMessageBoxIcon.Warning,
+                                FindForm());
+                        }
+
                         txtDocumentPath?.Focus();
                         return false;
                     }
+
                     if (!System.IO.File.Exists(txtDocumentPath?.Text))
                     {
                         if (showMessageBox && !AutoConfirmDialogs)
-                            MessageBox.Show("Die ausgewählte Datei existiert nicht.", "Validierung",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        {
+                            CustomMessageBox.Show(
+                                "Die ausgewählte Datei existiert nicht.",
+                                "Validierung",
+                                CustomMessageBoxButtons.OK,
+                                CustomMessageBoxIcon.Warning,
+                                FindForm());
+                        }
+
                         txtDocumentPath?.Focus();
                         return false;
                     }

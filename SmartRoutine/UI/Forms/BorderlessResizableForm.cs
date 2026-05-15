@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace SmartRoutine.UI.Helpers
+namespace SmartRoutine.UI.Forms
 {
     public partial class BorderlessResizableForm : Form
     {

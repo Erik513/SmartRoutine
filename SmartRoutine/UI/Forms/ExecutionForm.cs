@@ -8,9 +8,9 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace SmartRoutine.UI
+namespace SmartRoutine.UI.Forms
 {
-    public partial class ExecutionForm : BorderlessResizableForm
+    public partial class ExecutionForm : SmartRoutineForm
     {
         private readonly Routine _routine;
         private readonly RoutineStep _specificStep;
@@ -46,7 +46,10 @@ namespace SmartRoutine.UI
             _routine = routine;
             _specificStep = step;
             _onStepExecute = onExecute;
-            this.Text = $"Routine: {routine.Name}";
+
+            Text = $"Routine: {routine.Name}";
+            TitleBar.Title = Text;
+
             InitializeExecution();
         }
 
@@ -68,51 +71,42 @@ namespace SmartRoutine.UI
 
         private void ConfigureForm()
         {
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.MinimumSize = new Size(600, 450);
-            this.Size = new Size(900, 700);
-            this.BackColor = UIStyles.Colors.BackgroundDark;
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(600, 450);
+            Size = new Size(900, 700);
+            BackColor = UIStyles.Colors.BackgroundDark;
         }
 
         private void InitializeExecution()
         {
             _session = new RoutineExecutionSession(_routine, _specificStep);
 
-            // TitleBar
-            var titleBar = new TitleBarControl(this.Text);
-            this.Controls.Add(titleBar);
-
-            // Haupt-Layout
             var mainLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                Padding = new Padding(0, titleBar.Height, 0, 0),
+                Padding = new Padding(0),
                 ColumnCount = 1,
                 RowCount = 2,
                 BackColor = Color.Transparent
             };
+
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
 
-            // Content Panel
             _contentPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 BackColor = UIStyles.Colors.BackgroundMedium
             };
+
             mainLayout.Controls.Add(_contentPanel, 0, 0);
+            mainLayout.Controls.Add(CreateFooterPanel(), 0, 1);
 
-            // Footer-Leiste
-            var footerPanel = CreateFooterPanel();
-            mainLayout.Controls.Add(footerPanel, 0, 1);
+            ContentPanel.Controls.Clear();
+            ContentPanel.Controls.Add(mainLayout);
 
-            this.Controls.Add(mainLayout);
-
-            // Ersten Step laden
             LoadCurrentStep();
         }
-
         private Panel CreateFooterPanel()
         {
             var footer = new Panel

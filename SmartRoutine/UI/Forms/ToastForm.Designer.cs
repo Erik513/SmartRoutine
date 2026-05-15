@@ -1,6 +1,6 @@
-﻿namespace SmartRoutine.UI.Controls
+﻿namespace SmartRoutine.UI.Forms
 {
-    partial class InfoPopupForm
+    partial class ToastForm
     {
         /// <summary>
         /// Required designer variable.
@@ -31,7 +31,7 @@
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "InfoPopupForm";
+            this.Text = "ToastForm";
         }
 
         #endregion

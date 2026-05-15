@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Helpers
@@ -10,243 +10,210 @@ namespace SmartRoutine.UI.Helpers
         private const int WM_NCLBUTTONDOWN = 0xA1;
         private const int HT_CAPTION = 0x2;
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        [DllImport("user32.dll")]
         private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        [DllImport("user32.dll")]
         private static extern bool ReleaseCapture();
 
-        /// <summary>
-        /// Das Control, das als Drag-Handle fungiert
-        /// </summary>
         public Control DragHandle { get; private set; }
 
-        private Timer _refreshTimer;
-        private bool _isDragging;
+        private bool _mouseDown;
+        private Point _mouseDownPosition;
 
-        /// <summary>
-        /// Erstellt einen neuen FormDragHandle für das angegebene Control
-        /// </summary>
-        /// <param name="control">Das Control, das als Drag-Handle fungieren soll</param>
+        private bool _isRestoringFromMaximized;
+
         public FormDragHandle(Control control)
         {
             DragHandle = control ?? throw new ArgumentNullException(nameof(control));
+            DragHandle.MouseUp += DragHandle_MouseUp;
+            DragHandle.MouseDown += OnMouseDown;
             DragHandle.MouseMove += OnMouseMove;
-            DragHandle.DoubleClick += OnDoubleClick;
-            DragHandle.MouseUp += OnMouseUp;
-
-            // Für Resize-Optimierung
-            var form = DragHandle.FindForm();
-            if (form != null)
-            {
-                form.ResizeBegin += OnFormResizeBegin;
-                form.ResizeEnd += OnFormResizeEnd;
-            }
         }
 
-        private void OnDoubleClick(object sender, EventArgs e)
+        private void DragHandle_MouseUp(object sender, MouseEventArgs e)
         {
-            var form = DragHandle.FindForm();
-            if (form != null)
-            {
-                form.SuspendLayout();
-                form.WindowState = form.WindowState == FormWindowState.Normal
-                    ? FormWindowState.Maximized
-                    : FormWindowState.Normal;
-                form.ResumeLayout(true);
-
-                // Verzögertes Refreshen
-                form.BeginInvoke(new Action(() => RefreshFormControls(form)));
-            }
+            _mouseDown = false;
         }
 
-        private List<Control> GetAllControls(Control container)
+        private void OnMouseDown(object sender, MouseEventArgs e)
         {
-            var controls = new List<Control>();
-            foreach (Control c in container.Controls)
-            {
-                controls.Add(c);
-                controls.AddRange(GetAllControls(c));
-            }
-            return controls;
-        }
+            if (e.Button != MouseButtons.Left)
+                return;
 
+            var form = DragHandle.FindForm();
+
+            if (form == null)
+                return;
+
+            // Doppelklick
+            if (e.Clicks == 2)
+            {
+                ToggleMaximize(form);
+                return;
+            }
+
+            _mouseDown = true;
+            _mouseDownPosition = Cursor.Position;
+        }
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            if (!_mouseDown || e.Button != MouseButtons.Left)
+                return;
+
+            var form = DragHandle.FindForm();
+
+            if (form == null)
+                return;
+
+            // Erst ab kleiner Bewegung wirklich draggen
+            int dragDistance = Math.Abs(Cursor.Position.X - _mouseDownPosition.X) +
+                               Math.Abs(Cursor.Position.Y - _mouseDownPosition.Y);
+
+            if (dragDistance < 4)
+                return;
+
+            _mouseDown = false;
+
+            if (form.WindowState == FormWindowState.Maximized)
             {
-                var form = DragHandle.FindForm();
-                if (form != null)
+                if (_isRestoringFromMaximized)
+                    return;
+
+                _isRestoringFromMaximized = true;
+
+                form.WindowState = FormWindowState.Normal;
+
+                Timer timer = new Timer();
+                timer.Interval = 30;
+
+                timer.Tick += (s, args) =>
                 {
-                    _isDragging = true;
+                    timer.Stop();
+                    timer.Dispose();
 
-                    // Wenn maximiert -> zuerst in Normal wechseln
-                    if (form.WindowState == FormWindowState.Maximized)
-                    {
-                        form.WindowState = FormWindowState.Normal;
-                        // Sofort refreshen
-                        RefreshFormNow(form);
+                    // AKTUELLE Mausposition holen
+                    var cursor = Cursor.Position;
+                    var screen = Screen.FromPoint(cursor);
 
-                        // Position für Drag neu berechnen
-                        var screen = Screen.FromControl(form);
-                        form.Location = new Point(
-                            Cursor.Position.X - (form.Width / 2),
-                            Math.Max(screen.WorkingArea.Top, Cursor.Position.Y - 10)
-                        );
-                    }
+                    form.Location = new Point(
+                        cursor.X - form.Width / 2,
+                        Math.Max(screen.WorkingArea.Top, cursor.Y - 10)
+                    );
 
                     ReleaseCapture();
                     SendMessage(form.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
-                    CenterToScreenIfUnderTaskbar();
-                    SnapToTopIfNeeded();
-                }
-            }
-        }
 
-        private void OnMouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                var form = DragHandle.FindForm();
-                if (form != null)
-                {
-                    _isDragging = false;
-                    // Nach Drag-Release refreshen
-                    form.BeginInvoke(new Action(() => RefreshFormControls(form)));
-                }
-            }
-        }
+                    SnapToTopIfNeeded(form);
+                    KeepFormOnScreen(form);
 
-        private void OnFormResizeBegin(object sender, EventArgs e)
-        {
-            // Beim Beginn des Resizings: Buttons ausblenden für flüssigeres Resizing
-            var form = DragHandle.FindForm();
-        }
-
-        private void OnFormResizeEnd(object sender, EventArgs e)
-        {
-            // Nach dem Resizing: Buttons wieder einblenden und neu zeichnen
-            var form = DragHandle.FindForm();
-            if (form != null)
-            {
-                // Verzögertes Refreshen für alle Controls
-                form.BeginInvoke(new Action(() => RefreshFormControls(form)));
-
-                // Zusätzlich einen Timer für erneutes Refreshen (falls nötig)
-                _refreshTimer?.Dispose();
-                _refreshTimer = new Timer { Interval = 50 };
-                _refreshTimer.Tick += (s, args) =>
-                {
-                    RefreshFormControls(form);
-                    _refreshTimer?.Stop();
-                    _refreshTimer?.Dispose();
+                    _isRestoringFromMaximized = false;
                 };
-                _refreshTimer.Start();
+
+                timer.Start();
+
+                return;
             }
+
+            ReleaseCapture();
+            SendMessage(form.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+
+            SnapToTopIfNeeded(form);
+            KeepFormOnScreen(form);
+        }
+        private void ToggleMaximize(Form form)
+        {
+            if (form == null)
+                return;
+
+            if (form.WindowState == FormWindowState.Maximized)
+            {
+                form.WindowState = FormWindowState.Normal;
+                return;
+            }
+
+            Timer timer = new Timer();
+            timer.Interval = 30;
+
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                timer.Dispose();
+
+                form.WindowState = FormWindowState.Maximized;
+            };
+
+            timer.Start();
         }
 
-        private void SnapToTopIfNeeded()
+        private void SnapToTopIfNeeded(Form form)
         {
-            var form = DragHandle.FindForm();
-            if (form != null && form.WindowState != FormWindowState.Maximized)
-            {
-                var screen = Screen.FromControl(form);
-                var mousePos = Cursor.Position;
+            if (form == null || form.WindowState == FormWindowState.Maximized)
+                return;
 
-                if (mousePos.Y <= screen.WorkingArea.Top + 2)
+            var screen = Screen.FromPoint(Cursor.Position);
+            var area = screen.WorkingArea;
+
+            if (Cursor.Position.Y <= area.Top + 4)
+            {
+                Timer timer = new Timer();
+                timer.Interval = 30;
+
+                timer.Tick += (s, e) =>
                 {
-                    form.SuspendLayout();
+                    timer.Stop();
+                    timer.Dispose();
+
                     form.WindowState = FormWindowState.Maximized;
-                    form.ResumeLayout(true);
-                    form.BeginInvoke(new Action(() => RefreshFormControls(form)));
-                }
+                };
+
+                timer.Start();
             }
         }
 
-        private void RefreshFormNow(Form form)
+        private void KeepFormOnScreen(Form form)
         {
-            form.SuspendLayout();
-            form.PerformLayout();
-            form.ResumeLayout(false);
-            form.Invalidate(true);
-            form.Update();
+            if (form == null || form.WindowState == FormWindowState.Maximized)
+                return;
+
+            var screen = Screen.FromControl(form);
+            var area = screen.WorkingArea;
+
+            bool outsideScreen =
+                form.Right < area.Left + 50 ||
+                form.Left > area.Right - 50 ||
+                form.Bottom < area.Top + 50 ||
+                form.Top > area.Bottom - 50;
+
+            if (!outsideScreen)
+                return;
+
+            int centerX = area.Left + (area.Width - form.Width) / 2;
+            int centerY = area.Top + (area.Height - form.Height) / 2;
+
+            form.Location = new Point(centerX, centerY);
         }
 
-        private void RefreshFormControls(Form form)
-        {
-            form.SuspendLayout();
-            foreach (Control c in GetAllControls(form))
-            {
-                if (c.Visible)
-                {
-                    c.Invalidate();
-                    c.Update();
-                }
-            }
-            form.ResumeLayout(true);
-            form.Invalidate(true);
-            form.Update();
-        }
-
-        private void CenterToScreenIfUnderTaskbar()
-        {
-            var form = DragHandle.FindForm();
-            if (form != null)
-            {
-                int taskBarHeight = Screen.PrimaryScreen.Bounds.Height - Screen.PrimaryScreen.WorkingArea.Height;
-                int visibleAreaTop = Screen.PrimaryScreen.WorkingArea.Top + taskBarHeight;
-                int panelTopRelativeToScreen = form.Top + 20;
-
-                if (panelTopRelativeToScreen > Screen.PrimaryScreen.Bounds.Height - visibleAreaTop)
-                {
-                    int centerX = Screen.PrimaryScreen.Bounds.Width / 2;
-                    int centerY = Screen.PrimaryScreen.Bounds.Height / 2;
-                    form.Location = new Point(centerX - form.Width / 2, centerY - form.Height / 2);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Statische Hilfsmethode für einfache Verwendung
-        /// </summary>
         public static FormDragHandle Create(Control control)
         {
             return new FormDragHandle(control);
         }
 
-        /// <summary>
-        /// Entfernt alle Event-Handler und gibt Ressourcen frei
-        /// </summary>
         public void Dispose()
         {
             if (DragHandle != null)
             {
+                DragHandle.MouseDown -= OnMouseDown;
                 DragHandle.MouseMove -= OnMouseMove;
-                DragHandle.DoubleClick -= OnDoubleClick;
-                DragHandle.MouseUp -= OnMouseUp;
-
-                var form = DragHandle.FindForm();
-                if (form != null)
-                {
-                    form.ResizeBegin -= OnFormResizeBegin;
-                    form.ResizeEnd -= OnFormResizeEnd;
-                }
+                DragHandle.MouseUp -= DragHandle_MouseUp;
 
                 DragHandle = null;
             }
-
-            _refreshTimer?.Dispose();
         }
     }
 
-    /// <summary>
-    /// Statische Hilfsklasse für schnellen Zugriff
-    /// </summary>
     public static class FormDragExtensions
     {
-        /// <summary>
-        /// Macht dieses Control zu einem Form-Drag-Handle
-        /// </summary>
         public static FormDragHandle MakeDragHandle(this Control control)
         {
             return new FormDragHandle(control);

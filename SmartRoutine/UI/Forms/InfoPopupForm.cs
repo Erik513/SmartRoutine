@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 
-namespace SmartRoutine.UI.Controls
+namespace SmartRoutine.UI.Forms
 {
     public partial class InfoPopupForm : Form
     {

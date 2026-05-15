@@ -13,9 +13,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace SmartRoutine.UI
+namespace SmartRoutine.UI.Forms
 {
-    public partial class MainForm : BorderlessResizableForm
+    public partial class MainForm : SmartRoutineForm
     {
 
         // ========== FIELDS ==========
@@ -30,19 +30,22 @@ namespace SmartRoutine.UI
 
         // ========== CONSTRUCTOR ==========
         public MainForm(IRoutineService routineService)
+            : base(
+                title: "SmartRoutine",
+                showMinimize: true,
+                showMaximize: true,
+                showClose: true)
         {
-            _routineService = routineService ?? throw new ArgumentNullException(nameof(routineService));
+            _routineService = routineService
+                ?? throw new ArgumentNullException(nameof(routineService));
 
             ConfigureForm();
             CreateIntegratedUI();
             ShowRoutinesView();
-
-            this.Resize += MainForm_Resize;
         }
         // ========== CONFIGURATION ==========
         private void ConfigureForm()
         {
-            this.FormBorderStyle = FormBorderStyle.None;
             this.BackColor = UIStyles.Colors.BackgroundDark;
             this.MinimumSize = MINIMUM_WINDOW_SIZE;
             this.Size = MINIMUM_WINDOW_SIZE;
@@ -52,22 +55,11 @@ namespace SmartRoutine.UI
         // ========== UI CREATION METHODS ==========
         private void CreateIntegratedUI()
         {
-            this.Controls.Clear();
+            ContentPanel.Controls.Clear();
+            ContentPanel.Padding = new Padding(5);
 
-            // TitleBar
-            var titleBar = new TitleBarControl("SmartRoutine");
-            this.Controls.Add(titleBar);
-
-            // Content Panel
-            var contentPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(5, 5 + titleBar.Height, 5, 5)
-            };
-            this.Controls.Add(contentPanel);
-
-            // UserControls
             _routinesView = new RoutinesViewControl(_routineService);
+            _routinesView.Dock = DockStyle.Fill;
             _routinesView.NewRoutineClicked += (s, routine) => ShowEditorView(routine);
             _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine);
             _routinesView.DeleteRoutineClicked += (s, routine) => DeleteRoutine(routine);
@@ -75,33 +67,40 @@ namespace SmartRoutine.UI
             {
                 ExecuteFullRoutine(routine);
             };
-            contentPanel.Controls.Add(_routinesView);
 
             var urlValidationService = new UrlValidationService();
+
             _editorView = new RoutineEditorViewControl(_routineService, urlValidationService);
+            _editorView.Dock = DockStyle.Fill;
             _editorView.BackToRoutinesClicked += (s, e) => ShowRoutinesView();
             _editorView.SaveChanges += (s, routine) => SaveRoutine(routine);
 
-            contentPanel.Controls.Add(_editorView);
+            ContentPanel.Controls.Add(_routinesView);
+            ContentPanel.Controls.Add(_editorView);
         }
 
         private void ExecuteFullRoutine(Routine routine)
         {
             if (routine == null || routine.Steps.Count == 0)
             {
-                MessageBox.Show("Diese Routine enthält keine Schritte.", "Info",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show(
+                    "Diese Routine enthält keine Schritte.",
+                    "Info",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Info,
+                    FindForm());
                 return;
             }
             var session = new RoutineExecutionSession(routine);
 
             if (!session.HasExecutableSteps)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Alle Schritte dieser Routine sind derzeit deaktiviert.",
                     "Routine nicht ausführbar",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Info,
+                    FindForm());
 
                 return;
             }
@@ -152,48 +151,20 @@ namespace SmartRoutine.UI
         {
             if (routine == null) return;
 
-            if (MessageBox.Show($"Routine '{routine.Name}' wirklich löschen?", "Bestätigen",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            if (CustomMessageBox.Show(
+                    $"Routine '{routine.Name}' wirklich löschen?",
+                    "Bestätigen",
+                    CustomMessageBoxButtons.YesNo,
+                    CustomMessageBoxIcon.Warning,
+                    FindForm()) == DialogResult.Yes)
             {
                 _routineService.DeleteRoutine(routine.Id);
                 _routinesView.LoadRoutines();
             }
         }
 
-        private void StartRoutine(Routine routine)
-        {
-            if (routine == null || routine.Steps.Count == 0)
-            {
-                MessageBox.Show("Diese Routine enthält keine Schritte.", "Info",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            var executionForm = new ExecutionForm(routine, (step) =>
-            {
-                _routineService.ExecuteStep(step);
-            });
-            executionForm.ShowDialog(this);
-        }
-
 
         // ========== EVENT HANDLER ==========
-        private void MainForm_Resize(object sender, EventArgs e)
-        {
-            this.SuspendLayout();
-            try
-            {
-                if (this.Controls[0] is TitleBarControl titleBar)
-                {
-                    titleBar.UpdateMaximizeButton(this.WindowState == FormWindowState.Maximized);
-                }
-            }
-            finally
-            {
-                this.ResumeLayout(false);
-                this.PerformLayout();
-            }
-        }
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
