@@ -14,21 +14,11 @@ namespace SmartRoutine.Logic.Services
     {
         private readonly IRoutineRepository _repository;
         private List<Routine> _testRoutines;
-        private bool _useTestData = AppSettings.UseTestData;
+        private readonly bool _useTestData;
 
-        public bool UseTestData
-        {
-            get => _useTestData;
-            set
-            {
-                _useTestData = value;
-                if (_useTestData)
-                {
-                    LoadTestData();
-                }
-            }
-        }
-        public RoutineService(IRoutineRepository repository = null, bool useTestData = true)
+        public bool UseTestData => _useTestData;
+
+        public RoutineService(IRoutineRepository repository = null, bool useTestData = false)
         {
             _repository = repository;
             _useTestData = useTestData;
@@ -37,11 +27,11 @@ namespace SmartRoutine.Logic.Services
             {
                 LoadTestData();
             }
-
-            // Nur wenn kein Testdaten-Modus, dann muss Repository existieren
-            if (!_useTestData && _repository == null)
+            else if (_repository == null)
             {
-                throw new ArgumentNullException(nameof(repository), "Repository is required when not using test data");
+                throw new ArgumentNullException(
+                    nameof(repository),
+                    "Repository is required when test data is disabled.");
             }
         }
 
