@@ -11,7 +11,7 @@ namespace SmartRoutine.UI.Controls
         private Label lblTitle;
         private StyledListBox listBox;
 
-        private string _title = "";
+
         private int _headerHeight = 30;
         private Color _headerBackColor = UIStyles.Colors.BackgroundDark;
         private Color _headerForeColor = UIStyles.Colors.TextPrimary;
@@ -22,7 +22,10 @@ namespace SmartRoutine.UI.Controls
         public event EventHandler ItemsReordered;
 
         private readonly string _displayTextMember;
+        private readonly bool _allowReorder;
         private readonly bool _showEnumeration;
+        private string _headerTitle;
+        private readonly ContentAlignment _headerTextAlign;
 
         public StyledListBox InnerListBox => listBox;
         public new event MouseEventHandler MouseMove
@@ -43,37 +46,27 @@ namespace SmartRoutine.UI.Controls
             set => listBox.IsItemDisabled = value;
         }
 
-        public StyledListBoxControl()
-            : this(
-                title: "",
-                displayTextMember: null,
-                showHeader: false,
-                allowReorder: false,
-                showEnumeration: false,
-                textAlign: ContentAlignment.MiddleLeft)
-        {
-        }
+        public StyledListBoxControl() { }
+
         public StyledListBoxControl(
-            string title = "",
             string displayTextMember = null,
-            bool showHeader = true,
             bool allowReorder = false,
             bool showEnumeration = false,
-            ContentAlignment textAlign = ContentAlignment.MiddleLeft)
+            string headerTitle = null,
+            ContentAlignment headerTextAlign = ContentAlignment.MiddleLeft) : this()
         {
-            _title = title;
+
             _displayTextMember = displayTextMember;
+            _allowReorder = allowReorder;
             _showEnumeration = showEnumeration;
+            _headerTitle = headerTitle ?? "";
+            _headerTextAlign = headerTextAlign;
+            InitializeControl();
 
-            InitializeControl(showHeader, allowReorder, textAlign);
-
-            lblTitle.Text = title;
-            lblTitle.TextAlign = textAlign;
-            headerPanel.Visible = showHeader && !string.IsNullOrWhiteSpace(title);
 
             SetStyle(ControlStyles.OptimizedDoubleBuffer |
-                     ControlStyles.AllPaintingInWmPaint |
-                     ControlStyles.ResizeRedraw, true);
+            ControlStyles.AllPaintingInWmPaint |
+            ControlStyles.ResizeRedraw, true);
 
             UpdateStyles();
         }
@@ -83,10 +76,12 @@ namespace SmartRoutine.UI.Controls
             return listBox.IndexFromPoint(point);
         }
 
-        private void InitializeControl(bool showHeader, bool allowReorder, ContentAlignment textAlign)
+        private void InitializeControl()
         {
             this.Dock = DockStyle.Fill;
             this.BackColor = Color.Transparent;
+
+            bool showHeader = !string.IsNullOrWhiteSpace(_headerTitle);
 
             headerPanel = new Panel
             {
@@ -98,22 +93,23 @@ namespace SmartRoutine.UI.Controls
 
             lblTitle = new Label
             {
-                Text = _title,
+                Text = _headerTitle,
                 Dock = DockStyle.Fill,
                 ForeColor = _headerForeColor,
                 Font = _headerFont,
-                TextAlign = textAlign,
-                Padding = GetHeaderPadding(textAlign),
+                TextAlign = _headerTextAlign,
+                Padding = GetHeaderPadding(_headerTextAlign),
                 BackColor = Color.Transparent
             };
 
             headerPanel.Controls.Add(lblTitle);
 
-            listBox = new StyledListBox(allowReorder)
+            listBox = new StyledListBox
             {
                 Dock = DockStyle.Fill,
                 DisplayTextMember = _displayTextMember,
-                ShowEnumeration = _showEnumeration
+                ShowEnumeration = _showEnumeration,
+                AllowReorder = _allowReorder
             };
 
             // Events weiterleiten
@@ -147,10 +143,10 @@ namespace SmartRoutine.UI.Controls
 
         public string Title
         {
-            get => _title;
+            get => _headerTitle;
             set
             {
-                _title = value;
+                _headerTitle = value;
                 lblTitle.Text = value;
                 headerPanel.Visible = !string.IsNullOrWhiteSpace(value);
             }

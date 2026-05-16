@@ -150,12 +150,11 @@ namespace SmartRoutine.UI.Controls
             leftRoutineTitleTlp.Controls.Add(txtRoutineName, 1, 0);
 
             lstSteps = new StyledListBoxControl(
-                title: "Meine Schritte",
                 displayTextMember: "Name",
-                showHeader: true,
                 allowReorder: true,
                 showEnumeration: true,
-                textAlign: ContentAlignment.MiddleCenter)
+                headerTitle: "Meine Schritte",
+                headerTextAlign: ContentAlignment.MiddleCenter)
             {
                 Dock = DockStyle.Fill,
                 ItemHeightCustom = 35,

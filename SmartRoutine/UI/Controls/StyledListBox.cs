@@ -63,10 +63,8 @@ namespace SmartRoutine.UI.Controls
             set { _disabledBackColor = value; Invalidate(); }
         }
 
-        public StyledListBox(bool allowReorder = false)
+        public StyledListBox()
         {
-            _allowReorder = allowReorder;
-
             this.DrawMode = DrawMode.OwnerDrawFixed;
             this.ItemHeight = _itemHeight;
             this.BackColor = UIStyles.Colors.BackgroundDark;

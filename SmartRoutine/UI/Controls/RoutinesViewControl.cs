@@ -63,12 +63,11 @@ namespace SmartRoutine.UI.Controls
 
             // ========== OBERE ZEILE: StyledListBoxControl ==========
             lstRoutines = new StyledListBoxControl(
-                title: "Meine Routinen",
                 displayTextMember: "Name",
-                showHeader: true,
                 allowReorder: true,
                 showEnumeration: false,
-                textAlign: ContentAlignment.MiddleCenter)
+                headerTitle: "Meine Routinen",
+                headerTextAlign: ContentAlignment.MiddleCenter)
             {
                 Dock = DockStyle.Fill,
                 ItemHeightCustom = 35,
