@@ -1,6 +1,5 @@
 ﻿using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
-using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
 using SmartRoutine.UI.Helpers;
 using System;
@@ -642,7 +641,10 @@ namespace SmartRoutine.UI.Controls
             tglStepEnabled.Checked = true;
             tglAutoStart.Checked = true;
 
-            cmbStepType.SelectedIndex = -1;
+            BeginInvoke(new Action(() =>
+            {
+                cmbStepType.SelectedIndex = -1;
+            }));
 
             lblStepNameTitle.Text = "Neuen Schritt erstellen";
             BuildBaseEditorTable();
@@ -845,10 +847,24 @@ namespace SmartRoutine.UI.Controls
         }
         private void BtnExecuteStep_Click(object sender, EventArgs e)
         {
-            if (_editingStep == null) return;
+            if (_editingStep == null)
+            {
+                var result = AskToSaveChanges();
 
-            // Prüfe auf ungespeicherte Änderungen
-            if (HasUnsavedChanges())
+                if (result == DialogResult.Yes)
+                {
+                    if (!ValidateCurrentStep(true)) return;
+
+                    SaveCurrentStep(refreshList: true);
+
+                    if (_editingStep == null) return;
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else if (HasUnsavedChanges())
             {
                 var result = AskToSaveChanges();
 
