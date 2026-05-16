@@ -29,7 +29,12 @@ namespace SmartRoutine.UI.Controls
         private int _dragInsertPosition = -1;
 
         public event EventHandler ItemsReordered;
-        
+        public Func<object, string> DisplayTextProvider { get; set; }
+
+        public string DisplayTextMember { get; set; }
+
+        public bool ShowEnumeration { get; set; } = false;
+
         private bool _allowReorder = true;
 
         public bool AllowReorder
@@ -78,6 +83,28 @@ namespace SmartRoutine.UI.Controls
             this.AllowDrop = _allowReorder;
         }
 
+        private string GetDisplayText(object item, int index)
+        {
+            string text;
+
+            if (DisplayTextProvider != null)
+            {
+                text = DisplayTextProvider(item);
+            }
+            else if (!string.IsNullOrWhiteSpace(DisplayTextMember))
+            {
+                var property = item?.GetType().GetProperty(DisplayTextMember);
+                text = property?.GetValue(item)?.ToString() ?? "";
+            }
+            else
+            {
+                text = item?.ToString() ?? "";
+            }
+
+            return ShowEnumeration
+                ? $"{index + 1}. {text}"
+                : text;
+        }
         public int ItemHeightCustom
         {
             get => _itemHeight;
@@ -350,7 +377,7 @@ namespace SmartRoutine.UI.Controls
             Rectangle rect = new Rectangle(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height);
 
             object item = Items[e.Index];
-            string itemText = item?.ToString() ?? "";
+            string itemText = GetDisplayText(item, e.Index);
             bool isDisabled = IsItemDisabled?.Invoke(item) == true;
 
             Color backColor;

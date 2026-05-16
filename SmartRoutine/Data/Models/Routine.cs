@@ -12,11 +12,6 @@ namespace SmartRoutine.Data.Models
         public DateTime? UpdatedAt { get; set; }
         public DateTime? LastExecutionAt { get; set; }
         public List<RoutineStep> Steps { get; set; } = new List<RoutineStep>();
-
-        public override string ToString()
-        {
-            return Name;
-        }
     }
 
     public abstract class RoutineStep
@@ -29,11 +24,6 @@ namespace SmartRoutine.Data.Models
         public bool AutoStart { get; set; } = true;
 
         public abstract StepType Type { get; }
-
-        public override string ToString()
-        {
-            return $"{Order + 1}. {Name}";
-        }
     }
 
     // OpenUrl Step

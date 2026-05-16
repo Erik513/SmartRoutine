@@ -62,7 +62,13 @@ namespace SmartRoutine.UI.Controls
             mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
             // ========== OBERE ZEILE: StyledListBoxControl ==========
-            lstRoutines = new StyledListBoxControl(title: "Meine Routinen", showHeader: true, allowReorder: true, ContentAlignment.MiddleCenter)
+            lstRoutines = new StyledListBoxControl(
+                title: "Meine Routinen",
+                displayTextMember: "Name",
+                showHeader: true,
+                allowReorder: true,
+                showEnumeration: false,
+                textAlign: ContentAlignment.MiddleCenter)
             {
                 Dock = DockStyle.Fill,
                 ItemHeightCustom = 35,

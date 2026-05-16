@@ -21,7 +21,10 @@ namespace SmartRoutine.UI.Controls
         public event EventHandler SelectedIndexChanged;
         public event EventHandler ItemsReordered;
 
-        public Control InnerListBox => listBox;
+        private readonly string _displayTextMember;
+        private readonly bool _showEnumeration;
+
+        public StyledListBox InnerListBox => listBox;
         public new event MouseEventHandler MouseMove
         {
             add => listBox.MouseMove += value;
@@ -41,37 +44,38 @@ namespace SmartRoutine.UI.Controls
         }
 
         public StyledListBoxControl()
+            : this(
+                title: "",
+                displayTextMember: null,
+                showHeader: false,
+                allowReorder: false,
+                showEnumeration: false,
+                textAlign: ContentAlignment.MiddleLeft)
         {
-            InitializeControl(showHeader: false, allowReorder: false);
-
-            this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
-              ControlStyles.AllPaintingInWmPaint |
-              ControlStyles.ResizeRedraw, true);
-            this.UpdateStyles();
         }
-        public StyledListBoxControl(string title = "", bool showHeader = false, bool allowReorder = false, ContentAlignment textAlign = ContentAlignment.MiddleLeft)
+        public StyledListBoxControl(
+            string title = "",
+            string displayTextMember = null,
+            bool showHeader = true,
+            bool allowReorder = false,
+            bool showEnumeration = false,
+            ContentAlignment textAlign = ContentAlignment.MiddleLeft)
         {
             _title = title;
+            _displayTextMember = displayTextMember;
+            _showEnumeration = showEnumeration;
 
-            InitializeControl(showHeader, allowReorder);
+            InitializeControl(showHeader, allowReorder, textAlign);
 
             lblTitle.Text = title;
             lblTitle.TextAlign = textAlign;
             headerPanel.Visible = showHeader && !string.IsNullOrWhiteSpace(title);
 
-            // Padding anpassen bei Linksbündig vs. Zentriert
-            if (textAlign == ContentAlignment.MiddleLeft)
-            {
-                lblTitle.Padding = new Padding(10, 0, 0, 0);
-            }
-            else if (textAlign == ContentAlignment.MiddleCenter)
-            {
-                lblTitle.Padding = new Padding(0, 0, 0, 0);
-            }
-            else if (textAlign == ContentAlignment.MiddleRight)
-            {
-                lblTitle.Padding = new Padding(0, 0, 10, 0);
-            }
+            SetStyle(ControlStyles.OptimizedDoubleBuffer |
+                     ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.ResizeRedraw, true);
+
+            UpdateStyles();
         }
 
         public int IndexFromPoint(Point point)
@@ -79,7 +83,7 @@ namespace SmartRoutine.UI.Controls
             return listBox.IndexFromPoint(point);
         }
 
-        private void InitializeControl(bool showHeader, bool allowReorder)
+        private void InitializeControl(bool showHeader, bool allowReorder, ContentAlignment textAlign)
         {
             this.Dock = DockStyle.Fill;
             this.BackColor = Color.Transparent;
@@ -98,8 +102,8 @@ namespace SmartRoutine.UI.Controls
                 Dock = DockStyle.Fill,
                 ForeColor = _headerForeColor,
                 Font = _headerFont,
-                TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(10, 0, 0, 0),
+                TextAlign = textAlign,
+                Padding = GetHeaderPadding(textAlign),
                 BackColor = Color.Transparent
             };
 
@@ -108,7 +112,8 @@ namespace SmartRoutine.UI.Controls
             listBox = new StyledListBox(allowReorder)
             {
                 Dock = DockStyle.Fill,
-                MinimumSize = new Size(0, 50)
+                DisplayTextMember = _displayTextMember,
+                ShowEnumeration = _showEnumeration
             };
 
             // Events weiterleiten
@@ -117,6 +122,25 @@ namespace SmartRoutine.UI.Controls
 
             this.Controls.Add(listBox);
             this.Controls.Add(headerPanel);
+        }
+
+        private Padding GetHeaderPadding(ContentAlignment textAlign)
+        {
+            switch (textAlign)
+            {
+                case ContentAlignment.MiddleLeft:
+                case ContentAlignment.TopLeft:
+                case ContentAlignment.BottomLeft:
+                    return new Padding(10, 0, 0, 0);
+
+                case ContentAlignment.MiddleRight:
+                case ContentAlignment.TopRight:
+                case ContentAlignment.BottomRight:
+                    return new Padding(0, 0, 10, 0);
+
+                default:
+                    return new Padding(0);
+            }
         }
 
         // ========== Öffentliche Eigenschaften ==========
@@ -128,7 +152,7 @@ namespace SmartRoutine.UI.Controls
             {
                 _title = value;
                 lblTitle.Text = value;
-                headerPanel.Visible = !string.IsNullOrEmpty(value);
+                headerPanel.Visible = !string.IsNullOrWhiteSpace(value);
             }
         }
 
