@@ -868,9 +868,9 @@ namespace SmartRoutine.UI.Controls
 
             if (shouldOpenExecutionForm)
             {
-                var executionForm = new ExecutionForm(_currentRoutine, _editingStep, (step) =>
+                var executionForm = new ExecutionForm(_currentRoutine, _editingStep, step =>
                 {
-                    _routineService.ExecuteStep(step);
+                    return _routineService.ExecuteStep(step);
                 });
 
                 executionForm.ShowDialog(this);

@@ -1,13 +1,11 @@
 ﻿using SmartRoutine.Data.Models;
-using System;
+using SmartRoutine.Logic.Services;
 using System.Collections.Generic;
 
 namespace SmartRoutine.Logic.Interfaces
 {
     public interface IRoutineService
     {
-        event Action<string> OpenUrlInWebView;
-
         // Routines
         List<Routine> GetAllRoutines();
         Routine GetRoutine(string id);
@@ -24,7 +22,7 @@ namespace SmartRoutine.Logic.Interfaces
         void ReorderSteps(string routineId, int oldIndex, int newIndex);
 
         // Execution
-        void ExecuteStep(RoutineStep step);
+        StepExecutionResult ExecuteStep(RoutineStep step);
         bool ValidateStep(RoutineStep step);
     }
 }

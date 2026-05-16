@@ -420,47 +420,47 @@ namespace SmartRoutine.Logic.Services
             }
         }
 
-        public void ExecuteStep(RoutineStep step)
+        public StepExecutionResult ExecuteStep(RoutineStep step)
         {
             if (step == null)
-                return;
+                return StepExecutionResult.None();
+
             switch (step)
             {
                 case OpenUrlStep urlStep:
-                    ExecuteOpenUrl(urlStep);
-                    break;
+                    return ExecuteOpenUrl(urlStep);
+
                 case OpenFolderStep folderStep:
                     ExecuteOpenFolder(folderStep);
-                    break;
+                    return StepExecutionResult.None();
+
                 case OpenApplicationStep appStep:
                     ExecuteOpenApplication(appStep);
-                    break;
+                    return StepExecutionResult.None();
+
                 case OpenDocumentStep docStep:
                     ExecuteOpenDocument(docStep);
-                    break;
+                    return StepExecutionResult.None();
+
                 default:
                     throw new NotSupportedException($"Step type {step.GetType()} not supported");
             }
         }
-        public event Action<string> OpenUrlInWebView;
 
-        private void ExecuteOpenUrl(OpenUrlStep step)
+        private StepExecutionResult ExecuteOpenUrl(OpenUrlStep step)
         {
             if (step.OpenInExternalBrowser)
             {
-                // Externer Browser
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = step.Url,
                     UseShellExecute = true
                 });
+
+                return StepExecutionResult.None();
             }
-            else
-            {
-                // Interne WebView - Event auslösen
-                // Prüfe ob jemand das Event abonniert hat
-                OpenUrlInWebView?.Invoke(step.Url);
-            }
+
+            return StepExecutionResult.OpenInternalUrl(step.Url);
         }
 
         private void ExecuteOpenFolder(OpenFolderStep step)

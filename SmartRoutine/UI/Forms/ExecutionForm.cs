@@ -14,7 +14,7 @@ namespace SmartRoutine.UI.Forms
     {
         private readonly Routine _routine;
         private readonly RoutineStep _specificStep;
-        private readonly Action<RoutineStep> _onStepExecute;
+        private readonly Func<RoutineStep, StepExecutionResult> _onStepExecute;
         private RoutineExecutionSession _session;
 
         // WebView für interne URL-Anzeige
@@ -31,7 +31,7 @@ namespace SmartRoutine.UI.Forms
         private string _pendingToastMessage;
 
         // Konstruktor für komplette Routine
-        public ExecutionForm(Routine routine, Action<RoutineStep> onExecute) : this()
+        public ExecutionForm(Routine routine, Func<RoutineStep, StepExecutionResult> onExecute) : this()
         {
             _routine = routine;
             _specificStep = null;
@@ -41,7 +41,7 @@ namespace SmartRoutine.UI.Forms
         }
 
         // Konstruktor für einzelnen Step
-        public ExecutionForm(Routine routine, RoutineStep step, Action<RoutineStep> onExecute) : this()
+        public ExecutionForm(Routine routine, RoutineStep step, Func<RoutineStep, StepExecutionResult> onExecute) : this()
         {
             _routine = routine;
             _specificStep = step;
@@ -338,12 +338,12 @@ namespace SmartRoutine.UI.Forms
         {
             var step = _session.CurrentStep;
 
-            _onStepExecute?.Invoke(step);
+            var result = _onStepExecute?.Invoke(step);
             _session.MarkCurrentStepExecuted();
 
-            if (step is OpenUrlStep urlStep && !urlStep.OpenInExternalBrowser)
+            if (result?.ShouldOpenInInternalBrowser == true)
             {
-                ShowWebView(urlStep.Url);
+                ShowWebView(result.InternalBrowserUrl);
             }
 
             _executeBtn.Enabled = true;
