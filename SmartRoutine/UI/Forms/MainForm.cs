@@ -107,7 +107,7 @@ namespace SmartRoutine.UI.Forms
             }
 
             routine.LastExecutionAt = DateTime.Now;
-            _routineService.UpdateRoutine(routine);
+            _routineService.SaveRoutine(routine);
 
             var executionForm = new ExecutionForm(routine, step =>
             {

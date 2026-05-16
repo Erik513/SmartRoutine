@@ -136,53 +136,6 @@ namespace SmartRoutine.Logic.Services
             }
         }
 
-        public void UpdateRoutine(Routine routine)
-        {
-            if (routine == null) return;
-
-            if (_useTestData)
-            {
-                var index = _testRoutines.FindIndex(r => r.Id == routine.Id);
-                if (index >= 0)
-                {
-                    var existing = _testRoutines[index];
-
-                    // Nur Name und UpdatedAt aktualisieren
-                    existing.Name = routine.Name;
-                    existing.UpdatedAt = routine.UpdatedAt;
-
-                    // Steps ersetzen (mit korrekten Orders)
-                    var sortedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
-                    for (int i = 0; i < sortedSteps.Count; i++)
-                    {
-                        sortedSteps[i].Order = i;
-                    }
-                    existing.Steps = sortedSteps;
-
-                    // WICHTIG: Die Order der Routine selbst NICHT ändern!
-                    // existing.Order bleibt wie es ist
-                }
-            }
-            else
-            {
-                var existing = _repository.GetRoutine(routine.Id);
-                if (existing != null)
-                {
-                    existing.Name = routine.Name;
-                    existing.UpdatedAt = routine.UpdatedAt;
-
-                    var sortedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
-                    for (int i = 0; i < sortedSteps.Count; i++)
-                    {
-                        sortedSteps[i].Order = i;
-                    }
-                    existing.Steps = sortedSteps;
-
-                    _repository.UpdateRoutine(existing);
-                }
-            }
-        }
-
         public void DeleteRoutine(string id)
         {
             if (_useTestData)
@@ -221,48 +174,71 @@ namespace SmartRoutine.Logic.Services
         {
             if (routine == null) return;
 
+            NormalizeStepOrders(routine);
+
             if (_useTestData)
-            {
-                var index = _testRoutines.FindIndex(r => r.Id == routine.Id);
-                if (index >= 0)
-                {
-                    for (int i = 0; i < routine.Steps.Count; i++)
-                    {
-                        routine.Steps[i].Order = i;
-                    }
-                    _testRoutines[index] = routine;
-                }
-                else
-                {
-                    routine.Order = _testRoutines.Count;
-                    _testRoutines.Add(routine);
-                }
-            }
+                SaveRoutineInMemory(routine);
             else
-            {
-                var existing = _repository.LoadRoutines().FirstOrDefault(r => r.Id == routine.Id);
-                if (existing != null)
-                {
-                    existing.Name = routine.Name;
-                    existing.UpdatedAt = DateTime.Now;
-                    existing.Steps.Clear();
-                    foreach (var step in routine.Steps.OrderBy(s => s.Order))
-                    {
-                        // Kopiere den Step mit seinem konkreten Typ
-                        existing.Steps.Add(CopyStep(step));
-                    }
-                    _repository.UpdateRoutine(existing);
-                }
-                else
-                {
-                    var routines = _repository.LoadRoutines();
-                    int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
-                    routine.Order = maxOrder + 1;
-                    routine.CreatedAt = DateTime.Now;
-                    _repository.AddRoutine(routine);
-                }
-            }
+                SaveRoutineInRepository(routine);
         }
+
+        private void NormalizeStepOrders(Routine routine)
+        {
+            if (routine.Steps == null)
+                routine.Steps = new List<RoutineStep>();
+
+            var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
+
+            for (int i = 0; i < orderedSteps.Count; i++)
+                orderedSteps[i].Order = i;
+
+            routine.Steps = orderedSteps;
+        }
+
+        private void SaveRoutineInMemory(Routine routine)
+        {
+            var index = _testRoutines.FindIndex(r => r.Id == routine.Id);
+
+            if (index >= 0)
+            {
+                routine.UpdatedAt = DateTime.Now;
+                _testRoutines[index] = routine;
+                return;
+            }
+
+            int maxOrder = _testRoutines.Count > 0 ? _testRoutines.Max(r => r.Order) : -1;
+
+            routine.Order = maxOrder + 1;
+            routine.CreatedAt = DateTime.Now;
+
+            _testRoutines.Add(routine);
+        }
+
+        private void SaveRoutineInRepository(Routine routine)
+        {
+            var existing = _repository.GetRoutine(routine.Id);
+
+            if (existing != null)
+            {
+                existing.Name = routine.Name;
+                existing.UpdatedAt = DateTime.Now;
+                existing.LastExecutionAt = routine.LastExecutionAt;
+                existing.Steps = routine.Steps.Select(CopyStep).ToList();
+
+                _repository.UpdateRoutine(existing);
+                return;
+            }
+
+            var routines = _repository.LoadRoutines();
+            int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
+
+            routine.Order = maxOrder + 1;
+            routine.CreatedAt = DateTime.Now;
+
+            _repository.AddRoutine(routine);
+        }
+
+
         private RoutineStep CopyStep(RoutineStep original)
         {
             switch (original)

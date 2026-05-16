@@ -749,7 +749,7 @@ namespace SmartRoutine.UI.Controls
                 reorderedSteps[i].Order = i;
             }
             _currentRoutine.Steps = reorderedSteps;
-            _routineService.UpdateRoutine(_currentRoutine);
+            _routineService.SaveRoutine(_currentRoutine);
             lstSteps.Invalidate();
             lstSteps.Update();
         }
@@ -1391,7 +1391,7 @@ namespace SmartRoutine.UI.Controls
         {
             _currentRoutine.Name = txtRoutineName.Text.Trim();
             _currentRoutine.UpdatedAt = DateTime.Now;
-            _routineService.UpdateRoutine(_currentRoutine);
+            _routineService.SaveRoutine(_currentRoutine);
         }
     }
 }

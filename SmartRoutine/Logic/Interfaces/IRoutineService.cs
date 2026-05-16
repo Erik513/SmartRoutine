@@ -10,7 +10,6 @@ namespace SmartRoutine.Logic.Interfaces
         List<Routine> GetAllRoutines();
         Routine GetRoutine(string id);
         Routine CreateRoutine(string name);
-        void UpdateRoutine(Routine routine);
         void DeleteRoutine(string id);
         void ReorderRoutines(List<Routine> reorderedRoutines);
         void SaveRoutine(Routine routine);
