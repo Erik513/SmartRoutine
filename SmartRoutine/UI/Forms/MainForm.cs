@@ -61,8 +61,8 @@ namespace SmartRoutine.UI.Forms
 
             _routinesView = new RoutinesViewControl(_routineService);
             _routinesView.Dock = DockStyle.Fill;
-            _routinesView.NewRoutineClicked += (s, routine) => ShowEditorView(routine);
-            _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine);
+            _routinesView.NewRoutineClicked += (s, routine) => ShowEditorView(routine, isNewRoutine: true);
+            _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine, isNewRoutine: false);
             _routinesView.DeleteRoutineClicked += (s, routine) => DeleteRoutine(routine);
             _routinesView.StartRoutineClicked += (s, routine) =>
             {
@@ -140,12 +140,12 @@ namespace SmartRoutine.UI.Forms
             _routinesView.LoadRoutines();
         }
 
-        private void ShowEditorView(Routine routine)
+        private void ShowEditorView(Routine routine, bool isNewRoutine = false)
         {
             _currentRoutine = routine;
             _routinesView.Hide();
             _editorView.Show();
-            _editorView.LoadRoutine(routine);
+            _editorView.LoadRoutine(routine, isNewRoutine);
         }
 
         private void DeleteRoutine(Routine routine)

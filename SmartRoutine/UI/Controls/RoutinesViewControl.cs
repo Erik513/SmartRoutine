@@ -106,7 +106,6 @@ namespace SmartRoutine.UI.Controls
                 string newRoutineName = $"Meine Routine {nextNumber}";
 
                 var newRoutine = _routineService.CreateRoutine(newRoutineName);
-                newRoutine.IsNew = true;
 
                 LoadRoutines();
                 SelectRoutine(newRoutine);

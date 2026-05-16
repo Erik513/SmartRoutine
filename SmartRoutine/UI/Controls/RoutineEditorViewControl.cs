@@ -397,7 +397,7 @@ namespace SmartRoutine.UI.Controls
 
 
         // ========== PUBLIC METHODS ==========
-        public void LoadRoutine(Routine routine)
+        public void LoadRoutine(Routine routine, bool isNewRoutine = false)
         {
             _originalRoutine = DeepCopy(routine ?? new Routine());
             _currentRoutine = DeepCopy(routine ?? new Routine());
@@ -417,16 +417,14 @@ namespace SmartRoutine.UI.Controls
 
             if (_currentRoutine.Steps.Count == 0)
                 rightTlp.Visible = false;
-
-            if (routine?.IsNew == true)
+            
+            if (isNewRoutine)
             {
-                this.BeginInvoke(new Action(() =>
+                BeginInvoke(new Action(() =>
                 {
                     txtRoutineName.Focus();
                     txtRoutineName.SelectAll();
                 }));
-
-                routine.IsNew = false;
             }
         }
         private void TxtUrl_TextChanged(object sender, EventArgs e)
