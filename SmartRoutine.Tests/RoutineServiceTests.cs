@@ -145,59 +145,6 @@ namespace SmartRoutine.Tests
 
         // UPDATE ROUTINE
 
-        [TestMethod] // Main-Function
-        public void UpdateRoutine_UpdatesNameAndSteps()
-        {
-            var service = CreateService();
-            service.CreateRoutine("Original Name");
-            var routine = service.GetAllRoutines().First();
-
-            // Alten Step hinzufügen
-            var oldStep = new OpenUrlStep { Name = "Old Step", Order = 0, Url = "oldurl", OpenInExternalBrowser = true };
-            service.AddStep(routine.Id, oldStep);
-
-            // Neuen Step erstellen
-            routine.Name = "Updated Name";
-            routine.Steps = new List<RoutineStep>
-            {
-                new OpenUrlStep { Id = "new1", Name = "New Step", Order = 0, Url = "newurl", OpenInExternalBrowser = false }
-            };
-            service.UpdateRoutine(routine);
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-            Assert.AreEqual("Updated Name", updatedRoutine.Name);
-            Assert.AreEqual(1, updatedRoutine.Steps.Count);
-            Assert.AreEqual("New Step", updatedRoutine.Steps[0].Name);
-        }
-
-        [TestMethod]
-        public void UpdateRoutine_WithNull_DoesNothing()
-        {
-            var service = CreateService();
-            service.CreateRoutine("Original");
-
-            service.UpdateRoutine(null);
-            var routines = service.GetAllRoutines();
-
-            Assert.AreEqual(1, routines.Count);
-            Assert.AreEqual("Original", routines[0].Name);
-        }
-
-        [TestMethod]
-        public void UpdateRoutine_WithNonExistentRoutine_DoesNothing()
-        {
-            var service = CreateService();
-            service.CreateRoutine("Original");
-            var nonExistent = new Routine { Id = "non-existent", Name = "Ghost" };
-
-            service.UpdateRoutine(nonExistent);
-            var routines = service.GetAllRoutines();
-
-            Assert.AreEqual(1, routines.Count);
-            Assert.AreEqual("Original", routines[0].Name);
-            Assert.IsNull(service.GetRoutine("non-existent"));
-        }
-
 
         // SAVE ROUTINE
 

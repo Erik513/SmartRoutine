@@ -19,14 +19,15 @@ namespace SmartRoutine.UI.Controls
 
         private const int TITLE_BAR_HEIGHT = 30;
         private static readonly Size BUTTON_SIZE = new Size(30, 30);
-        private const int ICON_SIZE = 18;
-        private const int ICON_LEFT_MARGIN = 8;
+        private const int ICON_SIZE = TITLE_BAR_HEIGHT;
+        private const int ICON_LEFT_MARGIN = 0;
 
         public string Title
         {
             get => lblTitle.Text;
             set => lblTitle.Text = value;
         }
+        
         public Image IconImage
         {
             get => picIcon.Image;
@@ -201,8 +202,8 @@ namespace SmartRoutine.UI.Controls
             if (picIcon.Visible)
             {
                 picIcon.Location = new Point(
-                    ICON_LEFT_MARGIN,
-                    (Height - ICON_SIZE) / 2);
+                ICON_LEFT_MARGIN,
+                0);
 
                 picIcon.BringToFront();
             }

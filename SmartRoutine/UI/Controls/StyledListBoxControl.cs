@@ -46,6 +46,12 @@ namespace SmartRoutine.UI.Controls
             set => listBox.IsItemDisabled = value;
         }
 
+        public Func<object, Image> IconProvider
+        {
+            get => listBox.IconProvider;
+            set => listBox.IconProvider = value;
+        }
+
         public StyledListBoxControl() { }
 
         public StyledListBoxControl(

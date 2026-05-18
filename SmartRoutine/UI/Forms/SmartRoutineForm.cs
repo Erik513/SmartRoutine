@@ -38,6 +38,11 @@ namespace SmartRoutine.UI.Forms
             FormBorderStyle = FormBorderStyle.None;
             BackColor = UIStyles.Colors.BackgroundDark;
 
+            if (Properties.Resources.AppIcon != null)
+            {
+                Icon = Properties.Resources.AppIcon;
+            }
+
             var rootLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,

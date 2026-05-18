@@ -31,42 +31,32 @@ namespace SmartRoutine.UI.Forms
         private string _pendingToastMessage;
 
         // Konstruktor für komplette Routine
-        public ExecutionForm(Routine routine, Func<RoutineStep, StepExecutionResult> onExecute) : this()
+        public ExecutionForm(
+            Routine routine,
+            Func<RoutineStep, StepExecutionResult> onExecute)
+            : base(
+                title: $"Routine: {routine.Name}")
         {
+            InitializeForm();
             _routine = routine;
             _specificStep = null;
             _onStepExecute = onExecute;
-            this.Text = $"Routine: {routine.Name}";
             InitializeExecution();
         }
 
         // Konstruktor für einzelnen Step
-        public ExecutionForm(Routine routine, RoutineStep step, Func<RoutineStep, StepExecutionResult> onExecute) : this()
+        public ExecutionForm(
+            Routine routine,
+            RoutineStep step,
+            Func<RoutineStep, StepExecutionResult> onExecute)
+            : base(
+                title: $"Routine: {routine.Name}")
         {
+            InitializeForm();
             _routine = routine;
             _specificStep = step;
             _onStepExecute = onExecute;
-
-            Text = $"Routine: {routine.Name}";
-            TitleBar.Title = Text;
-
             InitializeExecution();
-        }
-
-        private ExecutionForm()
-        {
-            ConfigureForm();
-            _toolTip = new ToolTip();
-            _infoPopup = new InfoPopupForm();
-            
-            Shown += (s, e) =>
-            {
-                if (!string.IsNullOrEmpty(_pendingToastMessage))
-                {
-                    ToastForm.ShowToast(_pendingToastMessage, this);
-                    _pendingToastMessage = null;
-                }
-            };
         }
 
         private void ConfigureForm()
@@ -75,6 +65,23 @@ namespace SmartRoutine.UI.Forms
             MinimumSize = new Size(600, 450);
             Size = new Size(900, 700);
             BackColor = UIStyles.Colors.BackgroundDark;
+        }
+
+        private void InitializeForm()
+        {
+            ConfigureForm();
+
+            _toolTip = new ToolTip();
+            _infoPopup = new InfoPopupForm();
+
+            Shown += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(_pendingToastMessage))
+                {
+                    ToastForm.ShowToast(_pendingToastMessage, this);
+                    _pendingToastMessage = null;
+                }
+            };
         }
 
         private void InitializeExecution()

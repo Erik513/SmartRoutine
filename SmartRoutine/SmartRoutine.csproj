@@ -35,6 +35,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>
+    </ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Castle.Core, Version=5.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
       <HintPath>..\packages\Castle.Core.5.2.1\lib\net462\Castle.Core.dll</HintPath>
@@ -132,6 +136,11 @@
     <Compile Include="Logic\Services\RoutineExecutionSession.cs" />
     <Compile Include="Logic\Services\StepExecutionResult.cs" />
     <Compile Include="Logic\TestData\TestDataFactory.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="UI\Forms\CustomMessageBoxForm.cs" />
     <Compile Include="UI\Forms\CustomMessageBoxForm.Designer.cs">
       <DependentUpon>CustomMessageBoxForm.cs</DependentUpon>
@@ -223,13 +232,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -244,7 +249,24 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Properties\Resources\AppIcon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\Resources\IconApplication.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\Resources\IconDocument.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\Resources\IconFolder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\Resources\IconLogo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\Resources\IconWeb.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets" Condition="Exists('..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

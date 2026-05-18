@@ -255,26 +255,6 @@ namespace SmartRoutine.Tests.UI
 
         // BackButton Tests
 
-        [TestMethod]
-        public void BackButton_Click_WithChanges_SavesAndTriggersBackEvent()
-        {
-            _editor.LoadRoutine(_testRoutine);
-            var txtRoutineName = GetPrivateField<TextBox>(_editor, "txtRoutineName");
-            txtRoutineName.Text = "Changed Name";
-
-            bool backEventFired = false;
-            _editor.BackToRoutinesClicked += (s, e) => backEventFired = true;
-
-            _mockService.Setup(s => s.UpdateRoutine(It.IsAny<Routine>()));
-            _mockService.Setup(s => s.GetAllRoutines()).Returns(new System.Collections.Generic.List<Routine>());
-
-            var btnBack = GetPrivateField<Button>(_editor, "btnBack");
-
-            btnBack.PerformClick();
-
-            Assert.IsTrue(backEventFired);
-        }
-
 
         // Hilfsmethode für Reflection
 

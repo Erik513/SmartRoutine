@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Drawing.Imaging;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -163,6 +164,7 @@ namespace SmartRoutine.UI.Controls
             lstSteps.IsItemDisabled = item => item is RoutineStep step && !step.Show;
             lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
             lstSteps.ItemsReordered += LstSteps_ItemsReordered;
+            lstSteps.IconProvider = GetStepIcon;
 
             leftTlp.Controls.Add(leftRoutineTitleTlp, 0, 0);
             leftTlp.Controls.Add(lstSteps, 0, 1);
@@ -393,6 +395,22 @@ namespace SmartRoutine.UI.Controls
                     CreateOpenDocumentControls();
                     break;
             }
+        }
+        private Image GetStepIcon(object item)
+        {
+            if (item is OpenUrlStep)
+                return Properties.Resources.IconWeb;
+
+            if (item is OpenFolderStep)
+                return Properties.Resources.IconFolder;
+
+            if (item is OpenDocumentStep)
+                return Properties.Resources.IconDocument;
+
+            if (item is OpenApplicationStep)
+                return Properties.Resources.IconApplication;
+
+            return null;
         }
 
 

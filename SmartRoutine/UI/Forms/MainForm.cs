@@ -31,6 +31,7 @@ namespace SmartRoutine.UI.Forms
         // ========== CONSTRUCTOR ==========
         public MainForm(IRoutineService routineService)
             : base(
+                icon: Properties.Resources.IconLogo,
                 title: "SmartRoutine",
                 showMinimize: true,
                 showMaximize: true,

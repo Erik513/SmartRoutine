@@ -30,10 +30,12 @@ namespace SmartRoutine.UI.Controls
 
         public event EventHandler ItemsReordered;
         public Func<object, string> DisplayTextProvider { get; set; }
-
         public string DisplayTextMember { get; set; }
-
         public bool ShowEnumeration { get; set; } = false;
+
+        public Func<object, Image> IconProvider { get; set; }
+        private const int ITEM_ICON_SIZE = 22;
+        private const int ITEM_ICON_MARGIN = 8;
 
         private bool _allowReorder = true;
 
@@ -99,9 +101,7 @@ namespace SmartRoutine.UI.Controls
                 text = item?.ToString() ?? "";
             }
 
-            return ShowEnumeration
-                ? $"{index + 1}. {text}"
-                : text;
+            return text;
         }
         public int ItemHeightCustom
         {
@@ -430,13 +430,55 @@ namespace SmartRoutine.UI.Controls
             }
 
             int textRightMargin = 12;
-            int textLeftMargin = 8;
+            int textLeft = rect.X + 8;
             int reservedDragWidth = _allowReorder ? dragRect.Width : 0;
+            int scrollBarWidth = isVScrollVisible ? SystemInformation.VerticalScrollBarWidth : 0;
+
+            if (ShowEnumeration)
+            {
+                string numberText = $"{e.Index + 1}.";
+                SizeF numberSize = e.Graphics.MeasureString(numberText, Font);
+
+                Rectangle numberRect = new Rectangle(
+                    textLeft,
+                    rect.Y,
+                    (int)Math.Ceiling(numberSize.Width) + 4,
+                    rect.Height
+                );
+
+                using (var numberBrush = new SolidBrush(textColor))
+                using (var numberFormat = new StringFormat
+                {
+                    Alignment = StringAlignment.Near,
+                    LineAlignment = StringAlignment.Center
+                })
+                {
+                    e.Graphics.DrawString(numberText, Font, numberBrush, numberRect, numberFormat);
+                }
+
+                textLeft += numberRect.Width + 4;
+            }
+
+            Image icon = IconProvider?.Invoke(item);
+
+            if (icon != null)
+            {
+                Rectangle iconRect = new Rectangle(
+                    textLeft,
+                    rect.Y + (rect.Height - ITEM_ICON_SIZE) / 2,
+                    ITEM_ICON_SIZE,
+                    ITEM_ICON_SIZE
+                );
+
+                e.Graphics.DrawImage(icon, iconRect);
+
+                textLeft += ITEM_ICON_SIZE + ITEM_ICON_MARGIN;
+            }
 
             Rectangle textRect = new Rectangle(
-                rect.X + textLeftMargin,
+                textLeft,
                 rect.Y,
-                rect.Width - reservedDragWidth - textLeftMargin - textRightMargin - (isVScrollVisible ? SystemInformation.VerticalScrollBarWidth : 0),
+                rect.Width - (textLeft - rect.X) - reservedDragWidth - textRightMargin - scrollBarWidth,
                 rect.Height
             );
 
