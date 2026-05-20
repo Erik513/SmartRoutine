@@ -102,7 +102,7 @@ namespace SmartRoutine.UI.Controls
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             // Buttons
-            btnNewRoutine = UIStyles.Buttons.CreatePrimary("+ Neue Routine", "", new Size(0, 0));
+            btnNewRoutine = UIStyles.Buttons.CreateGreen("+", "Neue Routine erstellen", new Size(30, 30), true);
             btnNewRoutine.Dock = DockStyle.Fill;
             btnNewRoutine.Margin = new Padding(5, 5, 5, 5);
             btnNewRoutine.Click += (s, e) =>
@@ -118,17 +118,17 @@ namespace SmartRoutine.UI.Controls
                 NewRoutineClicked?.Invoke(s, newRoutine);
             };
 
-            btnEditRoutine = UIStyles.Buttons.CreatePrimary("✎ Bearbeiten", "", new Size(0, 0));
+            btnEditRoutine = UIStyles.Buttons.CreatePrimary("✎", "Routine bearbeiten", new Size(30, 30), true);
             btnEditRoutine.Dock = DockStyle.Fill;
             btnEditRoutine.Margin = new Padding(5, 5, 5, 5);
             btnEditRoutine.Click += (s, e) => EditRoutineClicked?.Invoke(s, _selectedRoutine);
 
-            btnDeleteRoutine = UIStyles.Buttons.CreateDanger("🗑 Löschen", "", new Size(0, 0));
+            btnDeleteRoutine = UIStyles.Buttons.CreateDanger("🗑", "Routine löschen", new Size(30, 30), true);
             btnDeleteRoutine.Dock = DockStyle.Fill;
             btnDeleteRoutine.Margin = new Padding(5, 5, 5, 5);
             btnDeleteRoutine.Click += (s, e) => DeleteRoutineClicked?.Invoke(s, _selectedRoutine);
 
-            btnStartRoutine = UIStyles.Buttons.CreateGreen("▶ Starten", "", new Size(0, 0));
+            btnStartRoutine = UIStyles.Buttons.CreateGreen("▶", "Routine starten", new Size(30, 30), true);
             btnStartRoutine.Dock = DockStyle.Fill;
             btnStartRoutine.Margin = new Padding(5, 5, 5, 5);
             btnStartRoutine.Enabled = true;

@@ -137,7 +137,7 @@ namespace SmartRoutine.UI.Forms
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 35));   // Info-Icon
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 65));   // Step-Counter
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));   // Step-Name
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));  // Navigation
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));       // Navigation
 
             _infoLabel = new Label
             {
@@ -192,16 +192,15 @@ namespace SmartRoutine.UI.Forms
             navPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
             navPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
 
-            _prevBtn = CreateFooterButton("◀", "Vorheriger Schritt");
+            _prevBtn = UIStyles.Buttons.CreatePrimary("⏮", "Vorheriger Schritt", new Size(50,50), isIcon: true);
             _prevBtn.Click += (s, e) => NavigateToPreviousStep();
 
-            _executeBtn = CreateFooterButton("➜", "Schritt ausführen");
-            _executeBtn.BackColor = UIStyles.Colors.Green;
-            _executeBtn.ForeColor = UIStyles.Colors.White;
+            _executeBtn = UIStyles.Buttons.CreateGreen("▶", "Schritt ausführen", new Size(50, 50), isIcon: true);
             _executeBtn.Click += (s, e) => ExecuteCurrentStep();
 
-            _nextBtn = CreateFooterButton("▶", "Nächster Schritt");
+            _nextBtn = UIStyles.Buttons.CreatePrimary("⏭", "Nächster Schritt",  new Size(50, 50), isIcon: true);
             _nextBtn.Click += (s, e) => NavigateToNextStep();
+            
             navPanel.Controls.Add(_prevBtn, 0, 0);
             navPanel.Controls.Add(_executeBtn, 1, 0);
             navPanel.Controls.Add(_nextBtn, 2, 0);

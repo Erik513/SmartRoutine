@@ -73,7 +73,7 @@ namespace SmartRoutine.UI.Controls
         private readonly bool _allowWindowSnapAndMaximize;
         public TitleBarControl(
             Image icon = null,
-            string title = "SmartRoutine",
+            string title = "",
             ContentAlignment titleTextAlign = ContentAlignment.MiddleCenter,
             bool showMinimizeButton = true,
             bool showMaximizeButton = true,

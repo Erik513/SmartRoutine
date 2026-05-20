@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SmartRoutine.UI.Controls;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
@@ -52,10 +53,14 @@ namespace SmartRoutine.UI.Helpers
             public static Color GreenDark = Color.FromArgb(20, 100, 50);        // Dunkles Grün
             public static Color Green = Color.FromArgb(30, 150, 70);      
             public static Color GreenLight = Color.FromArgb(40, 180, 90);
+            public static Color GreenLighter = Color.FromArgb(50, 210, 110);
+
 
             // Warnungen
-            public static Color Yellow = Color.FromArgb(200, 150, 0);      // Dunkles Gelb/Gold
+            public static Color YellowDark = Color.FromArgb(170, 125, 0);
+            public static Color Yellow = Color.FromArgb(200, 150, 0);
             public static Color YellowLight = Color.FromArgb(230, 180, 30);
+            public static Color YellowLighter = Color.FromArgb(255, 210, 60);
 
             // Fehler/Negative Aktionen
             public static Color RedDark = Color.FromArgb(150, 20, 30);          // Dunkles Rot
@@ -114,7 +119,7 @@ namespace SmartRoutine.UI.Helpers
             public static Font Normal = new Font("Segoe UI", 9);
             public static Font Small = new Font("Segoe UI", 8);
             public static Font Monospace = new Font("Consolas", 9);
-            public static Font Icon = new Font("Segoe UI Symbol", 10);
+            public static Font Icon = new Font("Segoe UI Symbol", 13f);
         }
 
         // Button-Styles
@@ -122,7 +127,7 @@ namespace SmartRoutine.UI.Helpers
         {
 
             // Standard-Button
-            public static Button CreateStandard(string text = "", string tooltip = "", Size? size = null)
+            public static Button CreateStandard(string text = "", string tooltip = "", Size? size = null, bool isIcon = false)
             {
                 var button = new Button
                 {
@@ -131,17 +136,22 @@ namespace SmartRoutine.UI.Helpers
                     FlatStyle = FlatStyle.Flat,
                     BackColor = Colors.BackgroundMedium,
                     ForeColor = Colors.TextPrimary,
-                    Font = Fonts.Normal,
+                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
                     TabStop = false,
                     Cursor = Cursors.Hand,
                     Margin = new Padding(0),
-                    Padding = new Padding(0),
+                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
                     TextAlign = ContentAlignment.MiddleCenter
                 };
                 button.FlatAppearance.BorderSize = 1;
                 button.FlatAppearance.BorderColor = Colors.BorderDark;
                 button.FlatAppearance.MouseOverBackColor = Colors.BackgroundLight;
                 button.FlatAppearance.MouseDownBackColor = Colors.Primary;
+                SetEnabledStyle(button,
+                    Colors.BackgroundMedium,     // enabled BackColor
+                    Colors.TextPrimary,         // enabled ForeColor
+                    Colors.BackgroundMedium,    // disabled BackColor
+                    Colors.TextPrimary);        // disabled ForeColor
 
                 AddToolTip(button, tooltip);
 
@@ -149,7 +159,7 @@ namespace SmartRoutine.UI.Helpers
             }
 
             // Primary-Button (hervorstehend)
-            public static Button CreatePrimary(string text = "", string tooltip = "", Size? size = null)
+            public static Button CreatePrimary(string text = "", string tooltip = "", Size? size = null, bool isIcon = false)
             {
                 var button = new Button
                 {
@@ -158,44 +168,49 @@ namespace SmartRoutine.UI.Helpers
                     FlatStyle = FlatStyle.Flat,
                     BackColor = Colors.PrimaryDark,
                     ForeColor = Colors.TextPrimary,
-                    Font = Fonts.Normal,
+                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
                     TabStop = false,
                     Cursor = Cursors.Hand,
                     Margin = new Padding(0),
-                    Padding = new Padding(0),
+                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
                     TextAlign = ContentAlignment.MiddleCenter
                 };
                 button.FlatAppearance.BorderSize = 0;
                 button.FlatAppearance.BorderColor = Colors.BorderDark;
                 button.FlatAppearance.MouseOverBackColor = Colors.Primary;
                 button.FlatAppearance.MouseDownBackColor = Colors.PrimaryLight;
+                SetEnabledStyle(button,
+                    Colors.PrimaryDark,             // enabled BackColor
+                    Colors.TextPrimary,         // enabled ForeColor
+                    Colors.PrimaryDark,         // disabled BackColor
+                    Colors.TextPrimary);        // disabled ForeColor
 
                 AddToolTip(button, tooltip);
 
                 return button;
             }
-            public static Button CreateGreen(string text = "", string tooltip = "", Size? size = null)
+            public static Button CreateGreen(string text = "", string tooltip = "", Size? size = null, bool isIcon = false)
             {
                 var button = new Button
                 {
                     Text = text,
                     Size = size ?? new Size(30, 30),
                     FlatStyle = FlatStyle.Flat,
-                    BackColor = Colors.PrimaryDark,
+                    BackColor = Colors.GreenDark,
                     ForeColor = Colors.TextPrimary,
-                    Font = Fonts.Normal,
+                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
                     TabStop = false,
                     Cursor = Cursors.Hand,
                     Margin = new Padding(0),
-                    Padding = new Padding(0),
+                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
                     TextAlign = ContentAlignment.MiddleCenter
                 };
                 button.FlatAppearance.BorderSize = 1;
                 button.FlatAppearance.BorderColor = Colors.BorderDark;
                 button.FlatAppearance.MouseOverBackColor = Colors.Green;
                 button.FlatAppearance.MouseDownBackColor = Colors.GreenLight;
-                SetupDisabledStyle(button,
-                    Colors.GreenDark,             // enabled BackColor
+                SetEnabledStyle(button,
+                    Colors.GreenDark,           // enabled BackColor
                     Colors.TextPrimary,         // enabled ForeColor
                     Colors.PrimaryDark,         // disabled BackColor
                     Colors.TextPrimary);        // disabled ForeColor
@@ -206,32 +221,61 @@ namespace SmartRoutine.UI.Helpers
             }
 
             // Danger-Button (für Close/Actions)
-            public static Button CreateDanger(string text = "", string tooltip = "", Size? size = null)
+            public static Button CreateDanger(string text = "", string tooltip = "", Size? size = null, bool isIcon = false)
             {
                 var button = new Button
                 {
                     Text = text,
                     Size = size ?? new Size(30, 30),
                     FlatStyle = FlatStyle.Flat,
-                    BackColor = Colors.PrimaryDark,
+                    BackColor = Colors.RedDark,
                     ForeColor = Colors.TextPrimary,
-                    Font = Fonts.Normal,
+                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
                     TabStop = false,
                     Cursor = Cursors.Hand,
                     Margin = new Padding(0),
-                    Padding = new Padding(0),
+                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
                     TextAlign = ContentAlignment.MiddleCenter
                 };
                 button.FlatAppearance.BorderSize = 1;
                 button.FlatAppearance.BorderColor = Colors.BorderDark;
                 button.FlatAppearance.MouseOverBackColor = Colors.Red;
                 button.FlatAppearance.MouseDownBackColor = Colors.RedLight;
-                SetupDisabledStyle(button,
+                SetEnabledStyle(button,
                     Colors.RedDark,             // enabled BackColor
                     Colors.TextPrimary,         // enabled ForeColor
                     Colors.PrimaryDark,         // disabled BackColor
-                    Colors.TextPrimary);        // disabled ForeColor
+                    Colors.TextDisabled);        // disabled ForeColor
 
+                AddToolTip(button, tooltip);
+
+                return button;
+            }
+            public static Button CreateBrowseInFolder(string tooltip = "", Size? size = null, bool isIcon = true)
+            {
+                var button = new Button
+                {
+                    Text = "📁",
+                    Size = size ?? new Size(30, 30),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Colors.Yellow,
+                    ForeColor = Colors.TextPrimary,
+                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
+                    TabStop = false,
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0),
+                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                button.FlatAppearance.BorderSize = 1;
+                button.FlatAppearance.BorderColor = Colors.BorderDark;
+                button.FlatAppearance.MouseOverBackColor = Colors.YellowLight;
+                button.FlatAppearance.MouseDownBackColor = Colors.YellowLighter;
+                SetEnabledStyle(button,
+                    Colors.Yellow,              // enabled BackColor
+                    Colors.TextPrimary,         // enabled ForeColor
+                    Colors.Primary,             // disabled BackColor
+                    Colors.TextDisabled);       // disabled ForeColor
                 AddToolTip(button, tooltip);
 
                 return button;
@@ -265,18 +309,30 @@ namespace SmartRoutine.UI.Helpers
                 return button;
             }
 
-            private static void SetupDisabledStyle(Button button, Color enabledBackColor, Color enabledForeColor, Color disabledBackColor, Color disabledForeColor)
+            private static void SetEnabledStyle(
+                Button button,
+                Color enabledBackColor,
+                Color enabledForeColor,
+                Color disabledBackColor,
+                Color disabledForeColor)
             {
-                // Initiale Farben setzen
-                button.BackColor = button.Enabled ? enabledBackColor : disabledBackColor;
-                button.ForeColor = button.Enabled ? enabledForeColor : disabledForeColor;
+                if (button == null)
+                    return;
 
-                // Event für spätere Änderungen
-                button.EnabledChanged += (s, e) =>
+                void Apply()
                 {
-                    button.BackColor = button.Enabled ? enabledBackColor : disabledBackColor;
-                    button.ForeColor = button.Enabled ? enabledForeColor : disabledForeColor;
-                };
+                    button.BackColor = button.Enabled
+                        ? enabledBackColor
+                        : disabledBackColor;
+
+                    button.ForeColor = button.Enabled
+                        ? enabledForeColor
+                        : disabledForeColor;
+                }
+
+                button.EnabledChanged += (s, e) => Apply();
+
+                Apply();
             }
 
             private static void AddToolTip(Button button, string tooltip)

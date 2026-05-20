@@ -147,7 +147,9 @@ namespace SmartRoutine.UI.Forms
             Button button;
 
             if (result == DialogResult.OK || result == DialogResult.Yes)
-                button = UIStyles.Buttons.CreatePrimary(text, "", new Size(120, 35));
+                button = UIStyles.Buttons.CreateGreen(text, "", new Size(120, 35));
+            else if (result == DialogResult.No)
+                button = UIStyles.Buttons.CreateDanger(text, "", new Size(120, 35));
             else
                 button = UIStyles.Buttons.CreateStandard(text, "", new Size(120, 35));
 
@@ -158,7 +160,7 @@ namespace SmartRoutine.UI.Forms
             if (result == DialogResult.OK || result == DialogResult.Yes)
                 AcceptButton = button;
 
-            if (result == DialogResult.Cancel)
+            if (result == DialogResult.Cancel || result == DialogResult.No)
                 CancelButton = button;
 
             button.Click += (s, e) =>
@@ -177,35 +179,35 @@ namespace SmartRoutine.UI.Forms
                 case CustomMessageBoxButtons.OK:
                     return new[]
                     {
-                        ("OK", DialogResult.OK)
+                        ("✓", DialogResult.OK)
                     };
 
                 case CustomMessageBoxButtons.OKCancel:
                     return new[]
                     {
-                        ("OK", DialogResult.OK),
+                        ("✓", DialogResult.OK),
                         ("Abbrechen", DialogResult.Cancel)
                     };
 
                 case CustomMessageBoxButtons.YesNo:
                     return new[]
                     {
-                        ("Ja", DialogResult.Yes),
-                        ("Nein", DialogResult.No)
+                        ("✓", DialogResult.Yes),
+                        ("✖", DialogResult.No)
                     };
 
                 case CustomMessageBoxButtons.YesNoCancel:
                     return new[]
                     {
-                        ("Ja", DialogResult.Yes),
-                        ("Nein", DialogResult.No),
+                        ("✓", DialogResult.Yes),
+                        ("✖", DialogResult.No),
                         ("Abbrechen", DialogResult.Cancel)
                     };
 
                 default:
                     return new[]
                     {
-                        ("OK", DialogResult.OK)
+                        ("✓", DialogResult.OK)
                     };
             }
         }

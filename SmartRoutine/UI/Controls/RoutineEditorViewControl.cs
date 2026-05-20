@@ -177,8 +177,9 @@ namespace SmartRoutine.UI.Controls
             rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Basis-Tabelle
             rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Optionen-Tabelle
             rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));   // Füllbereich
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));   // Buttons
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60)); // Buttons
             rightTlp.Visible = false;
+            //rightTlp.CellBorderStyle = TableLayoutPanelCellBorderStyle.InsetDouble;
 
             // ========== ROW 1: TITLE ==========
             rightTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
@@ -248,38 +249,38 @@ namespace SmartRoutine.UI.Controls
                 Margin = new Padding(0)
             };
 
-            // ========== ROW 5: BUTTONS ==========
+            // ========== ROW 5: BUTTONS ========== 
             rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(4, 1);
             rightBtnsTlp.Dock = DockStyle.Fill;
-            rightBtnsTlp.ColumnStyles.Clear();
+            rightBtnsTlp.Margin = new Padding(5);
+            rightBtnsTlp.Padding = new Padding(0);
 
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // Spacer links
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155)); // Execute
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155)); // Save
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155)); // Cancel
+            rightBtnsTlp.ColumnStyles.Clear();
+            rightBtnsTlp.RowStyles.Clear();
+
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+
+            rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             // Execute
-            btnExecuteStep = UIStyles.Buttons.CreateGreen(
-                "▶ Ausführen",
-                "",
-                new Size(155, 35));
-
+            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Ausführen", new Size(100, 35), true);
+            btnExecuteStep.Dock = DockStyle.Fill;
+            btnExecuteStep.Margin = new Padding(5, 5, 5, 5);
             btnExecuteStep.Click += BtnExecuteStep_Click;
 
             // Save
-            btnSaveStep = UIStyles.Buttons.CreatePrimary(
-                "💾 Speichern",
-                "",
-                new Size(155, 35));
-
+            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾", "Speichern", new Size(100, 35), true);
+            btnSaveStep.Dock = DockStyle.Fill;
+            btnSaveStep.Margin = new Padding(5, 5, 5, 5);
             btnSaveStep.Click += BtnSaveStep_Click;
 
             // Cancel
-            btnCancelStep = UIStyles.Buttons.CreatePrimary(
-                "✖ Abbrechen",
-                "",
-                new Size(155, 35));
-
+            btnCancelStep = UIStyles.Buttons.CreatePrimary("✖", "Abbrechen", new Size(100, 35), true);
+            btnCancelStep.Dock = DockStyle.Fill;
+            btnCancelStep.Margin = new Padding(5, 5, 5, 5);
             btnCancelStep.Click += BtnCancelStep_Click;
 
             // Hinzufügen
@@ -304,21 +305,21 @@ namespace SmartRoutine.UI.Controls
             footerTlp.ColumnStyles.Clear();
             footerTlp.RowStyles.Clear();
 
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170)); // Add
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 165)); // Delete
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // Add
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // Delete
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));  // LastExecution
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120)); // Back
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // Back
 
             footerTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnAddStep = UIStyles.Buttons.CreatePrimary("+ Schritt hinzufügen", "", new Size(155, 35));
+            btnAddStep = UIStyles.Buttons.CreateGreen("+", "Schritt hinzufügen", new Size(100, 35), true);
             btnAddStep.Dock = DockStyle.Fill;
             btnAddStep.Margin = new Padding(10, 10, 5, 10);
             btnAddStep.Click += BtnAddStep_Click;
 
-            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑 Löschen", "", new Size(155, 35));
+            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑", "Schritt löschen", new Size(100, 35), true);
             btnDeleteStep.Dock = DockStyle.Fill;
-            btnDeleteStep.Margin = new Padding(5, 10, 10, 10);
+            btnDeleteStep.Margin = new Padding(5, 10, 5, 10);
             btnDeleteStep.Click += BtnDeleteStep_Click;
             btnDeleteStep.Enabled = false;
 
@@ -327,9 +328,9 @@ namespace SmartRoutine.UI.Controls
             lblLastExecution.Margin = new Padding(15, 0, 10, 0);
             lblLastExecution.TextAlign = ContentAlignment.MiddleLeft;
 
-            btnBack = UIStyles.Buttons.CreateStandard("← Zurück", "", new Size(100, 35));
+            btnBack = UIStyles.Buttons.CreateStandard("←", "Zurück zum Hauptmenü", new Size(100, 35), true);
             btnBack.Dock = DockStyle.Fill;
-            btnBack.Margin = new Padding(10, 10, 10, 10);
+            btnBack.Margin = new Padding(5, 10, 10, 10);
             btnBack.Click += BtnBack_Click;
 
             footerTlp.Controls.Add(btnAddStep, 0, 0);
@@ -1013,7 +1014,7 @@ namespace SmartRoutine.UI.Controls
 
             txtFolderPath.Dock = DockStyle.Fill;
 
-            var btnBrowse = UIStyles.Buttons.CreateStandard("Durchsuchen...");
+            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Ordner auswählen");
             btnBrowse.Dock = DockStyle.Fill;
             btnBrowse.Margin = new Padding(5, 0, 0, 0);
 
@@ -1057,7 +1058,7 @@ namespace SmartRoutine.UI.Controls
 
             txtAppPath.Dock = DockStyle.Fill;
 
-            var btnBrowse = UIStyles.Buttons.CreateStandard("Durchsuchen...");
+            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Programm auswählen");
             btnBrowse.Dock = DockStyle.Fill;
             btnBrowse.Margin = new Padding(5, 0, 0, 0);
 
@@ -1106,7 +1107,7 @@ namespace SmartRoutine.UI.Controls
 
             txtDocumentPath.Dock = DockStyle.Fill;
 
-            btnBrowseDocument = UIStyles.Buttons.CreateStandard("Durchsuchen...");
+            btnBrowseDocument = UIStyles.Buttons.CreateBrowseInFolder("Dokument auswählen");
             btnBrowseDocument.Dock = DockStyle.Fill;
             btnBrowseDocument.Margin = new Padding(5, 0, 0, 0);
 
