@@ -1380,86 +1380,143 @@ namespace SmartRoutine.UI.Controls
 
         private void SaveCurrentStep(bool refreshList = true)
         {
-            if (!ValidateCurrentStep(false)) return;
+            if (!ValidateCurrentStep(false))
+                return;
 
-            string name = txtStepName.Text.Trim();
-            string description = txtStepDescription.Text.Trim();
-            bool show = tglStepEnabled.Checked;
+            var step = CreateStepFromEditor();
 
-            if (cmbStepType.SelectedIndex == -1) return;
+            if (step == null)
+                return;
+
+            SaveStep(step);
+
+            if (refreshList)
+            {
+                RefreshStepsList(false);
+
+                ToastForm.ShowToast(
+                    $"✓ Schritt '{step.Name}' gespeichert",
+                    FindForm());
+            }
+        }
+
+        private RoutineStep CreateStepFromEditor()
+        {
+            if (cmbStepType.SelectedIndex == -1)
+                return null;
 
             var selectedType = (StepType)cmbStepType.SelectedValue;
+
             RoutineStep step;
 
             switch (selectedType)
             {
                 case StepType.OpenUrl:
-                    var urlResult = _urlValidationService.ValidateAndRepairUrl(txtUrl?.Text, false);
+
+                    var urlResult =
+                        _urlValidationService.ValidateAndRepairUrl(
+                            txtUrl?.Text,
+                            false);
 
                     if (!urlResult.IsValid)
-                        return;
+                        return null;
 
                     step = new OpenUrlStep
                     {
                         Url = urlResult.RepairedUrl,
-                        OpenInExternalBrowser = tglOpenInExternBrowser?.Checked ?? true
+                        OpenInExternalBrowser =
+                            tglOpenInExternBrowser?.Checked ?? true
                     };
+
                     break;
+
                 case StepType.OpenFolder:
+
                     step = new OpenFolderStep
                     {
                         FolderPath = txtFolderPath?.Text ?? "",
-                        OpenInNewWindow = tglOpenInNewWindow?.Checked ?? true
+                        OpenInNewWindow =
+                            tglOpenInNewWindow?.Checked ?? true
                     };
+
                     break;
+
                 case StepType.OpenApplication:
+
                     step = new OpenApplicationStep
                     {
                         ApplicationPath = txtAppPath?.Text ?? "",
                         Arguments = txtAppArguments?.Text ?? "",
-                        RunAsAdmin = tglRunAsAdmin?.Checked ?? false
+                        RunAsAdmin =
+                            tglRunAsAdmin?.Checked ?? false
                     };
+
                     break;
+
                 case StepType.OpenDocument:
+
                     step = new OpenDocumentStep
                     {
                         FilePath = txtDocumentPath?.Text ?? "",
                         OpenWithAssociatedApp = true
                     };
+
                     break;
+
                 default:
-                    throw new NotSupportedException();
+                    return null;
             }
 
-            step.Name = name;
-            step.Description = description;
-            step.Show = show;
-            step.AutoStart = tglAutoStart.Checked;
+            ApplyCommonStepProperties(step);
 
+            return step;
+        }
+
+        private void ApplyCommonStepProperties(RoutineStep step)
+        {
+            step.Name = txtStepName.Text.Trim();
+
+            step.Description =
+                txtStepDescription.Text.Trim();
+
+            step.Show = tglStepEnabled.Checked;
+
+            step.AutoStart = tglAutoStart.Checked;
+        }
+
+        private void SaveStep(RoutineStep step)
+        {
             if (_editingStep != null)
             {
                 step.Id = _editingStep.Id;
                 step.Order = _editingStep.Order;
-                _routineService.UpdateStep(_currentRoutine.Id, step);
+
+                _routineService.UpdateStep(
+                    _currentRoutine.Id,
+                    step);
+
                 _editingStep = step;
-                _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
+
+                _currentRoutine =
+                    _routineService.GetRoutine(
+                        _currentRoutine.Id);
             }
             else
             {
-                _routineService.AddStep(_currentRoutine.Id, step);
-                _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
+                _routineService.AddStep(
+                    _currentRoutine.Id,
+                    step);
+
+                _currentRoutine =
+                    _routineService.GetRoutine(
+                        _currentRoutine.Id);
 
                 if (_originalRoutine != null)
-                    _currentRoutine.Order = _originalRoutine.Order;
+                    _currentRoutine.Order =
+                        _originalRoutine.Order;
 
-                _editingStep = _currentRoutine.Steps.LastOrDefault();
-            }
-
-            if (refreshList)
-            {
-                RefreshStepsList(silent: false);
-                var parentForm = this.FindForm();
-                ToastForm.ShowToast($"✓ Schritt '{step.Name}' gespeichert", parentForm);
+                _editingStep =
+                    _currentRoutine.Steps.LastOrDefault();
             }
         }
         private void SaveCurrentRoutine()
