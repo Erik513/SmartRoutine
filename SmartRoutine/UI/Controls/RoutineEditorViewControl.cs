@@ -968,6 +968,20 @@ namespace SmartRoutine.UI.Controls
             if (!ValidateCurrentStep(true))
                 return;
 
+            if (!_routineService.ValidateStep(
+                _editingStep,
+                out string validationError))
+            {
+                CustomMessageBox.Show(
+                    validationError,
+                    "Ausführung nicht möglich",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning,
+                    FindForm());
+
+                return;
+            }
+
             bool shouldOpenExecutionForm =
                 _editingStep is OpenUrlStep urlStep && !urlStep.OpenInExternalBrowser;
 
@@ -1303,7 +1317,6 @@ namespace SmartRoutine.UI.Controls
             txtFolderPath.Focus();
             return false;
         }
-
         private bool ValidateOpenApplicationStep(bool showMessageBox)
         {
             if (string.IsNullOrWhiteSpace(txtAppPath?.Text))
@@ -1326,7 +1339,6 @@ namespace SmartRoutine.UI.Controls
             txtAppPath.Focus();
             return false;
         }
-
         private bool ValidateOpenDocumentStep(bool showMessageBox)
         {
             if (string.IsNullOrWhiteSpace(txtDocumentPath?.Text))
@@ -1365,8 +1377,6 @@ namespace SmartRoutine.UI.Controls
                 CustomMessageBoxIcon.Warning,
                 FindForm());
         }
-
-
 
         private void SaveCurrentStep(bool refreshList = true)
         {

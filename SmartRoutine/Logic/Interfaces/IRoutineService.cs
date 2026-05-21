@@ -22,6 +22,6 @@ namespace SmartRoutine.Logic.Interfaces
 
         // Execution
         StepExecutionResult ExecuteStep(RoutineStep step);
-        bool ValidateStep(RoutineStep step);
+        bool ValidateStep(RoutineStep step, out string errorMessage);
     }
 }

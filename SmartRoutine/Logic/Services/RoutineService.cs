@@ -6,6 +6,7 @@ using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace SmartRoutine.Logic.Services
@@ -463,21 +464,84 @@ namespace SmartRoutine.Logic.Services
             }
         }
 
-        public bool ValidateStep(RoutineStep step)
+        public bool ValidateStep(
+            RoutineStep step,
+            out string errorMessage)
         {
+            errorMessage = null;
+
             switch (step)
             {
                 case OpenUrlStep urlStep:
-                    return Uri.IsWellFormedUriString(urlStep.Url, UriKind.Absolute);
+
+                    if (string.IsNullOrWhiteSpace(urlStep.Url))
+                    {
+                        errorMessage = "Die URL ist leer.";
+                        return false;
+                    }
+
+                    if (!Uri.IsWellFormedUriString(urlStep.Url, UriKind.Absolute))
+                    {
+                        errorMessage = $"Die URL '{urlStep.Url}' ist ungültig.";
+                        return false;
+                    }
+
+                    return true;
+
                 case OpenFolderStep folderStep:
-                    return !string.IsNullOrWhiteSpace(folderStep.FolderPath) &&
-                           System.IO.Directory.Exists(folderStep.FolderPath);
+
+                    if (string.IsNullOrWhiteSpace(folderStep.FolderPath))
+                    {
+                        errorMessage = "Der Ordnerpfad ist leer.";
+                        return false;
+                    }
+
+                    if (!Directory.Exists(folderStep.FolderPath))
+                    {
+                        errorMessage =
+                            $"Der Ordner existiert nicht:\n{folderStep.FolderPath}";
+
+                        return false;
+                    }
+
+                    return true;
+
                 case OpenApplicationStep appStep:
-                    return !string.IsNullOrWhiteSpace(appStep.ApplicationPath) &&
-                           System.IO.File.Exists(appStep.ApplicationPath);
+
+                    if (string.IsNullOrWhiteSpace(appStep.ApplicationPath))
+                    {
+                        errorMessage = "Der Programmpfad ist leer.";
+                        return false;
+                    }
+
+                    if (!File.Exists(appStep.ApplicationPath))
+                    {
+                        errorMessage =
+                            $"Die Anwendung existiert nicht:\n{appStep.ApplicationPath}";
+
+                        return false;
+                    }
+
+                    return true;
+
                 case OpenDocumentStep docStep:
-                    return !string.IsNullOrWhiteSpace(docStep.FilePath) &&
-                           System.IO.File.Exists(docStep.FilePath);
+
+                    if (string.IsNullOrWhiteSpace(docStep.FilePath))
+                    {
+                        errorMessage = "Der Dateipfad ist leer.";
+                        return false;
+                    }
+
+                    if (!File.Exists(docStep.FilePath))
+                    {
+                        errorMessage =
+                            $"Die Datei existiert nicht:\n{docStep.FilePath}";
+
+                        return false;
+                    }
+
+                    return true;
+
                 default:
                     return true;
             }
