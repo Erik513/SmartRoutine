@@ -823,106 +823,136 @@ namespace SmartRoutine.UI.Controls
         }
         private void BtnExecuteStep_Click(object sender, EventArgs e)
         {
-            if (_editingStep == null)
-            {
-                var result = AskToSaveChanges();
-
-                if (result == DialogResult.Yes)
-                {
-                    if (!ValidateCurrentStep(true)) return;
-
-                    SaveCurrentStep(refreshList: true);
-
-                    if (_editingStep == null) return;
-                }
-                else
-                {
-                    return;
-                }
-            }
-            else if (HasUnsavedChanges())
-            {
-                var result = AskToSaveChanges();
-
-                if (result == DialogResult.Yes)
-                {
-                    if (!ValidateCurrentStep(true)) return;
-                    SaveCurrentStep(refreshList: false);
-                }
-                else if (result == DialogResult.Cancel)
-                {
-                    return;
-                }
-            }
-
-            if (!ValidateCurrentStep(true))
+            if (!PrepareStepForExecution())
                 return;
 
-            if (!_routineService.ValidateStep(
+            if (!ValidateStepForExecution())
+                return;
+
+            ExecuteEditingStep();
+        }
+        private bool PrepareStepForExecution()
+        {
+            if (_editingStep == null)
+            {
+                return HandleNewStepExecution();
+            }
+
+            if (HasUnsavedChanges())
+            {
+                return HandleUnsavedStepChanges();
+            }
+
+            return true;
+        }
+        private bool HandleNewStepExecution()
+        {
+            var result = AskToSaveChanges();
+
+            if (result != DialogResult.Yes)
+                return false;
+
+            if (!ValidateCurrentStep(true))
+                return false;
+
+            SaveCurrentStep(true);
+
+            return _editingStep != null;
+        }
+        private bool HandleUnsavedStepChanges()
+        {
+            var result = AskToSaveChanges();
+
+            switch (result)
+            {
+                case DialogResult.Yes:
+
+                    if (!ValidateCurrentStep(true))
+                        return false;
+
+                    SaveCurrentStep(false);
+                    return true;
+
+                case DialogResult.No:
+                    return true;
+
+                case DialogResult.Cancel:
+                    return false;
+
+                default:
+                    return false;
+            }
+        }
+        private bool ValidateStepForExecution()
+        {
+            if (!ValidateCurrentStep(true))
+                return false;
+
+            if (_routineService.ValidateStep(
                 _editingStep,
                 out string validationError))
             {
-                CustomMessageBox.Show(
-                    validationError,
-                    "Ausführung nicht möglich",
-                    CustomMessageBoxButtons.OK,
-                    CustomMessageBoxIcon.Warning,
-                    FindForm());
-
-                return;
+                return true;
             }
 
+            CustomMessageBox.Show(
+                validationError,
+                "Ausführung nicht möglich",
+                CustomMessageBoxButtons.OK,
+                CustomMessageBoxIcon.Warning,
+                FindForm());
+
+            return false;
+        }
+        private void ExecuteEditingStep()
+        {
             bool shouldOpenExecutionForm =
-                _editingStep is OpenUrlStep urlStep && !urlStep.OpenInExternalBrowser;
+                _editingStep is OpenUrlStep urlStep &&
+                !urlStep.OpenInExternalBrowser;
 
             if (shouldOpenExecutionForm)
             {
-                var executionForm = new ExecutionForm(_currentRoutine, _editingStep, step =>
+                OpenExecutionForm();
+                return;
+            }
+
+            _routineService.ExecuteStep(_editingStep);
+        }
+        private void OpenExecutionForm()
+        {
+            var executionForm = new ExecutionForm(
+                _currentRoutine,
+                _editingStep,
+                step =>
                 {
                     return _routineService.ExecuteStep(step);
                 });
 
-                executionForm.ShowDialog(this);
-            }
-            else
-            {
-                _routineService.ExecuteStep(_editingStep);
-            }
+            executionForm.ShowDialog(this);
         }
-
+        
         private bool HasUnsavedChanges()
         {
-            if (_editingStep == null) return false;
+            if (_editingStep == null)
+                return HasNewStepInput();
 
-            if (_editingStep.Name != txtStepName.Text.Trim()) return true;
-            if (_editingStep.Description != txtStepDescription.Text.Trim()) return true;
-            if (_editingStep.Show != tglStepEnabled.Checked) return true;
-            if (_editingStep.AutoStart != tglAutoStart.Checked) return true;
+            var editorStep = CreateStepFromEditor();
 
-            var currentType = (StepType)cmbStepType.SelectedValue;
-            if (_editingStep.Type != currentType) return true;
+            if (editorStep == null)
+                return true;
 
-            switch (_editingStep)
-            {
-                case OpenUrlStep urlStep:
-                    if (urlStep.Url != txtUrl?.Text) return true;
-                    if (urlStep.OpenInExternalBrowser != tglOpenInExternBrowser?.Checked) return true;
-                    break;
-                case OpenFolderStep folderStep:
-                    if (folderStep.FolderPath != txtFolderPath?.Text) return true;
-                    if (folderStep.OpenInNewWindow != tglOpenInNewWindow?.Checked) return true;
-                    break;
-                case OpenApplicationStep appStep:
-                    if (appStep.ApplicationPath != txtAppPath?.Text) return true;
-                    if (appStep.Arguments != txtAppArguments?.Text) return true;
-                    if (appStep.RunAsAdmin != tglRunAsAdmin?.Checked) return true;
-                    break;
-                case OpenDocumentStep docStep:
-                    if (docStep.FilePath != txtDocumentPath?.Text) return true;
-                    break;
-            }
+            editorStep.Id = _editingStep.Id;
+            editorStep.Order = _editingStep.Order;
 
-            return false;
+            return ChangeDetector.HasChanges(
+                _editingStep,
+                editorStep);
+        }
+        private bool HasNewStepInput()
+        {
+            return !string.IsNullOrWhiteSpace(txtStepName.Text)
+                || !string.IsNullOrWhiteSpace(txtStepDescription.Text)
+                || cmbStepType.SelectedIndex != -1;
         }
         private DialogResult AskToSaveChanges()
         {
