@@ -482,6 +482,17 @@ namespace SmartRoutine.UI.Helpers
                 };
             }
 
+            public static Panel CreateElevated()
+            {
+                return new Panel
+                {
+                    BackColor = Colors.BackgroundMediumElevated,
+                    Margin = new Padding(0),
+                    Padding = new Padding(0),
+                    Dock = DockStyle.Fill
+                };
+            }
+
             public static Panel CreateTransparent()
             {
                 return new Panel

@@ -113,29 +113,42 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeControl()
         {
-            // Hauptstruktur
+            InitializeMainLayout();
+            InitializeLeftPanel();
+            InitializeRightPanel();
+            InitializeFooter();
+            BuildMainLayout();
+
+            SetEditorEnabled(false);
+        }
+        private void InitializeMainLayout()
+        {
             mainTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
             mainTlp.Dock = DockStyle.Fill;
+
             mainTlp.RowStyles.Clear();
             mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
 
-            // ========== INHALT ==========
             contentTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
             contentTlp.Dock = DockStyle.Fill;
+
             contentTlp.ColumnStyles.Clear();
             contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
             contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
-
-            // ========== LINKE SEITE ==========
+        }
+        private void InitializeLeftPanel()
+        {
             leftTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
             leftTlp.Dock = DockStyle.Fill;
+
             leftTlp.RowStyles.Clear();
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             leftRoutineTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
             leftRoutineTitleTlp.Dock = DockStyle.Fill;
+
             leftRoutineTitleTlp.ColumnStyles.Clear();
             leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
@@ -168,24 +181,38 @@ namespace SmartRoutine.UI.Controls
 
             leftTlp.Controls.Add(leftRoutineTitleTlp, 0, 0);
             leftTlp.Controls.Add(lstSteps, 0, 1);
-
-            // ----- RECHTE SEITE -----
+        }
+        private void InitializeRightPanel()
+        {
             rightTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 5);
             rightTlp.Dock = DockStyle.Fill;
-            rightTlp.RowStyles.Clear();
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));   // Titel
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Basis-Tabelle
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));       // Optionen-Tabelle
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));   // Füllbereich
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60)); // Buttons
             rightTlp.Visible = false;
-            //rightTlp.CellBorderStyle = TableLayoutPanelCellBorderStyle.InsetDouble;
 
-            // ========== ROW 1: TITLE ==========
+            rightTlp.RowStyles.Clear();
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
+
+            InitializeRightTitlePanel();
+            InitializeEditorControls();
+            InitializeEditorTables();
+            InitializeRightFillPanel();
+            InitializeRightButtons();
+
+            rightTlp.Controls.Add(rightTitleTlp, 0, 0);
+            rightTlp.Controls.Add(editorBaseTable, 0, 1);
+            rightTlp.Controls.Add(editorOptionsTable, 0, 2);
+            rightTlp.Controls.Add(rightFillPanel, 0, 3);
+            rightTlp.Controls.Add(rightBtnsTlp, 0, 4);
+        }
+        private void InitializeRightTitlePanel()
+        {
             rightTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
             rightTitleTlp.Dock = DockStyle.Fill;
-            rightTitleTlp.ColumnStyles.Clear();
 
+            rightTitleTlp.ColumnStyles.Clear();
             rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
 
@@ -197,8 +224,10 @@ namespace SmartRoutine.UI.Controls
             tglStepEnabled.Anchor = AnchorStyles.None;
 
             rightTitleTlp.Controls.Add(tglStepEnabled, 1, 0);
+        }
 
-            // ========== EDITOR CONTROLS ==========
+        private void InitializeEditorControls()
+        {
             lblStepNameTitle = UIStyles.Labels.CreateTitle();
 
             txtStepName = UIStyles.TextBoxes.CreateStandard();
@@ -211,6 +240,7 @@ namespace SmartRoutine.UI.Controls
             cmbStepType.Dock = DockStyle.Fill;
 
             var stepTypes = StepTypeHelper.GetStepTypeListWithEmpty();
+
             cmbStepType.DataSource = stepTypes;
             cmbStepType.DisplayMember = "Value";
             cmbStepType.ValueMember = "Key";
@@ -223,16 +253,18 @@ namespace SmartRoutine.UI.Controls
                 "Autostart Aus");
 
             tglAutoStart.Anchor = AnchorStyles.Left;
+        }
 
-            // ========== ROW 2: BASE TABLE ==========
+        private void InitializeEditorTables()
+        {
             editorBaseTable = new StyledPropertyTable
             {
                 Dock = DockStyle.Top,
                 AutoSize = true
             };
+
             BuildBaseEditorTable();
 
-            // ========== ROW 3: OPTIONS TABLE ==========
             editorOptionsTable = new StyledPropertyTable
             {
                 Dock = DockStyle.Top,
@@ -240,16 +272,15 @@ namespace SmartRoutine.UI.Controls
             };
 
             BuildOptionsEditorTable();
-
-            // ========== ROW 4: FILL PANEL ==========
-            rightFillPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMediumElevated,
-                Margin = new Padding(0)
-            };
-
-            // ========== ROW 5: BUTTONS ========== 
+        }
+        private void InitializeRightFillPanel()
+        {
+            rightFillPanel = UIStyles.Panels.CreateElevated();
+            rightFillPanel.Dock = DockStyle.Fill;
+            rightFillPanel.Margin = new Padding(0);
+        }
+        private void InitializeRightButtons()
+        {
             rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(4, 1);
             rightBtnsTlp.Dock = DockStyle.Fill;
             rightBtnsTlp.Margin = new Padding(5);
@@ -265,73 +296,50 @@ namespace SmartRoutine.UI.Controls
 
             rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            // Execute
             btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Ausführen", new Size(100, 35), true);
             btnExecuteStep.Dock = DockStyle.Fill;
-            btnExecuteStep.Margin = new Padding(5, 5, 5, 5);
+            btnExecuteStep.Margin = new Padding(5);
             btnExecuteStep.Click += BtnExecuteStep_Click;
 
-            // Save
             btnSaveStep = UIStyles.Buttons.CreatePrimary("💾", "Speichern", new Size(100, 35), true);
             btnSaveStep.Dock = DockStyle.Fill;
-            btnSaveStep.Margin = new Padding(5, 5, 5, 5);
+            btnSaveStep.Margin = new Padding(5);
             btnSaveStep.Click += BtnSaveStep_Click;
 
-            // Cancel
             btnCancelStep = UIStyles.Buttons.CreatePrimary("✖", "Abbrechen", new Size(100, 35), true);
             btnCancelStep.Dock = DockStyle.Fill;
-            btnCancelStep.Margin = new Padding(5, 5, 5, 5);
+            btnCancelStep.Margin = new Padding(5);
             btnCancelStep.Click += BtnCancelStep_Click;
 
-            // Hinzufügen
             rightBtnsTlp.Controls.Add(btnExecuteStep, 1, 0);
             rightBtnsTlp.Controls.Add(btnSaveStep, 2, 0);
             rightBtnsTlp.Controls.Add(btnCancelStep, 3, 0);
-
-            // ========== RIGHT TLP ZUSAMMENBAU ==========
-            rightTlp.Controls.Add(rightTitleTlp, 0, 0);
-            rightTlp.Controls.Add(editorBaseTable, 0, 1);
-            rightTlp.Controls.Add(editorOptionsTable, 0, 2);
-            rightTlp.Controls.Add(rightFillPanel, 0, 3);
-            rightTlp.Controls.Add(rightBtnsTlp, 0, 4);
-
-            // ========== FOOTER ==========
+        }
+        private void InitializeFooter()
+        {
             var footerPanel = UIStyles.Panels.CreateDark();
             footerPanel.Dock = DockStyle.Fill;
 
             var footerTlp = UIStyles.TableLayoutPanels.CreateDark(4, 1);
             footerTlp.Dock = DockStyle.Fill;
             footerTlp.Padding = new Padding(0);
+
             footerTlp.ColumnStyles.Clear();
             footerTlp.RowStyles.Clear();
 
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // Add
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // Delete
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));  // LastExecution
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // Back
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
 
             footerTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnAddStep = UIStyles.Buttons.CreateGreen("+", "Schritt hinzufügen", new Size(100, 35), true);
-            btnAddStep.Dock = DockStyle.Fill;
-            btnAddStep.Margin = new Padding(10, 10, 5, 10);
-            btnAddStep.Click += BtnAddStep_Click;
-
-            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑", "Schritt löschen", new Size(100, 35), true);
-            btnDeleteStep.Dock = DockStyle.Fill;
-            btnDeleteStep.Margin = new Padding(5, 10, 5, 10);
-            btnDeleteStep.Click += BtnDeleteStep_Click;
-            btnDeleteStep.Enabled = false;
+            InitializeFooterButtons();
 
             lblLastExecution = UIStyles.Labels.CreateMuted();
             lblLastExecution.Dock = DockStyle.Fill;
             lblLastExecution.Margin = new Padding(15, 0, 10, 0);
             lblLastExecution.TextAlign = ContentAlignment.MiddleLeft;
-
-            btnBack = UIStyles.Buttons.CreateStandard("←", "Zurück zum Hauptmenü", new Size(100, 35), true);
-            btnBack.Dock = DockStyle.Fill;
-            btnBack.Margin = new Padding(5, 10, 10, 10);
-            btnBack.Click += BtnBack_Click;
 
             footerTlp.Controls.Add(btnAddStep, 0, 0);
             footerTlp.Controls.Add(btnDeleteStep, 1, 0);
@@ -340,16 +348,50 @@ namespace SmartRoutine.UI.Controls
 
             footerPanel.Controls.Add(footerTlp);
 
-            // ========== ZUSAMMENBAU ==========
+            mainTlp.Controls.Add(footerPanel, 0, 1);
+        }
+        private void InitializeFooterButtons()
+        {
+            btnAddStep = UIStyles.Buttons.CreateGreen(
+                "+",
+                "Schritt hinzufügen",
+                new Size(155, 35),
+                true);
+
+            btnAddStep.Dock = DockStyle.Fill;
+            btnAddStep.Margin = new Padding(10, 10, 5, 10);
+            btnAddStep.Click += BtnAddStep_Click;
+
+            btnDeleteStep = UIStyles.Buttons.CreateDanger(
+                "🗑",
+                "Schritt löschen",
+                new Size(155, 35),
+                true);
+
+            btnDeleteStep.Dock = DockStyle.Fill;
+            btnDeleteStep.Margin = new Padding(5, 10, 10, 10);
+            btnDeleteStep.Enabled = false;
+            btnDeleteStep.Click += BtnDeleteStep_Click;
+
+            btnBack = UIStyles.Buttons.CreateStandard(
+                "←",
+                "Zurück zur Hauptansicht",
+                new Size(100, 35),
+                true);
+
+            btnBack.Dock = DockStyle.Fill;
+            btnBack.Margin = new Padding(10);
+            btnBack.Click += BtnBack_Click;
+        }
+
+        private void BuildMainLayout()
+        {
             contentTlp.Controls.Add(leftTlp, 0, 0);
             contentTlp.Controls.Add(rightTlp, 1, 0);
 
             mainTlp.Controls.Add(contentTlp, 0, 0);
-            mainTlp.Controls.Add(footerPanel, 0, 1);
 
-            this.Controls.Add(mainTlp);
-
-            SetEditorEnabled(false);
+            Controls.Add(mainTlp);
         }
 
         private void BuildBaseEditorTable()
