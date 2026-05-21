@@ -94,7 +94,7 @@ namespace SmartRoutine.UI.Controls
             _editingStep = null;
 
             this.Dock = DockStyle.Fill;
-            this.BackColor = Color.Black;
+            this.BackColor = UIStyles.Colors.BackgroundDark;
 
             this.Load += (s, e) =>
             {
@@ -611,7 +611,13 @@ namespace SmartRoutine.UI.Controls
             rightTlp.Visible = false;
             _editingStep = null;
         }
-
+        private void CloseStepEditor()
+        {
+            lstSteps.SelectedIndex = -1;
+            ClearEditor();
+            rightTlp.Visible = false;
+            btnDeleteStep.Enabled = false;
+        }
         private void ClearEditor()
         {
             txtStepName.Text = "";
@@ -764,12 +770,7 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
 
             RefreshStepsList(silent: true);
-
-            lstSteps.ClearSelected();
-            ClearEditor();
-            rightTlp.Visible = false;
-            btnDeleteStep.Enabled = false;
-
+            CloseStepEditor();
             SaveChanges?.Invoke(this, _currentRoutine);
 
             var parentForm = this.FindForm();
@@ -789,7 +790,6 @@ namespace SmartRoutine.UI.Controls
             // Stelle sicher, dass die Steps aus der aktuellen Routine kommen
             var orderedSteps = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
 
-            Debug.WriteLine($"RefreshStepsList: {orderedSteps.Count} Schritte werden geladen");
             foreach (var step in orderedSteps)
             {
                 Debug.WriteLine($"  - {step.Name} (Order: {step.Order})");
@@ -808,18 +808,13 @@ namespace SmartRoutine.UI.Controls
         private void BtnSaveStep_Click(object sender, EventArgs e)
         {
             if (!ValidateCurrentStep()) return;
+
             SaveCurrentStep();
-            lstSteps.SelectedIndex = -1;
-            ClearEditor();
-            rightTlp.Visible = false;
-            btnDeleteStep.Enabled = false;
+            CloseStepEditor();
         }
         private void BtnCancelStep_Click(object sender, EventArgs e)
         {
-            lstSteps.SelectedIndex = -1;
-            ClearEditor();
-            rightTlp.Visible = false;
-            btnDeleteStep.Enabled = lstSteps.Items.Count > 0 && lstSteps.SelectedIndex >= 0;
+            CloseStepEditor();
         }
         private void BtnExecuteStep_Click(object sender, EventArgs e)
         {
@@ -1443,7 +1438,10 @@ namespace SmartRoutine.UI.Controls
         {
             _currentRoutine.Name = txtRoutineName.Text.Trim();
             _currentRoutine.UpdatedAt = DateTime.Now;
+
             _routineService.SaveRoutine(_currentRoutine);
+
+            _originalRoutine = RoutineCloneService.DeepCopy(_currentRoutine);
         }
     }
 }
