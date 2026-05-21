@@ -573,54 +573,22 @@ namespace SmartRoutine.UI.Controls
             }
         }
 
+
         private bool HasChanges()
         {
             if (_originalRoutine == null)
-            {
-                return !string.IsNullOrWhiteSpace(txtRoutineName.Text) || _currentRoutine.Steps.Count > 0;
-            }
+                return _currentRoutine != null;
 
-            if (_originalRoutine.Name != txtRoutineName.Text)
-                return true;
+            _currentRoutine.Name =
+                txtRoutineName.Text.Trim();
 
-            if (_originalRoutine.Steps.Count != _currentRoutine.Steps.Count)
-                return true;
-
-            for (int i = 0; i < _originalRoutine.Steps.Count; i++)
-            {
-                var orig = _originalRoutine.Steps[i];
-                var curr = _currentRoutine.Steps[i];
-
-                if (orig.Order != curr.Order || orig.Name != curr.Name || orig.Description != curr.Description || orig.AutoStart != curr.AutoStart)
-                    return true;
-
-                // Step-spezifische Vergleiche
-                switch (orig)
-                {
-                    case OpenUrlStep origUrl when curr is OpenUrlStep currUrl:
-                        if (origUrl.Url != currUrl.Url || origUrl.OpenInExternalBrowser != currUrl.OpenInExternalBrowser)
-                            return true;
-                        break;
-                    case OpenFolderStep origFolder when curr is OpenFolderStep currFolder:
-                        if (origFolder.FolderPath != currFolder.FolderPath || origFolder.OpenInNewWindow != currFolder.OpenInNewWindow)
-                            return true;
-                        break;
-                    case OpenApplicationStep origApp when curr is OpenApplicationStep currApp:
-                        if (origApp.ApplicationPath != currApp.ApplicationPath ||
-                            origApp.Arguments != currApp.Arguments ||
-                            origApp.RunAsAdmin != currApp.RunAsAdmin)
-                            return true;
-                        break;
-                    case OpenDocumentStep origDoc when curr is OpenDocumentStep currDoc:
-                        if (origDoc.FilePath != currDoc.FilePath)
-                            return true;
-                        break;
-                }
-            }
-
-            return false;
+            return ChangeDetector.HasChanges(
+                _originalRoutine,
+                _currentRoutine,
+                "UpdatedAt",
+                "LastExecutionAt");
         }
-        
+
         private void OpenEditorForStep(RoutineStep step = null)
         {
             CloseEditor();
