@@ -1,5 +1,6 @@
 ﻿using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
+using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
 using SmartRoutine.UI.Helpers;
 using System;
@@ -8,7 +9,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using System.Drawing.Imaging;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -487,8 +487,8 @@ namespace SmartRoutine.UI.Controls
         // ========== PUBLIC METHODS ==========
         public void LoadRoutine(Routine routine, bool isNewRoutine = false)
         {
-            _originalRoutine = DeepCopy(routine ?? new Routine());
-            _currentRoutine = DeepCopy(routine ?? new Routine());
+            _originalRoutine = RoutineCloneService.DeepCopy(routine ?? new Routine());
+            _currentRoutine = RoutineCloneService.DeepCopy(routine ?? new Routine());
 
             txtRoutineName.Text = _currentRoutine.Name;
             lblLastExecution.Text =
@@ -571,84 +571,6 @@ namespace SmartRoutine.UI.Controls
                 txtUrl.ForeColor = UIStyles.Colors.Red;
                 _errorToolTip.SetToolTip(txtUrl, result.ErrorMessage);
             }
-        }
-        private Routine DeepCopy(Routine original)
-        {
-            if (original == null) return null;
-
-            var copy = new Routine
-            {
-                Id = original.Id,
-                Name = original.Name,
-                Order = original.Order,
-                CreatedAt = original.CreatedAt,
-                UpdatedAt = original.UpdatedAt,
-                LastExecutionAt = original.LastExecutionAt,
-                Steps = new List<RoutineStep>()
-            };
-
-            foreach (var step in original.Steps)
-            {
-                switch (step)
-                {
-                    case OpenUrlStep urlStep:
-                        copy.Steps.Add(new OpenUrlStep
-                        {
-                            Id = urlStep.Id,
-                            Order = urlStep.Order,
-                            Name = urlStep.Name,
-                            Description = urlStep.Description,
-                            Show = urlStep.Show,
-                            AutoStart = urlStep.AutoStart,
-                            Url = urlStep.Url,
-                            OpenInExternalBrowser = urlStep.OpenInExternalBrowser
-                        });
-                        break;
-                    case OpenFolderStep folderStep:
-                        copy.Steps.Add(new OpenFolderStep
-                        {
-                            Id = folderStep.Id,
-                            Order = folderStep.Order,
-                            Name = folderStep.Name,
-                            Description = folderStep.Description,
-                            Show = folderStep.Show,
-                            AutoStart = folderStep.AutoStart,
-                            FolderPath = folderStep.FolderPath,
-                            OpenInNewWindow = folderStep.OpenInNewWindow
-                        });
-                        break;
-                    case OpenApplicationStep appStep:
-                        copy.Steps.Add(new OpenApplicationStep
-                        {
-                            Id = appStep.Id,
-                            Order = appStep.Order,
-                            Name = appStep.Name,
-                            Description = appStep.Description,
-                            Show = appStep.Show,
-                            AutoStart = appStep.AutoStart,
-                            ApplicationPath = appStep.ApplicationPath,
-                            Arguments = appStep.Arguments,
-                            RunAsAdmin = appStep.RunAsAdmin,
-                            WorkingDirectory = appStep.WorkingDirectory
-                        });
-                        break;
-                    case OpenDocumentStep docStep:
-                        copy.Steps.Add(new OpenDocumentStep
-                        {
-                            Id = docStep.Id,
-                            Order = docStep.Order,
-                            Name = docStep.Name,
-                            Description = docStep.Description,
-                            Show = docStep.Show,
-                            AutoStart = docStep.AutoStart,
-                            FilePath = docStep.FilePath,
-                            OpenWithAssociatedApp = docStep.OpenWithAssociatedApp
-                        });
-                        break;
-                }
-            }
-
-            return copy;
         }
 
         private bool HasChanges()
