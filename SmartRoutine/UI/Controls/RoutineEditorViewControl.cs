@@ -456,7 +456,34 @@ namespace SmartRoutine.UI.Controls
             return null;
         }
 
+        private TableLayoutPanel CreateBrowseInputPanel(
+            TextBox textBox,
+            Button browseButton)
+        {
+            var panel = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            panel.Dock = DockStyle.Fill;
+            panel.Margin = new Padding(0);
+            panel.Padding = new Padding(0);
+            panel.BackColor = Color.Transparent;
 
+            panel.ColumnStyles.Clear();
+            panel.RowStyles.Clear();
+
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
+
+            panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            textBox.Dock = DockStyle.Fill;
+
+            browseButton.Dock = DockStyle.Fill;
+            browseButton.Margin = new Padding(5, 0, 0, 0);
+
+            panel.Controls.Add(textBox, 0, 0);
+            panel.Controls.Add(browseButton, 1, 0);
+
+            return panel;
+        }
         // ========== PUBLIC METHODS ==========
         public void LoadRoutine(Routine routine, bool isNewRoutine = false)
         {
@@ -888,7 +915,6 @@ namespace SmartRoutine.UI.Controls
             if (!silent)
                 Debug.WriteLine($"RefreshStepsList: {orderedSteps.Count} Schritte geladen");
         }
-
         private void BtnSaveStep_Click(object sender, EventArgs e)
         {
             if (!ValidateCurrentStep()) return;
@@ -898,7 +924,6 @@ namespace SmartRoutine.UI.Controls
             rightTlp.Visible = false;
             btnDeleteStep.Enabled = false;
         }
-
         private void BtnCancelStep_Click(object sender, EventArgs e)
         {
             lstSteps.SelectedIndex = -1;
@@ -939,6 +964,9 @@ namespace SmartRoutine.UI.Controls
                     return;
                 }
             }
+
+            if (!ValidateCurrentStep(true))
+                return;
 
             bool shouldOpenExecutionForm =
                 _editingStep is OpenUrlStep urlStep && !urlStep.OpenInExternalBrowser;
@@ -992,7 +1020,6 @@ namespace SmartRoutine.UI.Controls
 
             return false;
         }
-
         private DialogResult AskToSaveChanges()
         {
             return CustomMessageBox.Show(
@@ -1036,29 +1063,12 @@ namespace SmartRoutine.UI.Controls
             editorOptionsTable.AddRow("URL", txtUrl);
             editorOptionsTable.AddRow("Öffnen in", tglOpenInExternBrowser);
         }
-
         private void CreateOpenFolderControls()
         {
             txtFolderPath = UIStyles.TextBoxes.CreateStandard();
             txtFolderPath.Name = "txtFolderPath";
 
-            var folderPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 1,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0)
-            };
-
-            folderPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            folderPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
-
-            txtFolderPath.Dock = DockStyle.Fill;
-
             var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Ordner auswählen");
-            btnBrowse.Dock = DockStyle.Fill;
-            btnBrowse.Margin = new Padding(5, 0, 0, 0);
 
             btnBrowse.Click += (s, e) =>
             {
@@ -1069,8 +1079,7 @@ namespace SmartRoutine.UI.Controls
                 }
             };
 
-            folderPanel.Controls.Add(txtFolderPath, 0, 0);
-            folderPanel.Controls.Add(btnBrowse, 1, 0);
+            var folderPanel = CreateBrowseInputPanel(txtFolderPath, btnBrowse);
 
             tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
             tglOpenInNewWindow.Name = "tglOpenInNewWindow";
@@ -1079,30 +1088,12 @@ namespace SmartRoutine.UI.Controls
             editorOptionsTable.AddRow("Ordnerpfad", folderPanel);
             editorOptionsTable.AddRow("Neues Fenster", tglOpenInNewWindow);
         }
-
-
         private void CreateOpenApplicationControls()
         {
             txtAppPath = UIStyles.TextBoxes.CreateStandard();
             txtAppPath.Name = "txtAppPath";
 
-            var appPathPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 1,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0)
-            };
-
-            appPathPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            appPathPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
-
-            txtAppPath.Dock = DockStyle.Fill;
-
             var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Programm auswählen");
-            btnBrowse.Dock = DockStyle.Fill;
-            btnBrowse.Margin = new Padding(5, 0, 0, 0);
 
             btnBrowse.Click += (s, e) =>
             {
@@ -1115,8 +1106,7 @@ namespace SmartRoutine.UI.Controls
                 }
             };
 
-            appPathPanel.Controls.Add(txtAppPath, 0, 0);
-            appPathPanel.Controls.Add(btnBrowse, 1, 0);
+            var appPathPanel = CreateBrowseInputPanel(txtAppPath, btnBrowse);
 
             txtAppArguments = UIStyles.TextBoxes.CreateStandard();
             txtAppArguments.Name = "txtAppArguments";
@@ -1129,29 +1119,12 @@ namespace SmartRoutine.UI.Controls
             editorOptionsTable.AddRow("Argumente", txtAppArguments);
             editorOptionsTable.AddRow("Als Admin", tglRunAsAdmin);
         }
-
         private void CreateOpenDocumentControls()
         {
             txtDocumentPath = UIStyles.TextBoxes.CreateStandard();
             txtDocumentPath.Name = "txtDocumentPath";
 
-            var documentPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 1,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0)
-            };
-
-            documentPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            documentPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 105));
-
-            txtDocumentPath.Dock = DockStyle.Fill;
-
             btnBrowseDocument = UIStyles.Buttons.CreateBrowseInFolder("Dokument auswählen");
-            btnBrowseDocument.Dock = DockStyle.Fill;
-            btnBrowseDocument.Margin = new Padding(5, 0, 0, 0);
 
             btnBrowseDocument.Click += (s, e) =>
             {
@@ -1161,17 +1134,15 @@ namespace SmartRoutine.UI.Controls
                     dialog.Title = "Dokument auswählen";
 
                     if (dialog.ShowDialog() == DialogResult.OK)
-                    {
                         txtDocumentPath.Text = dialog.FileName;
-                    }
                 }
             };
 
-            documentPanel.Controls.Add(txtDocumentPath, 0, 0);
-            documentPanel.Controls.Add(btnBrowseDocument, 1, 0);
+            var documentPanel = CreateBrowseInputPanel(txtDocumentPath, btnBrowseDocument);
 
             editorOptionsTable.AddRow("Dateipfad", documentPanel);
         }
+
         // ========== BACK BUTTON ==========
         private void BtnBack_Click(object sender, EventArgs e)
         {
@@ -1235,151 +1206,168 @@ namespace SmartRoutine.UI.Controls
         }
         private bool ValidateCurrentStep(bool showMessageBox = true)
         {
-            if (string.IsNullOrWhiteSpace(txtStepName.Text))
-            {
-                if (showMessageBox && !AutoConfirmDialogs)
-                {
-                    CustomMessageBox.Show(
-                        "Bitte geben Sie einen Namen für den Schritt ein.",
-                        "Validierung",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Warning,
-                        FindForm());
-                }
-
-                txtStepName.Focus();
+            if (!ValidateStepName(showMessageBox))
                 return false;
-            }
 
-            if (cmbStepType.SelectedIndex == -1)
-            {
-                if (showMessageBox && !AutoConfirmDialogs)
-                {
-                    CustomMessageBox.Show(
-                        "Bitte wählen Sie einen Aktionstyp aus.",
-                        "Validierung",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Warning,
-                        FindForm());
-                }
-
-                cmbStepType.Focus();
+            if (!ValidateStepType(showMessageBox))
                 return false;
-            }
 
             var selectedType = (StepType)cmbStepType.SelectedValue;
 
             switch (selectedType)
             {
                 case StepType.OpenUrl:
-                    if (string.IsNullOrWhiteSpace(txtUrl?.Text))
-                    {
-                        if (showMessageBox && !AutoConfirmDialogs)
-                        {
-                            CustomMessageBox.Show(
-                                "Bitte geben Sie eine URL ein.",
-                                "Validierung",
-                                CustomMessageBoxButtons.OK,
-                                CustomMessageBoxIcon.Warning,
-                                FindForm());
-                        }
-
-                        txtUrl?.Focus();
-                        return false;
-                    }
-
-                    var urlResult = _urlValidationService.ValidateAndRepairUrl(txtUrl.Text, false);
-
-                    if (!urlResult.IsValid)
-                    {
-                        if (showMessageBox && !AutoConfirmDialogs)
-                        {
-                            CustomMessageBox.Show(
-                                urlResult.ErrorMessage,
-                                "Ungültige URL",
-                                CustomMessageBoxButtons.OK,
-                                CustomMessageBoxIcon.Warning,
-                                FindForm());
-                        }
-
-                        txtUrl.Focus();
-                        return false;
-                    }
-                    break;
+                    return ValidateOpenUrlStep(showMessageBox);
 
                 case StepType.OpenFolder:
-                    if (string.IsNullOrWhiteSpace(txtFolderPath?.Text))
-                    {
-                        if (showMessageBox && !AutoConfirmDialogs)
-                        {
-                            CustomMessageBox.Show(
-                                "Bitte geben Sie einen Ordnerpfad ein.",
-                                "Validierung",
-                                CustomMessageBoxButtons.OK,
-                                CustomMessageBoxIcon.Warning,
-                                FindForm());
-                        }
-
-                        txtFolderPath?.Focus();
-                        return false;
-                    }
-                    break;
+                    return ValidateOpenFolderStep(showMessageBox);
 
                 case StepType.OpenApplication:
-                    if (string.IsNullOrWhiteSpace(txtAppPath?.Text))
-                    {
-                        if (showMessageBox && !AutoConfirmDialogs)
-                        {
-                            CustomMessageBox.Show(
-                                "Bitte geben Sie einen Programmpfad ein.",
-                                "Validierung",
-                                CustomMessageBoxButtons.OK,
-                                CustomMessageBoxIcon.Warning,
-                                FindForm());
-                        }
-
-                        txtAppPath?.Focus();
-                        return false;
-                    }
-                    break;
+                    return ValidateOpenApplicationStep(showMessageBox);
 
                 case StepType.OpenDocument:
-                    if (string.IsNullOrWhiteSpace(txtDocumentPath?.Text))
-                    {
-                        if (showMessageBox && !AutoConfirmDialogs)
-                        {
-                            CustomMessageBox.Show(
-                                "Bitte wählen Sie eine Datei aus.",
-                                "Validierung",
-                                CustomMessageBoxButtons.OK,
-                                CustomMessageBoxIcon.Warning,
-                                FindForm());
-                        }
+                    return ValidateOpenDocumentStep(showMessageBox);
 
-                        txtDocumentPath?.Focus();
-                        return false;
-                    }
+                default:
+                    return false;
+            }
+        }
+        private bool ValidateStepName(bool showMessageBox)
+        {
+            if (!string.IsNullOrWhiteSpace(txtStepName.Text))
+                return true;
 
-                    if (!System.IO.File.Exists(txtDocumentPath?.Text))
-                    {
-                        if (showMessageBox && !AutoConfirmDialogs)
-                        {
-                            CustomMessageBox.Show(
-                                "Die ausgewählte Datei existiert nicht.",
-                                "Validierung",
-                                CustomMessageBoxButtons.OK,
-                                CustomMessageBoxIcon.Warning,
-                                FindForm());
-                        }
+            ShowValidationMessage(
+                "Bitte geben Sie einen Namen für den Schritt ein.",
+                showMessageBox);
 
-                        txtDocumentPath?.Focus();
-                        return false;
-                    }
-                    break;
+            txtStepName.Focus();
+            return false;
+        }
+        private bool ValidateStepType(bool showMessageBox)
+        {
+            if (cmbStepType.SelectedIndex != -1)
+                return true;
+
+            ShowValidationMessage(
+                "Bitte wählen Sie einen Aktionstyp aus.",
+                showMessageBox);
+
+            cmbStepType.Focus();
+            return false;
+        }
+        private bool ValidateOpenUrlStep(bool showMessageBox)
+        {
+            if (string.IsNullOrWhiteSpace(txtUrl?.Text))
+            {
+                ShowValidationMessage(
+                    "Bitte geben Sie eine URL ein.",
+                    showMessageBox);
+
+                txtUrl?.Focus();
+                return false;
             }
 
-            return true;
+            var urlResult = _urlValidationService.ValidateAndRepairUrl(txtUrl.Text, false);
+
+            if (urlResult.IsValid)
+                return true;
+
+            ShowValidationMessage(
+                urlResult.ErrorMessage,
+                showMessageBox,
+                "Ungültige URL");
+
+            txtUrl.Focus();
+            return false;
         }
+        private bool ValidateOpenFolderStep(bool showMessageBox)
+        {
+            if (string.IsNullOrWhiteSpace(txtFolderPath?.Text))
+            {
+                ShowValidationMessage(
+                    "Bitte geben Sie einen Ordnerpfad ein.",
+                    showMessageBox);
+
+                txtFolderPath?.Focus();
+                return false;
+            }
+
+            if (System.IO.Directory.Exists(txtFolderPath.Text))
+                return true;
+
+            ShowValidationMessage(
+                "Der angegebene Ordner existiert nicht.",
+                showMessageBox);
+
+            txtFolderPath.Focus();
+            return false;
+        }
+
+        private bool ValidateOpenApplicationStep(bool showMessageBox)
+        {
+            if (string.IsNullOrWhiteSpace(txtAppPath?.Text))
+            {
+                ShowValidationMessage(
+                    "Bitte geben Sie einen Programmpfad ein.",
+                    showMessageBox);
+
+                txtAppPath?.Focus();
+                return false;
+            }
+
+            if (System.IO.File.Exists(txtAppPath.Text))
+                return true;
+
+            ShowValidationMessage(
+                "Die angegebene Anwendung existiert nicht.",
+                showMessageBox);
+
+            txtAppPath.Focus();
+            return false;
+        }
+
+        private bool ValidateOpenDocumentStep(bool showMessageBox)
+        {
+            if (string.IsNullOrWhiteSpace(txtDocumentPath?.Text))
+            {
+                ShowValidationMessage(
+                    "Bitte wählen Sie eine Datei aus.",
+                    showMessageBox);
+
+                txtDocumentPath?.Focus();
+                return false;
+            }
+
+            if (System.IO.File.Exists(txtDocumentPath.Text))
+                return true;
+
+            ShowValidationMessage(
+                "Die ausgewählte Datei existiert nicht.",
+                showMessageBox);
+
+            txtDocumentPath.Focus();
+            return false;
+        }
+
+        private void ShowValidationMessage(
+            string message,
+            bool showMessageBox,
+            string title = "Fehler bei Validierung")
+        {
+            if (!showMessageBox || AutoConfirmDialogs)
+                return;
+
+            CustomMessageBox.Show(
+                message,
+                title,
+                CustomMessageBoxButtons.OK,
+                CustomMessageBoxIcon.Warning,
+                FindForm());
+        }
+
+
+
         private void SaveCurrentStep(bool refreshList = true)
         {
             if (!ValidateCurrentStep(false)) return;
