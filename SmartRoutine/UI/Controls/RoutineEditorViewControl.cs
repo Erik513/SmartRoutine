@@ -158,6 +158,7 @@ namespace SmartRoutine.UI.Controls
 
             txtRoutineName = UIStyles.TextBoxes.CreateStandard();
             txtRoutineName.Dock = DockStyle.Fill;
+            txtRoutineName.MaxLength = 30;
 
             leftRoutineTitleTlp.Controls.Add(lblRoutineName, 0, 0);
             leftRoutineTitleTlp.Controls.Add(txtRoutineName, 1, 0);
@@ -232,6 +233,7 @@ namespace SmartRoutine.UI.Controls
 
             txtStepName = UIStyles.TextBoxes.CreateStandard();
             txtStepName.Dock = DockStyle.Fill;
+            txtStepName.MaxLength = 30;
 
             txtStepDescription = UIStyles.TextBoxes.CreateStandard();
             txtStepDescription.Dock = DockStyle.Fill;
