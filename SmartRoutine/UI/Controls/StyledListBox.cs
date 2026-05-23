@@ -1,6 +1,8 @@
 ﻿using SmartRoutine.UI.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Controls
@@ -9,11 +11,20 @@ namespace SmartRoutine.UI.Controls
     {
         private const int DragHandleWidth = 30;
         private const int DragHandleHitAreaPadding = 5;
-
         private const int ItemIconSize = 22;
         private const int ItemIconMargin = 8;
 
+        private static readonly StringFormat CenterLeftFormat = new StringFormat
+        {
+            Alignment = StringAlignment.Near,
+            LineAlignment = StringAlignment.Center,
+            Trimming = StringTrimming.EllipsisCharacter
+        };
+
+        private readonly Dictionary<Type, PropertyInfo> _displayPropertyCache = new Dictionary<Type, PropertyInfo>();
+
         private Color _itemBackColor = UIStyles.Colors.BackgroundMedium;
+        private Color _alternateItemBackColor;
         private Color _itemForeColor = UIStyles.Colors.TextPrimary;
         private Color _selectedBackColor = UIStyles.Colors.Primary;
         private Color _selectedForeColor = UIStyles.Colors.White;
@@ -24,21 +35,42 @@ namespace SmartRoutine.UI.Controls
         private Color _disabledBackColor = UIStyles.Colors.BackgroundDarkElevated;
 
         private int _itemHeight = 35;
-
         private int _hoverIndex = -1;
 
         private bool _allowReorder = true;
+        private bool _showEnumeration;
         private int _dragIndex = -1;
         private bool _isDragging;
         private Point _dragStartPoint;
         private int _dragInsertPosition = -1;
 
+        private Func<object, string> _displayTextProvider;
+        private string _displayTextMember;
+        private Func<object, Image> _iconProvider;
+        private Func<object, bool> _isItemDisabled;
+
         public event EventHandler ItemsReordered;
 
-        public Func<object, string> DisplayTextProvider { get; set; }
-        public string DisplayTextMember { get; set; }
-        
-        private bool _showEnumeration;
+        public Func<object, string> DisplayTextProvider
+        {
+            get => _displayTextProvider;
+            set
+            {
+                _displayTextProvider = value;
+                Invalidate();
+            }
+        }
+
+        public string DisplayTextMember
+        {
+            get => _displayTextMember;
+            set
+            {
+                _displayTextMember = value;
+                _displayPropertyCache.Clear();
+                Invalidate();
+            }
+        }
 
         public bool ShowEnumeration
         {
@@ -50,8 +82,25 @@ namespace SmartRoutine.UI.Controls
             }
         }
 
-        public Func<object, Image> IconProvider { get; set; }
-        public Func<object, bool> IsItemDisabled { get; set; }
+        public Func<object, Image> IconProvider
+        {
+            get => _iconProvider;
+            set
+            {
+                _iconProvider = value;
+                Invalidate();
+            }
+        }
+
+        public Func<object, bool> IsItemDisabled
+        {
+            get => _isItemDisabled;
+            set
+            {
+                _isItemDisabled = value;
+                Invalidate();
+            }
+        }
 
         public bool AllowReorder
         {
@@ -107,6 +156,8 @@ namespace SmartRoutine.UI.Controls
 
         public StyledListBox()
         {
+            _alternateItemBackColor = Darken(_itemBackColor, 5);
+
             DrawMode = DrawMode.OwnerDrawFixed;
             ItemHeight = _itemHeight;
             BackColor = UIStyles.Colors.BackgroundDark;
@@ -121,6 +172,8 @@ namespace SmartRoutine.UI.Controls
                 ControlStyles.ResizeRedraw |
                 ControlStyles.AllPaintingInWmPaint,
                 true);
+
+            EnableDoubleBuffering();
 
             UpdateStyles();
         }
@@ -160,17 +213,26 @@ namespace SmartRoutine.UI.Controls
         {
             if (_isDragging)
             {
-                _dragInsertPosition = -1;
-                Invalidate();
-            }
-            else
-            {
-                int oldHoverIndex = _hoverIndex;
-                _hoverIndex = -1;
-                InvalidateItem(oldHoverIndex);
+                base.OnMouseLeave(e);
+                return;
             }
 
+            int oldHoverIndex = _hoverIndex;
+            _hoverIndex = -1;
+
+            InvalidateItem(oldHoverIndex);
+
             base.OnMouseLeave(e);
+        }
+
+        protected override void OnDragLeave(EventArgs e)
+        {
+            InvalidateDragIndicator();
+
+            _dragInsertPosition = -1;
+            InvalidateDragIndicator();
+
+            base.OnDragLeave(e);
         }
 
         protected override void OnDragOver(DragEventArgs drgevent)
@@ -188,8 +250,9 @@ namespace SmartRoutine.UI.Controls
 
             if (_dragInsertPosition != newInsertPosition)
             {
+                InvalidateDragIndicator();
                 _dragInsertPosition = newInsertPosition;
-                Invalidate();
+                InvalidateDragIndicator();
             }
 
             AutoScrollDuringDrag(point, drgevent);
@@ -199,12 +262,17 @@ namespace SmartRoutine.UI.Controls
 
         protected override void OnDragDrop(DragEventArgs drgevent)
         {
-            if (_allowReorder && _dragIndex != -1 && _dragInsertPosition != -1)
+            Point point = PointToClient(new Point(drgevent.X, drgevent.Y));
+
+            bool droppedInside = ClientRectangle.Contains(point);
+
+            if (droppedInside && _allowReorder && _dragIndex != -1 && _dragInsertPosition != -1)
             {
                 ReorderDraggedItem();
             }
 
             ResetDragState();
+
             _hoverIndex = -1;
             Invalidate();
 
@@ -229,7 +297,7 @@ namespace SmartRoutine.UI.Controls
 
             bool isSelected = (e.State & DrawItemState.Selected) != 0 && !_isDragging;
             bool isHovered = e.Index == _hoverIndex && !_isDragging;
-            bool isDisabled = IsItemDisabled?.Invoke(item) == true;
+            bool isDisabled = _isItemDisabled?.Invoke(item) == true;
             bool isVScrollVisible = IsVerticalScrollBarVisible();
 
             Color backColor = GetBackColor(e.Index, isSelected, isHovered, isDisabled);
@@ -256,7 +324,10 @@ namespace SmartRoutine.UI.Controls
 
             if (m.Msg == 0x0F)
             {
-                DrawDragIndicator();
+                using (Graphics graphics = CreateGraphics())
+                {
+                    DrawDragIndicator(graphics);
+                }
             }
         }
 
@@ -441,16 +512,22 @@ namespace SmartRoutine.UI.Controls
 
         private void ResetDragState()
         {
+            bool needsInvalidate = _isDragging || _dragIndex != -1 || _dragInsertPosition != -1;
+
             _isDragging = false;
             _dragIndex = -1;
             _dragInsertPosition = -1;
-            Invalidate();
+
+            if (needsInvalidate)
+                Invalidate();
         }
 
         private void FillItemBackground(Graphics graphics, Rectangle rect, Color backColor)
         {
-            var brush = new SolidBrush(backColor);
-            graphics.FillRectangle(brush, rect);
+            using (SolidBrush brush = new SolidBrush(backColor))
+            {
+                graphics.FillRectangle(brush, rect);
+            }
         }
 
         private void DrawItemContent(
@@ -467,12 +544,12 @@ namespace SmartRoutine.UI.Controls
             int reservedDragWidth = _allowReorder ? dragRect.Width : 0;
             int scrollBarWidth = isVScrollVisible ? SystemInformation.VerticalScrollBarWidth : 0;
 
-            if (ShowEnumeration)
+            if (_showEnumeration)
             {
                 textLeft = DrawEnumeration(graphics, rect, index, textLeft, textColor);
             }
 
-            Image icon = IconProvider?.Invoke(item);
+            Image icon = _iconProvider?.Invoke(item);
 
             if (icon != null)
             {
@@ -499,10 +576,10 @@ namespace SmartRoutine.UI.Controls
                 (int)Math.Ceiling(numberSize.Width) + 4,
                 rect.Height);
 
-            var brush = new SolidBrush(textColor);
-            var format = CreateMiddleLeftStringFormat();
-
-            graphics.DrawString(numberText, Font, brush, numberRect, format);
+            using (SolidBrush brush = new SolidBrush(textColor))
+            {
+                graphics.DrawString(numberText, Font, brush, numberRect, CenterLeftFormat);
+            }
 
             return textLeft + numberRect.Width + 4;
         }
@@ -522,57 +599,73 @@ namespace SmartRoutine.UI.Controls
 
         private void DrawText(Graphics graphics, Rectangle textRect, string text, Color textColor)
         {
-            var brush = new SolidBrush(textColor);
-            var format = CreateMiddleLeftStringFormat();
-
-            format.Trimming = StringTrimming.EllipsisCharacter;
-
-            graphics.DrawString(text, Font, brush, textRect, format);
+            using (SolidBrush brush = new SolidBrush(textColor))
+            {
+                graphics.DrawString(text, Font, brush, textRect, CenterLeftFormat);
+            }
         }
 
         private void DrawDragHandle(Graphics graphics, Rectangle dragRect)
         {
-            var pen = new Pen(_dragHandleColor, 1.5f);
-
-            int centerY = dragRect.Y + dragRect.Height / 2;
-            int centerX = dragRect.X + dragRect.Width / 2;
-            int startX = centerX - 6;
-
-            int lineHeight = 3;
-            int spacing = 1;
-
-            for (int i = 0; i < 3; i++)
+            using (Pen pen = new Pen(_dragHandleColor, 1.5f))
             {
-                int y = centerY - lineHeight - spacing + i * (lineHeight + spacing);
-                graphics.DrawLine(pen, startX, y, startX + 12, y);
+                int centerY = dragRect.Y + dragRect.Height / 2;
+                int centerX = dragRect.X + dragRect.Width / 2;
+                int startX = centerX - 6;
+
+                int lineHeight = 3;
+                int spacing = 1;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    int y = centerY - lineHeight - spacing + i * (lineHeight + spacing);
+                    graphics.DrawLine(pen, startX, y, startX + 12, y);
+                }
             }
         }
 
-        private void DrawDragIndicator()
+        private void DrawDragIndicator(Graphics graphics)
         {
             if (!_isDragging || _dragInsertPosition == -1)
                 return;
 
-            Graphics graphics = CreateGraphics();
-
             int yPosition = GetDragIndicatorYPosition();
 
-            var pen = new Pen(_dragIndicatorColor, 3);
-            graphics.DrawLine(pen, 0, yPosition, Width, yPosition);
+            using (Pen pen = new Pen(_dragIndicatorColor, 3))
+            {
+                graphics.DrawLine(pen, 0, yPosition, Width, yPosition);
+            }
         }
 
         private string GetDisplayText(object item)
         {
-            if (DisplayTextProvider != null)
-                return DisplayTextProvider(item);
+            if (_displayTextProvider != null)
+                return _displayTextProvider(item);
 
-            if (!string.IsNullOrWhiteSpace(DisplayTextMember))
+            if (!string.IsNullOrWhiteSpace(_displayTextMember))
             {
-                var property = item?.GetType().GetProperty(DisplayTextMember);
+                PropertyInfo property = GetCachedDisplayProperty(item);
+
                 return property?.GetValue(item)?.ToString() ?? "";
             }
 
             return item?.ToString() ?? "";
+        }
+
+        private PropertyInfo GetCachedDisplayProperty(object item)
+        {
+            if (item == null)
+                return null;
+
+            Type itemType = item.GetType();
+
+            if (_displayPropertyCache.TryGetValue(itemType, out PropertyInfo cachedProperty))
+                return cachedProperty;
+
+            PropertyInfo property = itemType.GetProperty(_displayTextMember);
+            _displayPropertyCache[itemType] = property;
+
+            return property;
         }
 
         private Color GetBackColor(int index, bool isSelected, bool isHovered, bool isDisabled)
@@ -588,7 +681,7 @@ namespace SmartRoutine.UI.Controls
 
             return index % 2 == 0
                 ? _itemBackColor
-                : Darken(_itemBackColor, 5);
+                : _alternateItemBackColor;
         }
 
         private Color GetTextColor(bool isSelected, bool isDisabled)
@@ -651,21 +744,28 @@ namespace SmartRoutine.UI.Controls
             Invalidate(GetItemRectangle(index));
         }
 
+        private void InvalidateDragIndicator()
+        {
+            if (_dragInsertPosition == -1)
+                return;
+
+            int y = GetDragIndicatorYPosition();
+            Invalidate(new Rectangle(0, Math.Max(0, y - 4), Width, 8));
+        }
+
+        private void EnableDoubleBuffering()
+        {
+            typeof(Control)
+                .GetProperty("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.SetValue(this, true, null);
+        }
+
         private static Color Darken(Color color, int amount)
         {
             return Color.FromArgb(
                 Math.Max(0, color.R - amount),
                 Math.Max(0, color.G - amount),
                 Math.Max(0, color.B - amount));
-        }
-
-        private static StringFormat CreateMiddleLeftStringFormat()
-        {
-            return new StringFormat
-            {
-                Alignment = StringAlignment.Near,
-                LineAlignment = StringAlignment.Center
-            };
         }
     }
 }
