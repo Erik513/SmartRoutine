@@ -1,6 +1,5 @@
 ﻿using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
-using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
@@ -21,11 +20,16 @@ namespace SmartRoutine.UI.Controls
         private readonly IRoutineService _routineService;
         private Routine _selectedRoutine;
 
+        private TableLayoutPanel mainLayout;
+        private TableLayoutPanel buttonPanel;
+
         private StyledListBoxControl lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
 
-        private ToolTip _routineToolTip = UIStyles.ToolTips.CreateToolTip();
+        private readonly ToolTip _routineToolTip = UIStyles.ToolTips.CreateToolTip();
         private int _lastHoveredRoutineIndex = -1;
+
+        private const string DefaultRoutineNamePrefix = "Meine Routine ";
 
         public RoutinesViewControl(IRoutineService routineService)
         {
@@ -45,23 +49,32 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeControl()
         {
-            // Haupt-TableLayoutPanel (zentriert, 60% der Breite)
-            var mainLayout = new TableLayoutPanel
-            {
-                Anchor = AnchorStyles.None,
-                Size = new Size((int)(this.Width * 0.85), (int)(this.Height * 0.85)),
-                BackColor = Color.Transparent,
-                ColumnCount = 1,
-                RowCount = 2
-            };
+            InitializeMainLayout();
+            InitializeRoutineList();
+            InitializeButtonPanel();
+            BuildLayout();
+        }
 
-            // RowStyles: ListBox (90%) + Buttons (10%)
+        private void InitializeMainLayout()
+        {
+            mainLayout = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
+
+            mainLayout.Anchor = AnchorStyles.None;
+            mainLayout.BackColor = Color.Transparent;
+            mainLayout.Size = new Size(
+                (int)(Width * 0.85),
+                (int)(Height * 0.85));
+
             mainLayout.RowStyles.Clear();
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
-            mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            // ========== OBERE ZEILE: StyledListBoxControl ==========
+            mainLayout.ColumnStyles.Clear();
+            mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        }
+
+        private void InitializeRoutineList()
+        {
             lstRoutines = new StyledListBoxControl(
                 displayTextMember: "Name",
                 allowReorder: true,
@@ -73,94 +86,111 @@ namespace SmartRoutine.UI.Controls
                 ItemHeightCustom = 35,
                 Visible = true
             };
+
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
             lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
             lstRoutines.MouseMove += LstRoutines_MouseMove;
             lstRoutines.MouseLeave += LstRoutines_MouseLeave;
-            mainLayout.Controls.Add(lstRoutines, 0, 0);
+        }
+        private void InitializeButtonPanel()
+        {
+            buttonPanel = UIStyles.TableLayoutPanels.CreateDark(4, 1);
+            buttonPanel.Dock = DockStyle.Fill;
+            buttonPanel.Padding = new Padding(0);
 
-            // ========== UNTERE ZEILE: Button Panel (4x1 Layout) ==========
-            var buttonPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
-                ColumnCount = 4,
-                RowCount = 1,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink
-            };
-
-            // Spalten gleichmäßig verteilen
             buttonPanel.ColumnStyles.Clear();
+            buttonPanel.RowStyles.Clear();
+
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
 
-            // Zeilen gleichmäßig verteilen
-            buttonPanel.RowStyles.Clear();
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            // Buttons
             btnNewRoutine = UIStyles.Buttons.CreateGreen("+", "Neue Routine erstellen", new Size(30, 30), true);
             btnNewRoutine.Dock = DockStyle.Fill;
-            btnNewRoutine.Margin = new Padding(5, 5, 5, 5);
-            btnNewRoutine.Click += (s, e) =>
-            {
-                int nextNumber = GetNextRoutineNumber();
-                string newRoutineName = $"Meine Routine {nextNumber}";
-
-                var newRoutine = _routineService.CreateRoutine(newRoutineName);
-
-                LoadRoutines();
-                SelectRoutine(newRoutine);
-
-                NewRoutineClicked?.Invoke(s, newRoutine);
-            };
+            btnNewRoutine.Margin = new Padding(5);
+            btnNewRoutine.Click += BtnNewRoutine_Click;
 
             btnEditRoutine = UIStyles.Buttons.CreatePrimary("✎", "Routine bearbeiten", new Size(30, 30), true);
             btnEditRoutine.Dock = DockStyle.Fill;
-            btnEditRoutine.Margin = new Padding(5, 5, 5, 5);
-            btnEditRoutine.Click += (s, e) => EditRoutineClicked?.Invoke(s, _selectedRoutine);
+            btnEditRoutine.Margin = new Padding(5);
+            btnEditRoutine.Click += BtnEditRoutine_Click;
 
             btnDeleteRoutine = UIStyles.Buttons.CreateDanger("🗑", "Routine löschen", new Size(30, 30), true);
             btnDeleteRoutine.Dock = DockStyle.Fill;
-            btnDeleteRoutine.Margin = new Padding(5, 5, 5, 5);
-            btnDeleteRoutine.Click += (s, e) => DeleteRoutineClicked?.Invoke(s, _selectedRoutine);
+            btnDeleteRoutine.Margin = new Padding(5);
+            btnDeleteRoutine.Click += BtnDeleteRoutine_Click;
 
             btnStartRoutine = UIStyles.Buttons.CreateGreen("▶", "Routine starten", new Size(30, 30), true);
             btnStartRoutine.Dock = DockStyle.Fill;
-            btnStartRoutine.Margin = new Padding(5, 5, 5, 5);
-            btnStartRoutine.Enabled = true;
-            btnStartRoutine.Click += (s, e) =>
-            {
-                if (_selectedRoutine != null)
-                {
-                    StartRoutineClicked?.Invoke(s, _selectedRoutine);
-                }
-            };
+            btnStartRoutine.Margin = new Padding(5);
+            btnStartRoutine.Click += BtnStartRoutine_Click;
 
-            // Buttons im 2x2 Layout platzieren
             buttonPanel.Controls.Add(btnNewRoutine, 0, 0);
             buttonPanel.Controls.Add(btnEditRoutine, 1, 0);
             buttonPanel.Controls.Add(btnDeleteRoutine, 2, 0);
             buttonPanel.Controls.Add(btnStartRoutine, 3, 0);
+        }
 
+        private void BtnNewRoutine_Click(object sender, EventArgs e)
+        {
+            int nextNumber = GetNextRoutineNumber();
+            string newRoutineName = $"Meine Routine {nextNumber}";
+
+            var newRoutine = _routineService.CreateRoutine(newRoutineName);
+
+            LoadRoutines();
+            SelectRoutine(newRoutine);
+
+            NewRoutineClicked?.Invoke(this, newRoutine);
+        }
+
+        private void BtnEditRoutine_Click(object sender, EventArgs e)
+        {
+            if (_selectedRoutine == null)
+                return;
+
+            EditRoutineClicked?.Invoke(this, _selectedRoutine);
+        }
+
+        private void BtnDeleteRoutine_Click(object sender, EventArgs e)
+        {
+            if (_selectedRoutine == null)
+                return;
+
+            DeleteRoutineClicked?.Invoke(this, _selectedRoutine);
+        }
+
+        private void BtnStartRoutine_Click(object sender, EventArgs e)
+        {
+            if (_selectedRoutine == null)
+                return;
+
+            StartRoutineClicked?.Invoke(this, _selectedRoutine);
+        }
+
+
+        private void BuildLayout()
+        {
+            mainLayout.Controls.Add(lstRoutines, 0, 0);
             mainLayout.Controls.Add(buttonPanel, 0, 1);
 
-            // Zentrieren des Haupt-Layouts
-            this.Controls.Add(mainLayout);
+            Controls.Add(mainLayout);
 
-            // Resize-Event für Zentrierung
-            this.Resize += (s, e) => CenterControls(mainLayout);
+            Resize += (s, e) => CenterControls(mainLayout);
+
+            CenterControls(mainLayout);
         }
+
 
         private int GetNextRoutineNumber()
         {
             var routines = _routineService.GetAllRoutines();
 
             int maxNumber = routines
-                .Where(r => r.Name.StartsWith("Meine Routine "))
+                .Where(r => r.Name.StartsWith(DefaultRoutineNamePrefix))
                 .Select(r =>
                 {
                     string numberPart = r.Name.Substring("Meine Routine ".Length);
@@ -172,35 +202,52 @@ namespace SmartRoutine.UI.Controls
             return maxNumber + 1;
         }
 
-        private void CenterControls(TableLayoutPanel mainLayout)
-        {
-            int newWidth = this.Width - 160;
-            int newHeight = this.Height - 160;
 
-            mainLayout.Size = new Size(newWidth, newHeight);
-            mainLayout.Location = new Point(
-                (this.Width - mainLayout.Width) / 2,
-                (this.Height - mainLayout.Height) / 2
-            );
+
+        private void CenterControls(TableLayoutPanel layout)
+        {
+            int newWidth = Math.Max(300, Width - 160);
+            int newHeight = Math.Max(300, Height - 160);
+
+            layout.Size = new Size(newWidth, newHeight);
+
+            layout.Location = new Point(
+                (Width - layout.Width) / 2,
+                (Height - layout.Height) / 2);
         }
 
         public void LoadRoutines()
         {
             string selectedId = _selectedRoutine?.Id;
 
+            ReloadRoutineItems();
+
+            RestoreSelection(selectedId);
+
+            _selectedRoutine = lstRoutines.SelectedItem as Routine;
+
+            UpdateButtonStates();
+        }
+        private void ReloadRoutineItems()
+        {
             lstRoutines.Items.Clear();
+
             var routines = _routineService.GetAllRoutines();
 
             foreach (var routine in routines)
+            {
                 lstRoutines.Items.Add(routine);
-
+            }
+        }
+        private void RestoreSelection(string selectedId)
+        {
             if (!string.IsNullOrEmpty(selectedId))
+            {
                 SelectRoutineById(selectedId);
-            else
-                lstRoutines.SelectedIndex = -1;
+                return;
+            }
 
-            _selectedRoutine = lstRoutines.SelectedItem as Routine;
-            UpdateButtonStates();
+            lstRoutines.SelectedIndex = -1;
         }
 
         public void SelectRoutine(Routine routine)
@@ -221,23 +268,39 @@ namespace SmartRoutine.UI.Controls
         {
             string selectedId = _selectedRoutine?.Id;
 
-            var newOrder = new List<Routine>();
+            var reorderedRoutines = GetReorderedRoutinesFromList();
+
+            _routineService.ReorderRoutines(reorderedRoutines);
+
+            LoadRoutines();
+
+            RestoreSelectionAfterReorder(selectedId);
+        }
+
+        private List<Routine> GetReorderedRoutinesFromList()
+        {
+            var reorderedRoutines = new List<Routine>();
 
             for (int i = 0; i < lstRoutines.Items.Count; i++)
             {
                 if (lstRoutines.Items[i] is Routine routine)
                 {
                     routine.Order = i;
-                    newOrder.Add(routine);
+                    reorderedRoutines.Add(routine);
                 }
             }
 
-            _routineService.ReorderRoutines(newOrder);
-            LoadRoutines();
+            return reorderedRoutines;
+        }
+        private void RestoreSelectionAfterReorder(string selectedId)
+        {
+            if (string.IsNullOrEmpty(selectedId))
+                return;
 
-            // Falls LoadRoutines die Auswahl nicht wiederherstellen konnte
-            if (!string.IsNullOrEmpty(selectedId) && lstRoutines.SelectedIndex == -1)
-                SelectRoutineById(selectedId);
+            if (lstRoutines.SelectedIndex != -1)
+                return;
+
+            SelectRoutineById(selectedId);
         }
 
         private void LstRoutines_MouseMove(object sender, MouseEventArgs e)
