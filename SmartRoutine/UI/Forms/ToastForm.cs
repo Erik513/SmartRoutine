@@ -1,120 +1,223 @@
 ﻿using SmartRoutine.UI.Helpers;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
     public partial class ToastForm : Form
     {
+        private const int ToastWidth = 350;
+        private const int ToastHeight = 80;
+        private const int CornerRadius = 12;
+        private const int CloseDelay = 2500;
+
+        private static ToastForm _currentToast;
+
         private Timer _closeTimer;
         private Label _messageLabel;
         private Panel _contentPanel;
-        private static ToastForm _currentToast;
 
         public ToastForm()
         {
-            InitializeForm();
+            ConfigureForm();
+            CreateControls();
+            CreateTimer();
+
+            SizeChanged += OnToastSizeChanged;
+            Load += OnToastLoad;
         }
 
-        private void InitializeForm()
+        public static void ShowToast(string message, Form owner)
         {
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.StartPosition = FormStartPosition.Manual;
-            this.Size = new Size(350, 80);
-            this.BackColor = UIStyles.Colors.Primary;
-            this.TopMost = true;
-            this.ShowInTaskbar = false;
-            this.Opacity = 0.90;
+            if (owner == null || owner.IsDisposed)
+                return;
 
-            // Abgerundete Ecken
-            this.Paint += (s, e) =>
+            CloseCurrentToast();
+
+            ToastForm toast = new ToastForm();
+            _currentToast = toast;
+
+            toast.SetMessage(message);
+            toast.Location = GetToastLocation(owner, toast);
+
+            toast._closeTimer.Start();
+            toast.Show(owner);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                using (var path = GetRoundedRectanglePath(this.ClientRectangle, 12))
-                {
-                    this.Region = new Region(path);
-                }
-            };
+                SizeChanged -= OnToastSizeChanged;
+                Load -= OnToastLoad;
 
-            // Content Panel mit Farbakzent
-            _contentPanel = new Panel
+                if (_closeTimer != null)
+                {
+                    _closeTimer.Stop();
+                    _closeTimer.Tick -= OnCloseTimerTick;
+                    _closeTimer.Dispose();
+                    _closeTimer = null;
+                }
+
+                if (_currentToast == this)
+                    _currentToast = null;
+
+                if (Region != null)
+                {
+                    Region.Dispose();
+                    Region = null;
+                }
+            }
+
+            base.Dispose(disposing);
+        }
+
+        private void ConfigureForm()
+        {
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.Manual;
+            Size = new Size(ToastWidth, ToastHeight);
+            BackColor = UIStyles.Colors.Primary;
+            TopMost = true;
+            ShowInTaskbar = false;
+            Opacity = 0.90;
+        }
+
+        private void CreateControls()
+        {
+            _contentPanel = CreateContentPanel();
+
+            Label successIcon = CreateSuccessIcon();
+            _messageLabel = CreateMessageLabel();
+
+            _contentPanel.Controls.Add(_messageLabel);
+            _contentPanel.Controls.Add(successIcon);
+
+            Controls.Add(_contentPanel);
+        }
+
+        private Panel CreateContentPanel()
+        {
+            return new Panel
             {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(15, 10, 15, 10),
                 BackColor = Color.Transparent
             };
+        }
 
-            // Icon für Erfolg (optional)
-            var successIcon = new Label
+        private Label CreateSuccessIcon()
+        {
+            return new Label
             {
                 Text = "✓",
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = UIStyles.Colors.White,
+                Font = UIStyles.Fonts.Icon,
                 Size = new Size(30, 30),
                 Location = new Point(10, 25),
-                TextAlign = ContentAlignment.MiddleCenter
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.Transparent
             };
+        }
 
-            // Nachrichten-Label
-            _messageLabel = new Label
+        private Label CreateMessageLabel()
+        {
+            return new Label
             {
                 Text = "",
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 10),
+                ForeColor = UIStyles.Colors.White,
+                Font = UIStyles.Fonts.Normal,
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent,
                 AutoSize = false,
                 Dock = DockStyle.Fill,
-                Padding = new Padding(40, 0, 10, 0)
-            };
-
-            _contentPanel.Controls.Add(_messageLabel);
-            _contentPanel.Controls.Add(successIcon);
-            this.Controls.Add(_contentPanel);
-
-            // Timer
-            _closeTimer = new Timer();
-            _closeTimer.Interval = 2500;
-            _closeTimer.Tick += (s, e) =>
-            {
-                _closeTimer.Stop();
-                this.Close();
-                _currentToast = null;
+                Padding = new Padding(40, 0, 10, 0),
+                AutoEllipsis = true
             };
         }
 
-        private System.Drawing.Drawing2D.GraphicsPath GetRoundedRectanglePath(Rectangle rect, int radius)
+        private void CreateTimer()
         {
-            var path = new System.Drawing.Drawing2D.GraphicsPath();
-            path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-            path.AddArc(rect.X + rect.Width - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-            path.AddArc(rect.X + rect.Width - radius * 2, rect.Y + rect.Height - radius * 2, radius * 2, radius * 2, 0, 90);
-            path.AddArc(rect.X, rect.Y + rect.Height - radius * 2, radius * 2, radius * 2, 90, 90);
+            _closeTimer = new Timer();
+            _closeTimer.Interval = CloseDelay;
+            _closeTimer.Tick += OnCloseTimerTick;
+        }
+
+        private void SetMessage(string message)
+        {
+            _messageLabel.Text = string.IsNullOrWhiteSpace(message)
+                ? ""
+                : message;
+        }
+
+        private static void CloseCurrentToast()
+        {
+            if (_currentToast == null || _currentToast.IsDisposed)
+                return;
+
+            _currentToast.Close();
+            _currentToast = null;
+        }
+
+        private static Point GetToastLocation(Form owner, ToastForm toast)
+        {
+            return owner.PointToScreen(new Point(
+                (owner.ClientSize.Width - toast.Width) / 2,
+                (int)(owner.ClientSize.Height * 0.75) - toast.Height / 2));
+        }
+
+        private void ApplyRoundedRegion()
+        {
+            if (ClientRectangle.Width <= 0 || ClientRectangle.Height <= 0)
+                return;
+
+            Region oldRegion = Region;
+            GraphicsPath path = GetRoundedRectanglePath(ClientRectangle, CornerRadius);
+
+            try
+            {
+                Region = new Region(path);
+            }
+            finally
+            {
+                path.Dispose();
+
+                if (oldRegion != null)
+                    oldRegion.Dispose();
+            }
+        }
+
+        private static GraphicsPath GetRoundedRectanglePath(Rectangle rect, int radius)
+        {
+            int diameter = radius * 2;
+            GraphicsPath path = new GraphicsPath();
+
+            path.AddArc(rect.X, rect.Y, diameter, diameter, 180, 90);
+            path.AddArc(rect.Right - diameter, rect.Y, diameter, diameter, 270, 90);
+            path.AddArc(rect.Right - diameter, rect.Bottom - diameter, diameter, diameter, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - diameter, diameter, diameter, 90, 90);
+
             path.CloseFigure();
+
             return path;
         }
 
-        public static void ShowToast(string message, Form owner)
+        private void OnToastLoad(object sender, EventArgs e)
         {
-            if (owner == null) return;
+            ApplyRoundedRegion();
+        }
 
-            if (_currentToast != null && !_currentToast.IsDisposed)
-            {
-                _currentToast.Close();
-            }
+        private void OnToastSizeChanged(object sender, EventArgs e)
+        {
+            ApplyRoundedRegion();
+        }
 
-            _currentToast = new ToastForm();
-            _currentToast._messageLabel.Text = message;
-
-            var position = owner.PointToScreen(new Point(
-                (owner.ClientSize.Width - _currentToast.Width) / 2,
-                (int)(owner.ClientSize.Height * 0.75) - (_currentToast.Height / 2)
-            ));
-
-            _currentToast.Location = position;
-
-            _currentToast._closeTimer.Start();
-            _currentToast.Show(owner);
+        private void OnCloseTimerTick(object sender, EventArgs e)
+        {
+            _closeTimer.Stop();
+            Close();
         }
     }
 }
