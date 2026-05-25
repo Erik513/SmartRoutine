@@ -1,53 +1,57 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SmartRoutine
 {
-    class SleepPreventer
+    public static class SleepPreventer
     {
+        private static readonly ExecutionFlag PreventSleepFlags =
+            ExecutionFlag.System |
+            ExecutionFlag.Display |
+            ExecutionFlag.Continuous;
+
+        private static readonly ExecutionFlag RestoreSleepFlags =
+            ExecutionFlag.Continuous;
+
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern uint SetThreadExecutionState(ExecutionFlag flags);
+        private static extern uint SetThreadExecutionState(
+            ExecutionFlag flags);
 
         [Flags]
-        enum ExecutionFlag : uint
+        private enum ExecutionFlag : uint
         {
             System = 0x00000001,
             Display = 0x00000002,
-            Continuous = 0x80000000,
+            Continuous = 0x80000000
         }
 
         public static void PreventSleep()
         {
-            try
-            {
-                // Verhindert Standby und Bildschirm-Abschaltung
-                SetThreadExecutionState(ExecutionFlag.System |
-                                       ExecutionFlag.Display |
-                                       ExecutionFlag.Continuous);
-            }
-            catch (Exception ex)
-            {
-                // Optional: Logging
-                Debug.WriteLine($"Failed to prevent sleep: {ex.Message}");
-            }
+            TrySetExecutionState(
+                PreventSleepFlags,
+                "prevent sleep");
         }
 
         public static void AllowSleep()
         {
+            TrySetExecutionState(
+                RestoreSleepFlags,
+                "restore sleep state");
+        }
+
+        private static void TrySetExecutionState(
+            ExecutionFlag flags,
+            string operation)
+        {
             try
             {
-                // Setzt den normalen Zustand wieder her
-                SetThreadExecutionState(ExecutionFlag.Continuous);
+                SetThreadExecutionState(flags);
             }
             catch (Exception ex)
             {
-                // Optional: Logging
-                Debug.WriteLine($"Failed to allow sleep: {ex.Message}");
+                Debug.WriteLine(
+                    $"Failed to {operation}: {ex.Message}");
             }
         }
     }

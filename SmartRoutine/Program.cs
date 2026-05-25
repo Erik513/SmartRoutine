@@ -1,39 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using SmartRoutine.Data;
+﻿using SmartRoutine.Data;
 using SmartRoutine.Data.Interfaces;
-using SmartRoutine.Logic.Services;
 using SmartRoutine.Logic.Interfaces;
-using SmartRoutine.UI;
+using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
+using System;
+using System.Windows.Forms;
 
 namespace SmartRoutine
 {
     internal static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
-        static void Main()
+        private static void Main()
         {
-            AppDomain.CurrentDomain.UnhandledException += (sender, e) => SleepPreventer.AllowSleep();
-            Application.ThreadException += (sender, e) => SleepPreventer.AllowSleep();
+            RegisterGlobalExceptionCleanup();
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // DataRepository
-            IRoutineRepository data = new RoutineRepository();
+            IRoutineRepository routineRepository = new RoutineRepository();
+            IRoutineService routineService = new RoutineService(routineRepository, false);
 
-            // BusinessLogic
-            IRoutineService logic = new RoutineService(data, true);
+            Application.Run(new MainForm(routineService));
+        }
 
-            // UI
-            Application.Run(new MainForm(logic));
+        private static void RegisterGlobalExceptionCleanup()
+        {
+            AppDomain.CurrentDomain.UnhandledException += delegate
+            {
+                SleepPreventer.AllowSleep();
+            };
+
+            Application.ThreadException += delegate
+            {
+                SleepPreventer.AllowSleep();
+            };
         }
     }
 }
