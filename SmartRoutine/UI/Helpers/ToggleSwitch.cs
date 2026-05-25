@@ -7,10 +7,17 @@ namespace SmartRoutine.UI.Helpers
 {
     public class ToggleSwitch : Control
     {
+        private const int DefaultWidth = 45;
+        private const int DefaultHeight = 25;
+        private const int PaddingSize = 2;
+        private const int BorderThickness = 1;
+
         private bool _checked;
         private bool _isHovered;
         private bool _isPressed;
+
         private ToolTip _toolTip;
+
         private string _toolTipTextChecked = "";
         private string _toolTipTextUnchecked = "";
 
@@ -18,97 +25,75 @@ namespace SmartRoutine.UI.Helpers
 
         public bool Checked
         {
-            get => _checked;
+            get
+            {
+                return _checked;
+            }
             set
             {
-                if (_checked != value)
-                {
-                    _checked = value;
-                    UpdateToolTip();
-                    Invalidate();
-                    CheckedChanged?.Invoke(this, EventArgs.Empty);
-                }
+                if (_checked == value)
+                    return;
+
+                _checked = value;
+
+                UpdateToolTip();
+                Invalidate();
+
+                CheckedChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
-        // Tooltip Text für eingeschalteten Zustand
         public string ToolTipTextChecked
         {
-            get => _toolTipTextChecked;
+            get
+            {
+                return _toolTipTextChecked;
+            }
             set
             {
-                _toolTipTextChecked = value;
+                _toolTipTextChecked = value ?? "";
                 UpdateToolTip();
             }
         }
 
-        // Tooltip Text für ausgeschalteten Zustand
         public string ToolTipTextUnchecked
         {
-            get => _toolTipTextUnchecked;
+            get
+            {
+                return _toolTipTextUnchecked;
+            }
             set
             {
-                _toolTipTextUnchecked = value;
+                _toolTipTextUnchecked = value ?? "";
                 UpdateToolTip();
             }
         }
 
-        // Einfacher Tooltip (für beide Zustände gleich)
         public string ToolTipText
         {
             set
             {
-                _toolTipTextChecked = value;
-                _toolTipTextUnchecked = value;
+                string text = value ?? "";
+
+                _toolTipTextChecked = text;
+                _toolTipTextUnchecked = text;
+
                 UpdateToolTip();
             }
         }
 
         public ToggleSwitch()
         {
-            this.Size = new Size(45, 25);
-
-            SetStyle(
-                ControlStyles.UserPaint |
-                ControlStyles.AllPaintingInWmPaint |
-                ControlStyles.OptimizedDoubleBuffer |
-                ControlStyles.ResizeRedraw |
-                ControlStyles.SupportsTransparentBackColor,
-                true);
-
-            this.DoubleBuffered = true;
-            this.Cursor = Cursors.Hand;
-
-            this.BackColor = Color.Transparent;
-
-            _toolTip = new ToolTip
-            {
-                InitialDelay = 500,
-                ReshowDelay = 100,
-                AutoPopDelay = 5000
-            };
-        }
-
-        private void UpdateToolTip()
-        {
-            if (_toolTip == null) return;
-
-            string tooltipText = _checked ? _toolTipTextChecked : _toolTipTextUnchecked;
-
-            if (!string.IsNullOrEmpty(tooltipText))
-            {
-                _toolTip.SetToolTip(this, tooltipText);
-            }
-            else
-            {
-                _toolTip.SetToolTip(this, "");
-            }
+            ConfigureControl();
+            CreateToolTip();
         }
 
         protected override void OnMouseEnter(EventArgs e)
         {
             _isHovered = true;
+
             Invalidate();
+
             base.OnMouseEnter(e);
         }
 
@@ -116,7 +101,9 @@ namespace SmartRoutine.UI.Helpers
         {
             _isHovered = false;
             _isPressed = false;
+
             Invalidate();
+
             base.OnMouseLeave(e);
         }
 
@@ -127,6 +114,7 @@ namespace SmartRoutine.UI.Helpers
                 _isPressed = true;
                 Invalidate();
             }
+
             base.OnMouseDown(e);
         }
 
@@ -136,119 +124,283 @@ namespace SmartRoutine.UI.Helpers
             {
                 _isPressed = false;
                 Checked = !Checked;
+
                 Invalidate();
             }
+
             base.OnMouseUp(e);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            base.OnPaint(e);
+
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            // Maße
-            int toggleWidth = this.Width - 4;
-            int toggleHeight = this.Height - 4;
-            int knobSize = toggleHeight - 2;
-            int radius = toggleHeight / 2;
+            Rectangle toggleRectangle = GetToggleRectangle();
+            Rectangle knobRectangle = GetKnobRectangle(toggleRectangle);
 
-            // Positionen
-            int x = 2;
-            int y = 2;
-            int knobX = Checked ? x + toggleWidth - knobSize - 2 : x + 2;
-
-            // Hintergrundfarbe
-            Color backColor;
-            if (!this.Enabled)
-                backColor = UIStyles.Colors.BackgroundDark;
-            else if (Checked)
-                backColor = UIStyles.Colors.Primary;
-            else
-                backColor = UIStyles.Colors.BackgroundMedium;
-
-            // Hintergrund zeichnen (abgerundetes Rechteck)
-            using (var path = GetRoundedRectangle(new Rectangle(x, y, toggleWidth, toggleHeight), radius))
-            using (var brush = new SolidBrush(backColor))
-            {
-                e.Graphics.FillPath(brush, path);
-            }
-
-            // Rahmen
-            Color borderColor;
-            if (!this.Enabled)
-                borderColor = UIStyles.Colors.BorderDark;
-            else if (_isHovered && !Checked)
-                borderColor = UIStyles.Colors.Primary;
-            else
-                borderColor = UIStyles.Colors.BorderMedium;
-
-            using (var path = GetRoundedRectangle(new Rectangle(x, y, toggleWidth, toggleHeight), radius))
-            using (var pen = new Pen(borderColor, 1))
-            {
-                e.Graphics.DrawPath(pen, path);
-            }
-
-            // Knopf (der runde Schieber)
-            Color knobColor;
-            if (!this.Enabled)
-                knobColor = UIStyles.Colors.TextDisabled;
-            else if (_isPressed)
-                knobColor = UIStyles.Colors.PrimaryLight;
-            else if (_isHovered)
-                knobColor = UIStyles.Colors.TextPrimary;
-            else
-                knobColor = UIStyles.Colors.White;
-
-            using (var brush = new SolidBrush(knobColor))
-            {
-                e.Graphics.FillEllipse(brush, knobX, y + 2, knobSize, knobSize);
-            }
-
-            // Knopf-Rahmen
-            using (var pen = new Pen(UIStyles.Colors.BorderMedium, 1))
-            {
-                e.Graphics.DrawEllipse(pen, knobX, y + 2, knobSize, knobSize);
-            }
+            DrawBackground(e.Graphics, toggleRectangle);
+            DrawBorder(e.Graphics, toggleRectangle);
+            DrawKnob(e.Graphics, knobRectangle);
+            DrawKnobBorder(e.Graphics, knobRectangle);
         }
 
-        protected override void OnPaintBackground(PaintEventArgs pevent)
+        protected override void OnPaintBackground(PaintEventArgs e)
         {
-            if (Parent != null && BackColor == Color.Transparent)
+            if (Parent == null || BackColor != Color.Transparent)
             {
-                var state = pevent.Graphics.Save();
-
-                pevent.Graphics.TranslateTransform(-Left, -Top);
-
-                var rect = new Rectangle(Parent.Location, Parent.Size);
-
-                InvokePaintBackground(Parent, new PaintEventArgs(pevent.Graphics, rect));
-                InvokePaint(Parent, new PaintEventArgs(pevent.Graphics, rect));
-
-                pevent.Graphics.Restore(state);
+                base.OnPaintBackground(e);
+                return;
             }
-            else
+
+            GraphicsState state = e.Graphics.Save();
+
+            try
             {
-                base.OnPaintBackground(pevent);
-            }
-        }
+                e.Graphics.TranslateTransform(-Left, -Top);
 
-        private GraphicsPath GetRoundedRectangle(Rectangle rect, int radius)
-        {
-            var path = new GraphicsPath();
-            path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-            path.AddArc(rect.X + rect.Width - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-            path.AddArc(rect.X + rect.Width - radius * 2, rect.Y + rect.Height - radius * 2, radius * 2, radius * 2, 0, 90);
-            path.AddArc(rect.X, rect.Y + rect.Height - radius * 2, radius * 2, radius * 2, 90, 90);
-            path.CloseFigure();
-            return path;
+                Rectangle rectangle = new Rectangle(
+                    Parent.Location,
+                    Parent.Size);
+
+                InvokePaintBackground(
+                    Parent,
+                    new PaintEventArgs(e.Graphics, rectangle));
+
+                InvokePaint(
+                    Parent,
+                    new PaintEventArgs(e.Graphics, rectangle));
+            }
+            finally
+            {
+                e.Graphics.Restore(state);
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _toolTip?.Dispose();
+                if (_toolTip != null)
+                {
+                    _toolTip.Dispose();
+                    _toolTip = null;
+                }
             }
+
             base.Dispose(disposing);
+        }
+
+        private void ConfigureControl()
+        {
+            Size = new Size(DefaultWidth, DefaultHeight);
+
+            SetStyle(
+                ControlStyles.UserPaint |
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.ResizeRedraw |
+                ControlStyles.SupportsTransparentBackColor,
+                true);
+
+            DoubleBuffered = true;
+
+            Cursor = Cursors.Hand;
+            BackColor = Color.Transparent;
+        }
+
+        private void CreateToolTip()
+        {
+            _toolTip = new ToolTip
+            {
+                InitialDelay = 500,
+                ReshowDelay = 100,
+                AutoPopDelay = 5000
+            };
+        }
+
+        private void UpdateToolTip()
+        {
+            if (_toolTip == null)
+                return;
+
+            string text = Checked
+                ? _toolTipTextChecked
+                : _toolTipTextUnchecked;
+
+            _toolTip.SetToolTip(this, text ?? "");
+        }
+
+        private Rectangle GetToggleRectangle()
+        {
+            return new Rectangle(
+                PaddingSize,
+                PaddingSize,
+                Width - PaddingSize * 2,
+                Height - PaddingSize * 2);
+        }
+
+        private Rectangle GetKnobRectangle(Rectangle toggleRectangle)
+        {
+            int knobSize = toggleRectangle.Height - 2;
+
+            int knobX = Checked
+                ? toggleRectangle.Right - knobSize - 2
+                : toggleRectangle.X + 2;
+
+            return new Rectangle(
+                knobX,
+                toggleRectangle.Y + 2,
+                knobSize,
+                knobSize);
+        }
+
+        private void DrawBackground(Graphics graphics, Rectangle rectangle)
+        {
+            GraphicsPath path = CreateRoundedRectanglePath(
+                rectangle,
+                rectangle.Height / 2);
+
+            SolidBrush brush = new SolidBrush(GetBackgroundColor());
+
+            try
+            {
+                graphics.FillPath(brush, path);
+            }
+            finally
+            {
+                brush.Dispose();
+                path.Dispose();
+            }
+        }
+
+        private void DrawBorder(Graphics graphics, Rectangle rectangle)
+        {
+            GraphicsPath path = CreateRoundedRectanglePath(
+                rectangle,
+                rectangle.Height / 2);
+
+            Pen pen = new Pen(GetBorderColor(), BorderThickness);
+
+            try
+            {
+                graphics.DrawPath(pen, path);
+            }
+            finally
+            {
+                pen.Dispose();
+                path.Dispose();
+            }
+        }
+
+        private void DrawKnob(Graphics graphics, Rectangle rectangle)
+        {
+            SolidBrush brush = new SolidBrush(GetKnobColor());
+
+            try
+            {
+                graphics.FillEllipse(brush, rectangle);
+            }
+            finally
+            {
+                brush.Dispose();
+            }
+        }
+
+        private void DrawKnobBorder(Graphics graphics, Rectangle rectangle)
+        {
+            Pen pen = new Pen(UIStyles.Colors.BorderMedium, BorderThickness);
+
+            try
+            {
+                graphics.DrawEllipse(pen, rectangle);
+            }
+            finally
+            {
+                pen.Dispose();
+            }
+        }
+
+        private Color GetBackgroundColor()
+        {
+            if (!Enabled)
+                return UIStyles.Colors.BackgroundDark;
+
+            if (Checked)
+                return UIStyles.Colors.Primary;
+
+            return UIStyles.Colors.BackgroundMedium;
+        }
+
+        private Color GetBorderColor()
+        {
+            if (!Enabled)
+                return UIStyles.Colors.BorderDark;
+
+            if (_isHovered && !Checked)
+                return UIStyles.Colors.Primary;
+
+            return UIStyles.Colors.BorderMedium;
+        }
+
+        private Color GetKnobColor()
+        {
+            if (!Enabled)
+                return UIStyles.Colors.TextDisabled;
+
+            if (_isPressed)
+                return UIStyles.Colors.PrimaryLight;
+
+            if (_isHovered)
+                return UIStyles.Colors.TextPrimary;
+
+            return UIStyles.Colors.White;
+        }
+
+        private GraphicsPath CreateRoundedRectanglePath(
+            Rectangle rectangle,
+            int radius)
+        {
+            int diameter = radius * 2;
+
+            GraphicsPath path = new GraphicsPath();
+
+            path.AddArc(
+                rectangle.X,
+                rectangle.Y,
+                diameter,
+                diameter,
+                180,
+                90);
+
+            path.AddArc(
+                rectangle.Right - diameter,
+                rectangle.Y,
+                diameter,
+                diameter,
+                270,
+                90);
+
+            path.AddArc(
+                rectangle.Right - diameter,
+                rectangle.Bottom - diameter,
+                diameter,
+                diameter,
+                0,
+                90);
+
+            path.AddArc(
+                rectangle.X,
+                rectangle.Bottom - diameter,
+                diameter,
+                diameter,
+                90,
+                90);
+
+            path.CloseFigure();
+
+            return path;
         }
     }
 }
