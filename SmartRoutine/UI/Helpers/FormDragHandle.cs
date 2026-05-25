@@ -7,37 +7,75 @@ namespace SmartRoutine.UI.Helpers
 {
     public class FormDragHandle : IDisposable
     {
-        private const int WM_NCLBUTTONDOWN = 0xA1;
-        private const int HT_CAPTION = 0x2;
+        private const int WmNcLeftButtonDown = 0xA1;
+        private const int HtCaption = 0x2;
+
+        private const int DragThreshold = 4;
+        private const int TimerDelay = 30;
+        private const int SnapThreshold = 4;
+        private const int OffscreenTolerance = 50;
 
         [DllImport("user32.dll")]
-        private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        private static extern int SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
         [DllImport("user32.dll")]
         private static extern bool ReleaseCapture();
 
-        public Control DragHandle { get; private set; }
-
         private bool _mouseDown;
         private Point _mouseDownPosition;
-
         private bool _isRestoringFromMaximized;
-        public bool AllowWindowSnapAndMaximize { get; set; } = true;
 
-        public FormDragHandle(Control control, bool allowWindowSnapAndMaximize = true)
+        public Control DragHandle { get; private set; }
+
+        public bool AllowWindowSnapAndMaximize { get; set; }
+
+        public FormDragHandle(
+            Control control,
+            bool allowWindowSnapAndMaximize = true)
         {
-            DragHandle = control ?? throw new ArgumentNullException(nameof(control));
+            if (control == null)
+                throw new ArgumentNullException(nameof(control));
+
+            DragHandle = control;
             AllowWindowSnapAndMaximize = allowWindowSnapAndMaximize;
 
-
-            DragHandle.MouseUp += DragHandle_MouseUp;
-            DragHandle.MouseDown += OnMouseDown;
-            DragHandle.MouseMove += OnMouseMove;
+            WireEvents();
         }
 
-        private void DragHandle_MouseUp(object sender, MouseEventArgs e)
+        public static FormDragHandle Create(
+            Control control,
+            bool allowWindowSnapAndMaximize = true)
         {
+            return new FormDragHandle(control, allowWindowSnapAndMaximize);
+        }
+
+        public void Dispose()
+        {
+            UnwireEvents();
+
             _mouseDown = false;
+            _isRestoringFromMaximized = false;
+            DragHandle = null;
+        }
+
+        private void WireEvents()
+        {
+            if (DragHandle == null)
+                return;
+
+            DragHandle.MouseDown += OnMouseDown;
+            DragHandle.MouseMove += OnMouseMove;
+            DragHandle.MouseUp += OnMouseUp;
+        }
+
+        private void UnwireEvents()
+        {
+            if (DragHandle == null)
+                return;
+
+            DragHandle.MouseDown -= OnMouseDown;
+            DragHandle.MouseMove -= OnMouseMove;
+            DragHandle.MouseUp -= OnMouseUp;
         }
 
         private void OnMouseDown(object sender, MouseEventArgs e)
@@ -45,18 +83,15 @@ namespace SmartRoutine.UI.Helpers
             if (e.Button != MouseButtons.Left)
                 return;
 
-            var form = DragHandle.FindForm();
+            Form form = DragHandle.FindForm();
 
             if (form == null)
                 return;
 
-            // Doppelklick
             if (e.Clicks == 2)
             {
                 if (AllowWindowSnapAndMaximize)
-                {
                     ToggleMaximize(form);
-                }
 
                 return;
             }
@@ -64,74 +99,81 @@ namespace SmartRoutine.UI.Helpers
             _mouseDown = true;
             _mouseDownPosition = Cursor.Position;
         }
+
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
             if (!_mouseDown || e.Button != MouseButtons.Left)
                 return;
 
-            var form = DragHandle.FindForm();
+            Form form = DragHandle.FindForm();
 
             if (form == null)
                 return;
 
-            // Erst ab kleiner Bewegung wirklich draggen
-            int dragDistance = Math.Abs(Cursor.Position.X - _mouseDownPosition.X) +
-                               Math.Abs(Cursor.Position.Y - _mouseDownPosition.Y);
+            Point cursor = Cursor.Position;
 
-            if (dragDistance < 4)
+            int dragDistance =
+                Math.Abs(cursor.X - _mouseDownPosition.X) +
+                Math.Abs(cursor.Y - _mouseDownPosition.Y);
+
+            if (dragDistance < DragThreshold)
                 return;
 
             _mouseDown = false;
 
             if (form.WindowState == FormWindowState.Maximized)
             {
-                if (!AllowWindowSnapAndMaximize)
-                    return;
-
-                if (_isRestoringFromMaximized)
-                    return;
-
-                _isRestoringFromMaximized = true;
-
-                form.WindowState = FormWindowState.Normal;
-
-                Timer timer = new Timer();
-                timer.Interval = 30;
-
-                timer.Tick += (s, args) =>
-                {
-                    timer.Stop();
-                    timer.Dispose();
-
-                    // AKTUELLE Mausposition holen
-                    var cursor = Cursor.Position;
-                    var screen = Screen.FromPoint(cursor);
-
-                    form.Location = new Point(
-                        cursor.X - form.Width / 2,
-                        Math.Max(screen.WorkingArea.Top, cursor.Y - 10)
-                    );
-
-                    ReleaseCapture();
-                    SendMessage(form.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
-
-                    SnapToTopIfNeeded(form);
-                    KeepFormOnScreen(form);
-
-                    _isRestoringFromMaximized = false;
-                };
-
-                timer.Start();
-
+                RestoreMaximizedFormAndStartDrag(form);
                 return;
             }
 
+            StartNativeDrag(form);
+        }
+
+        private void OnMouseUp(object sender, MouseEventArgs e)
+        {
+            _mouseDown = false;
+        }
+
+        private void RestoreMaximizedFormAndStartDrag(Form form)
+        {
+            if (!AllowWindowSnapAndMaximize)
+                return;
+
+            if (_isRestoringFromMaximized)
+                return;
+
+            _isRestoringFromMaximized = true;
+
+            form.WindowState = FormWindowState.Normal;
+
+            RunDelayed(delegate
+            {
+                Point cursor = Cursor.Position;
+                Screen screen = Screen.FromPoint(cursor);
+
+                form.Location = new Point(
+                    cursor.X - form.Width / 2,
+                    Math.Max(screen.WorkingArea.Top, cursor.Y - 10));
+
+                StartNativeDrag(form);
+
+                _isRestoringFromMaximized = false;
+            });
+        }
+
+        private void StartNativeDrag(Form form)
+        {
+            if (form == null)
+                return;
+
             ReleaseCapture();
-            SendMessage(form.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            SendMessage(form.Handle, WmNcLeftButtonDown, HtCaption, 0);
 
             SnapToTopIfNeeded(form);
             KeepFormOnScreen(form);
         }
+
         private void ToggleMaximize(Form form)
         {
             if (form == null)
@@ -143,18 +185,11 @@ namespace SmartRoutine.UI.Helpers
                 return;
             }
 
-            Timer timer = new Timer();
-            timer.Interval = 30;
-
-            timer.Tick += (s, e) =>
+            RunDelayed(delegate
             {
-                timer.Stop();
-                timer.Dispose();
-
-                form.WindowState = FormWindowState.Maximized;
-            };
-
-            timer.Start();
+                if (!form.IsDisposed)
+                    form.WindowState = FormWindowState.Maximized;
+            });
         }
 
         private void SnapToTopIfNeeded(Form form)
@@ -165,24 +200,18 @@ namespace SmartRoutine.UI.Helpers
             if (form == null || form.WindowState == FormWindowState.Maximized)
                 return;
 
-            var screen = Screen.FromPoint(Cursor.Position);
-            var area = screen.WorkingArea;
+            Point cursor = Cursor.Position;
+            Screen screen = Screen.FromPoint(cursor);
+            Rectangle area = screen.WorkingArea;
 
-            if (Cursor.Position.Y <= area.Top + 4)
+            if (cursor.Y > area.Top + SnapThreshold)
+                return;
+
+            RunDelayed(delegate
             {
-                Timer timer = new Timer();
-                timer.Interval = 30;
-
-                timer.Tick += (s, e) =>
-                {
-                    timer.Stop();
-                    timer.Dispose();
-
+                if (!form.IsDisposed)
                     form.WindowState = FormWindowState.Maximized;
-                };
-
-                timer.Start();
-            }
+            });
         }
 
         private void KeepFormOnScreen(Form form)
@@ -190,14 +219,14 @@ namespace SmartRoutine.UI.Helpers
             if (form == null || form.WindowState == FormWindowState.Maximized)
                 return;
 
-            var screen = Screen.FromControl(form);
-            var area = screen.WorkingArea;
+            Screen screen = Screen.FromControl(form);
+            Rectangle area = screen.WorkingArea;
 
             bool outsideScreen =
-                form.Right < area.Left + 50 ||
-                form.Left > area.Right - 50 ||
-                form.Bottom < area.Top + 50 ||
-                form.Top > area.Bottom - 50;
+                form.Right < area.Left + OffscreenTolerance ||
+                form.Left > area.Right - OffscreenTolerance ||
+                form.Bottom < area.Top + OffscreenTolerance ||
+                form.Top > area.Bottom - OffscreenTolerance;
 
             if (!outsideScreen)
                 return;
@@ -208,29 +237,39 @@ namespace SmartRoutine.UI.Helpers
             form.Location = new Point(centerX, centerY);
         }
 
-        public static FormDragHandle Create(Control control, bool allowWindowSnapAndMaximize = true)
+        private void RunDelayed(Action action)
         {
-            return new FormDragHandle(control, allowWindowSnapAndMaximize);
-        }
+            if (action == null)
+                return;
 
-        public void Dispose()
-        {
-            if (DragHandle != null)
+            Timer timer = new Timer();
+            timer.Interval = TimerDelay;
+
+            timer.Tick += delegate
             {
-                DragHandle.MouseDown -= OnMouseDown;
-                DragHandle.MouseMove -= OnMouseMove;
-                DragHandle.MouseUp -= DragHandle_MouseUp;
+                timer.Stop();
 
-                DragHandle = null;
-            }
+                try
+                {
+                    action();
+                }
+                finally
+                {
+                    timer.Dispose();
+                }
+            };
+
+            timer.Start();
         }
     }
 
     public static class FormDragExtensions
     {
-        public static FormDragHandle MakeDragHandle(this Control control, bool allowWindowSnapAndMaximize = true)
+        public static FormDragHandle MakeDragHandle(
+            this Control control,
+            bool allowWindowSnapAndMaximize = true)
         {
-            return new FormDragHandle(control, allowWindowSnapAndMaximize );
+            return new FormDragHandle(control, allowWindowSnapAndMaximize);
         }
     }
 }
