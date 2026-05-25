@@ -1,87 +1,150 @@
 ﻿using LiteDB;
 using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Data.Models;
+using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace SmartRoutine.Data
 {
     public class RoutineRepository : IRoutineRepository
     {
+        private const string DatabaseFileName = "SmartRoutine.db";
+
         private readonly string _dbPath;
 
-        // Standardkonstruktor für die echte App
-        public RoutineRepository() : this("SmartRoutine.db")
+        public RoutineRepository()
+            : this(GetDefaultDatabasePath())
         {
         }
 
-        // Konstruktor für Tests (erlaubt eigenen Pfad)
         public RoutineRepository(string dbPath)
         {
+            if (string.IsNullOrWhiteSpace(dbPath))
+                throw new ArgumentException(
+                    "Database path cannot be null or empty.",
+                    nameof(dbPath));
+
             _dbPath = dbPath;
 
-            // Konfiguriere den Mapper für bessere Typ-Namen
-            BsonMapper.Global.RegisterType<RoutineStep>
-            (
-                serialize: (step) => step.GetType().Name,
-                deserialize: (bson) => null // Wird automatisch von LiteDB gemacht
-            );
-        }
-
-        // Hilfsmethode, um eine Datenbankverbindung zu öffnen
-        private LiteDatabase OpenDatabase()
-        {
-            // 'connection=shared' ist wichtig, damit BsonMapper automatisch Ihre Eigenschaften mapped
-            return new LiteDatabase($"Filename={_dbPath}; connection=shared");
+            ConfigureBsonMapper();
         }
 
         public List<Routine> LoadRoutines()
         {
-            using (var db = OpenDatabase())
+            LiteDatabase db = OpenDatabase();
+
+            try
             {
-                // Holt alle Routinen aus der Collection "routines"
-                // OrderBy sorgt für die richtige Reihenfolge
                 return db.GetCollection<Routine>("routines")
                          .Query()
                          .OrderBy(r => r.Order)
                          .ToList();
             }
+            finally
+            {
+                db.Dispose();
+            }
         }
 
         public void AddRoutine(Routine routine)
         {
-            using (var db = OpenDatabase())
+            LiteDatabase db = OpenDatabase();
+
+            try
             {
-                var col = db.GetCollection<Routine>("routines");
-                col.Insert(routine);
+                ILiteCollection<Routine> collection =
+                    db.GetCollection<Routine>("routines");
+
+                collection.Insert(routine);
+            }
+            finally
+            {
+                db.Dispose();
             }
         }
 
         public void UpdateRoutine(Routine routine)
         {
-            using (var db = OpenDatabase())
+            LiteDatabase db = OpenDatabase();
+
+            try
             {
-                var col = db.GetCollection<Routine>("routines");
-                col.Update(routine); // Aktualisiert die Routine anhand der Id
+                ILiteCollection<Routine> collection =
+                    db.GetCollection<Routine>("routines");
+
+                collection.Update(routine);
+            }
+            finally
+            {
+                db.Dispose();
             }
         }
 
         public void DeleteRoutine(string routineId)
         {
-            using (var db = OpenDatabase())
+            LiteDatabase db = OpenDatabase();
+
+            try
             {
-                var col = db.GetCollection<Routine>("routines");
-                col.Delete(routineId);
+                ILiteCollection<Routine> collection =
+                    db.GetCollection<Routine>("routines");
+
+                collection.Delete(routineId);
+            }
+            finally
+            {
+                db.Dispose();
             }
         }
 
-        // Diese Methode brauchen Sie für Ihre Service-Logik
         public Routine GetRoutine(string routineId)
         {
-            using (var db = OpenDatabase())
+            LiteDatabase db = OpenDatabase();
+
+            try
             {
                 return db.GetCollection<Routine>("routines")
                          .FindById(routineId);
             }
+            finally
+            {
+                db.Dispose();
+            }
+        }
+
+        private LiteDatabase OpenDatabase()
+        {
+            return new LiteDatabase(
+                $"Filename={_dbPath}; connection=shared");
+        }
+
+        private void ConfigureBsonMapper()
+        {
+            BsonMapper.Global.RegisterType<RoutineStep>
+            (
+                serialize: step => step.GetType().Name,
+                deserialize: bson => null
+            );
+        }
+
+        private static string GetDefaultDatabasePath()
+        {
+            string appDataFolder =
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.ApplicationData);
+
+            string smartRoutineFolder =
+                Path.Combine(appDataFolder, "SmartRoutine");
+
+            if (!Directory.Exists(smartRoutineFolder))
+            {
+                Directory.CreateDirectory(smartRoutineFolder);
+            }
+
+            return Path.Combine(
+                smartRoutineFolder,
+                DatabaseFileName);
         }
     }
 }
