@@ -32,17 +32,31 @@ namespace SmartRoutine.UI.Forms
             CustomMessageBoxIcon icon = CustomMessageBoxIcon.Info,
             Form owner = null)
         {
-            using (var form = new CustomMessageBoxForm(message, title, buttons, icon))
+            CustomMessageBoxForm form = new CustomMessageBoxForm(message, title, buttons, icon);
+
+            try
             {
-                return owner != null
-                    ? form.ShowDialog(owner)
-                    : form.ShowDialog();
+                if (owner != null)
+                    return form.ShowDialog(owner);
+
+                return form.ShowDialog();
+            }
+            finally
+            {
+                form.Dispose();
             }
         }
     }
 
     public partial class CustomMessageBoxForm : SmartRoutineForm
     {
+        private const int FormWidth = 500;
+        private const int FormHeight = 220;
+        private const int ButtonPanelHeight = 70;
+        private const int ButtonColumnWidth = 125;
+        private const int DialogButtonWidth = 120;
+        private const int DialogButtonHeight = 35;
+
         private readonly string _message;
         private readonly CustomMessageBoxButtons _buttons;
 
@@ -60,11 +74,18 @@ namespace SmartRoutine.UI.Forms
                 allowWindowSnapAndMaximize: false,
                 titleBarBackColor: UIStyles.Colors.PrimaryDarkDark)
         {
-            _message = message;
+            _message = message ?? "";
             _buttons = buttons;
 
             ConfigureForm();
             BuildLayout();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            EnsureDialogResult();
+
+            base.OnFormClosing(e);
         }
 
         private void ConfigureForm()
@@ -72,146 +93,212 @@ namespace SmartRoutine.UI.Forms
             StartPosition = FormStartPosition.CenterParent;
             ShowInTaskbar = false;
 
-            Size = new Size(500, 220);
+            Size = new Size(FormWidth, FormHeight);
             MinimumSize = Size;
             MaximumSize = Size;
         }
 
         private void BuildLayout()
         {
-            var rootPanel = UIStyles.Panels.CreateMedium();
+            Panel rootPanel = UIStyles.Panels.CreateMedium();
+            TableLayoutPanel mainLayout = CreateMainLayout();
 
-            var mainTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
-            mainTlp.Dock = DockStyle.Fill;
-            mainTlp.BackColor = UIStyles.Colors.BackgroundMedium;
-            mainTlp.Padding = new Padding(0);
-            mainTlp.Margin = new Padding(0);
+            mainLayout.Controls.Add(CreateContentPanel(), 0, 0);
+            mainLayout.Controls.Add(CreateButtonPanel(), 0, 1);
 
-            mainTlp.RowStyles.Clear();
-            mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            mainTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
-
-            mainTlp.Controls.Add(CreateContentPanel(), 0, 0);
-            mainTlp.Controls.Add(CreateButtonPanel(), 0, 1);
-
-            rootPanel.Controls.Add(mainTlp);
+            rootPanel.Controls.Add(mainLayout);
 
             ContentPanel.Controls.Clear();
             ContentPanel.Controls.Add(rootPanel);
         }
+
+        private TableLayoutPanel CreateMainLayout()
+        {
+            TableLayoutPanel layout = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
+
+            layout.Dock = DockStyle.Fill;
+            layout.BackColor = UIStyles.Colors.BackgroundMedium;
+            layout.Padding = new Padding(0);
+            layout.Margin = new Padding(0);
+
+            layout.RowStyles.Clear();
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, ButtonPanelHeight));
+
+            return layout;
+        }
+
         private Control CreateContentPanel()
         {
-            var panel = UIStyles.Panels.CreateMedium();
+            Panel panel = UIStyles.Panels.CreateMedium();
             panel.Padding = new Padding(28, 20, 28, 10);
 
-            var messageLabel = UIStyles.Labels.CreateNormal(_message);
-            messageLabel.Dock = DockStyle.Fill;
-            messageLabel.TextAlign = ContentAlignment.MiddleCenter;
-            messageLabel.ForeColor = UIStyles.Colors.TextPrimary;
-            messageLabel.Font = UIStyles.Fonts.Normal;
-            messageLabel.BackColor = Color.Transparent;
-            messageLabel.AutoEllipsis = false;
+            Label messageLabel = CreateMessageLabel();
 
             panel.Controls.Add(messageLabel);
 
             return panel;
         }
 
+        private Label CreateMessageLabel()
+        {
+            Label label = UIStyles.Labels.CreateNormal(_message);
+
+            label.Dock = DockStyle.Fill;
+            label.TextAlign = ContentAlignment.MiddleCenter;
+            label.ForeColor = UIStyles.Colors.TextPrimary;
+            label.Font = UIStyles.Fonts.Normal;
+            label.BackColor = Color.Transparent;
+            label.AutoEllipsis = false;
+
+            return label;
+        }
+
         private Control CreateButtonPanel()
         {
-            var buttonPanel = UIStyles.TableLayoutPanels.CreateStandard(1, 1);
+            TableLayoutPanel buttonPanel = UIStyles.TableLayoutPanels.CreateStandard(1, 1);
+
             buttonPanel.Dock = DockStyle.Fill;
             buttonPanel.BackColor = UIStyles.Colors.BackgroundMedium;
             buttonPanel.Padding = new Padding(12, 12, 28, 18);
             buttonPanel.Margin = new Padding(0);
 
-            var buttonInfos = GetButtons();
+            AddButtonsToPanel(buttonPanel);
+
+            return buttonPanel;
+        }
+
+        private void AddButtonsToPanel(TableLayoutPanel buttonPanel)
+        {
+            DialogButtonInfo[] buttonInfos = GetButtons();
 
             buttonPanel.ColumnCount = buttonInfos.Length + 1;
             buttonPanel.ColumnStyles.Clear();
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
             buttonPanel.RowStyles.Clear();
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             for (int i = 0; i < buttonInfos.Length; i++)
             {
-                buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 125));
+                buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ButtonColumnWidth));
 
-                var button = CreateDialogButton(buttonInfos[i].Text, buttonInfos[i].Result);
+                Button button = CreateDialogButton(buttonInfos[i].Text, buttonInfos[i].Result);
                 buttonPanel.Controls.Add(button, i + 1, 0);
             }
-
-            return buttonPanel;
         }
+
         private Button CreateDialogButton(string text, DialogResult result)
         {
-            Button button;
-
-            if (result == DialogResult.OK || result == DialogResult.Yes)
-                button = UIStyles.Buttons.CreateGreen(text, "", new Size(120, 35));
-            else if (result == DialogResult.No)
-                button = UIStyles.Buttons.CreateDanger(text, "", new Size(120, 35));
-            else
-                button = UIStyles.Buttons.CreateStandard(text, "", new Size(120, 35));
+            Button button = CreateStyledButton(text, result);
 
             button.Dock = DockStyle.Fill;
             button.Margin = new Padding(6, 0, 0, 0);
             button.DialogResult = result;
+            button.Click += OnDialogButtonClick;
 
+            ConfigureAcceptCancelButton(button, result);
+
+            return button;
+        }
+
+        private Button CreateStyledButton(string text, DialogResult result)
+        {
+            Size size = new Size(DialogButtonWidth, DialogButtonHeight);
+
+            if (result == DialogResult.OK || result == DialogResult.Yes)
+                return UIStyles.Buttons.CreateGreen(text, "", size);
+
+            if (result == DialogResult.No)
+                return UIStyles.Buttons.CreateDanger(text, "", size);
+
+            return UIStyles.Buttons.CreateStandard(text, "", size);
+        }
+
+        private void ConfigureAcceptCancelButton(Button button, DialogResult result)
+        {
             if (result == DialogResult.OK || result == DialogResult.Yes)
                 AcceptButton = button;
 
             if (result == DialogResult.Cancel || result == DialogResult.No)
                 CancelButton = button;
-
-            button.Click += (s, e) =>
-            {
-                DialogResult = result;
-                Close();
-            };
-
-            return button;
         }
 
-        private (string Text, DialogResult Result)[] GetButtons()
+        private void OnDialogButtonClick(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+
+            if (button == null)
+                return;
+
+            DialogResult = button.DialogResult;
+            Close();
+        }
+
+        private DialogButtonInfo[] GetButtons()
         {
             switch (_buttons)
             {
                 case CustomMessageBoxButtons.OK:
                     return new[]
                     {
-                        ("✓", DialogResult.OK)
+                        new DialogButtonInfo("✓", DialogResult.OK)
                     };
 
                 case CustomMessageBoxButtons.OKCancel:
                     return new[]
                     {
-                        ("✓", DialogResult.OK),
-                        ("Abbrechen", DialogResult.Cancel)
+                        new DialogButtonInfo("✓", DialogResult.OK),
+                        new DialogButtonInfo("Abbrechen", DialogResult.Cancel)
                     };
 
                 case CustomMessageBoxButtons.YesNo:
                     return new[]
                     {
-                        ("✓", DialogResult.Yes),
-                        ("✖", DialogResult.No)
+                        new DialogButtonInfo("✓", DialogResult.Yes),
+                        new DialogButtonInfo("✖", DialogResult.No)
                     };
 
                 case CustomMessageBoxButtons.YesNoCancel:
                     return new[]
                     {
-                        ("✓", DialogResult.Yes),
-                        ("✖", DialogResult.No),
-                        ("Abbrechen", DialogResult.Cancel)
+                        new DialogButtonInfo("✓", DialogResult.Yes),
+                        new DialogButtonInfo("✖", DialogResult.No),
+                        new DialogButtonInfo("Abbrechen", DialogResult.Cancel)
                     };
 
                 default:
                     return new[]
                     {
-                        ("✓", DialogResult.OK)
+                        new DialogButtonInfo("✓", DialogResult.OK)
                     };
             }
         }
+
+        private void EnsureDialogResult()
+        {
+            if (DialogResult != DialogResult.None)
+                return;
+
+            DialogResult = GetDefaultDialogResult();
+        }
+
+        private DialogResult GetDefaultDialogResult()
+        {
+            switch (_buttons)
+            {
+                case CustomMessageBoxButtons.OKCancel:
+                case CustomMessageBoxButtons.YesNoCancel:
+                    return DialogResult.Cancel;
+
+                case CustomMessageBoxButtons.YesNo:
+                    return DialogResult.No;
+
+                default:
+                    return DialogResult.OK;
+            }
+        }
+
         private static Image GetTitleBarIcon(CustomMessageBoxIcon icon)
         {
             switch (icon)
@@ -236,28 +323,16 @@ namespace SmartRoutine.UI.Forms
             }
         }
 
-        protected override void OnFormClosing(FormClosingEventArgs e)
+        private struct DialogButtonInfo
         {
-            if (DialogResult == DialogResult.None)
+            public readonly string Text;
+            public readonly DialogResult Result;
+
+            public DialogButtonInfo(string text, DialogResult result)
             {
-                switch (_buttons)
-                {
-                    case CustomMessageBoxButtons.OKCancel:
-                    case CustomMessageBoxButtons.YesNoCancel:
-                        DialogResult = DialogResult.Cancel;
-                        break;
-
-                    case CustomMessageBoxButtons.YesNo:
-                        DialogResult = DialogResult.No;
-                        break;
-
-                    default:
-                        DialogResult = DialogResult.OK;
-                        break;
-                }
+                Text = text;
+                Result = result;
             }
-
-            base.OnFormClosing(e);
         }
     }
 }
