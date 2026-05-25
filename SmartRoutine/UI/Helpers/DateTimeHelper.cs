@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SmartRoutine.UI.Helpers
 {
@@ -13,21 +9,34 @@ namespace SmartRoutine.UI.Helpers
             if (!dateTime.HasValue)
                 return "Noch nie gestartet";
 
-            TimeSpan diff = DateTime.Now - dateTime.Value;
+            TimeSpan difference = DateTime.Now - dateTime.Value;
 
-            if (diff.TotalSeconds < 60)
+            if (difference.TotalSeconds < 60)
                 return "Gerade eben";
 
-            if (diff.TotalMinutes < 60)
-                return $"Vor {(int)diff.TotalMinutes} Minute(n)";
+            if (difference.TotalMinutes < 60)
+                return FormatTimeText(
+                    (int)difference.TotalMinutes,
+                    "Minute");
 
-            if (diff.TotalHours < 24)
-                return $"Vor {(int)diff.TotalHours} Stunde(n)";
+            if (difference.TotalHours < 24)
+                return FormatTimeText(
+                    (int)difference.TotalHours,
+                    "Stunde");
 
-            if (diff.TotalDays < 7)
-                return $"Vor {(int)diff.TotalDays} Tag(en)";
+            if (difference.TotalDays < 7)
+                return FormatTimeText(
+                    (int)difference.TotalDays,
+                    "Tag");
 
             return dateTime.Value.ToString("dd.MM.yyyy HH:mm");
+        }
+
+        private static string FormatTimeText(int value, string unit)
+        {
+            string suffix = value == 1 ? "" : "n";
+
+            return $"Vor {value} {unit}{suffix}";
         }
     }
 }
