@@ -4,54 +4,99 @@ using System.Windows.Forms;
 namespace SmartRoutine.UI.Helpers
 {
     /// <summary>
-    /// Utility class to attach Drag&Drop text support to any Control.
+    /// Helper for adding drag and drop support to controls.
     /// </summary>
     public static class DragDropHelper
     {
-        /// <summary>
-        /// Enables drag & drop for text on the given control.
-        /// </summary>
-        /// <param name="control">The control that should accept dragged text.</param>
-        /// <param name="onTextDropped">Action that is called with the dropped text.</param>
-        public static void EnableTextDragDrop(Control control, Action<string> onTextDropped)
+        public static void EnableTextDragDrop(
+            Control control,
+            Action<string> onTextDropped)
         {
+            if (control == null)
+                return;
+
             control.AllowDrop = true;
 
-            control.DragEnter += (s, e) =>
+            control.DragEnter += delegate (object sender, DragEventArgs e)
             {
-                if (e.Data.GetDataPresent(DataFormats.Text))
-                {
-                    e.Effect = DragDropEffects.Copy;
-                    control.Cursor = Cursors.Hand; // 👆 Hand cursor while hovering
-                }
-                else
-                {
-                    e.Effect = DragDropEffects.None;
-                    control.Cursor = Cursors.No;   // 🚫 Not allowed
-                }
-            };
-            control.DragOver += (s, e) =>
-            {
-                if (e.Data.GetDataPresent(DataFormats.Text))
-                    e.Effect = DragDropEffects.Copy;
-                else
-                    e.Effect = DragDropEffects.None;
+                HandleDragEnter(control, e);
             };
 
-            control.DragLeave += (s, e) =>
+            control.DragOver += delegate (object sender, DragEventArgs e)
             {
-                control.Cursor = Cursors.Default; // reset cursor when leaving
+                HandleDragOver(e);
             };
-            control.DragDrop += (s, e) =>
+
+            control.DragLeave += delegate (object sender, EventArgs e)
             {
-                string droppedText = e.Data.GetData(DataFormats.Text) as string;
-                if (!string.IsNullOrWhiteSpace(droppedText))
-                {
-                    onTextDropped?.Invoke(droppedText);
-                }
-                control.Cursor = Cursors.Default; // reset after drop
+                ResetCursor(control);
             };
+
+            control.DragDrop += delegate (object sender, DragEventArgs e)
+            {
+                HandleDragDrop(control, e, onTextDropped);
+            };
+        }
+
+        private static void HandleDragEnter(Control control, DragEventArgs e)
+        {
+            if (HasTextData(e))
+            {
+                e.Effect = DragDropEffects.Copy;
+                control.Cursor = Cursors.Hand;
+                return;
+            }
+
+            e.Effect = DragDropEffects.None;
+            control.Cursor = Cursors.No;
+        }
+
+        private static void HandleDragOver(DragEventArgs e)
+        {
+            e.Effect = HasTextData(e)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+        }
+
+        private static void HandleDragDrop(
+            Control control,
+            DragEventArgs e,
+            Action<string> onTextDropped)
+        {
+            try
+            {
+                string droppedText = GetDroppedText(e);
+
+                if (!string.IsNullOrWhiteSpace(droppedText) && onTextDropped != null)
+                    onTextDropped(droppedText);
+            }
+            finally
+            {
+                ResetCursor(control);
+            }
+        }
+
+        private static bool HasTextData(DragEventArgs e)
+        {
+            return e != null &&
+                   e.Data != null &&
+                   e.Data.GetDataPresent(DataFormats.Text);
+        }
+
+        private static string GetDroppedText(DragEventArgs e)
+        {
+            if (!HasTextData(e))
+                return null;
+
+            return e.Data.GetData(DataFormats.Text) as string;
+        }
+
+        private static void ResetCursor(Control control)
+        {
+            if (control == null || control.IsDisposed)
+                return;
+
+            control.Cursor = Cursors.Default;
         }
     }
 }
-
