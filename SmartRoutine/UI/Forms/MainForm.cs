@@ -4,171 +4,218 @@ using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
 using SmartRoutine.UI.Helpers;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
     public partial class MainForm : SmartRoutineForm
     {
+        private static readonly Size DefaultWindowSize = new Size(1024, 768);
+        private static readonly Size MinimumWindowSize = new Size(800, 600);
 
-        // ========== FIELDS ==========
         private readonly IRoutineService _routineService;
+
         private RoutinesViewControl _routinesView;
         private RoutineEditorViewControl _editorView;
         private Routine _currentRoutine;
 
-        // Constants
-        private static readonly Size DEFAULT_WINDOW_SIZE = new Size(1024, 768);
-        private static readonly Size MINIMUM_WINDOW_SIZE = new Size(800, 600);
-
-        // ========== CONSTRUCTOR ==========
         public MainForm(IRoutineService routineService)
             : base(
                 icon: Properties.Resources.IconLogo,
                 title: "SmartRoutine",
                 showMinimize: true,
                 showMaximize: true,
-                showClose: true, 
+                showClose: true,
                 allowWindowSnapAndMaximize: true,
-                titleBarBackColor: default)
+                titleBarBackColor: UIStyles.Colors.BackgroundBlack)
         {
-            _routineService = routineService
-                ?? throw new ArgumentNullException(nameof(routineService));
+            if (routineService == null)
+                throw new ArgumentNullException(nameof(routineService));
+
+            _routineService = routineService;
 
             ConfigureForm();
-            CreateIntegratedUI();
+            CreateViews();
+            WireEvents();
+            AddViewsToContentPanel();
+
             ShowRoutinesView();
         }
-        // ========== CONFIGURATION ==========
-        private void ConfigureForm()
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            this.BackColor = UIStyles.Colors.BackgroundDark;
-            this.MinimumSize = MINIMUM_WINDOW_SIZE;
-            this.Size = DEFAULT_WINDOW_SIZE;
-            this.CenterToScreen();
+            CleanupBeforeClose();
+            base.OnFormClosing(e);
         }
 
-        // ========== UI CREATION METHODS ==========
-        private void CreateIntegratedUI()
+        private void ConfigureForm()
+        {
+            BackColor = UIStyles.Colors.BackgroundDark;
+            MinimumSize = MinimumWindowSize;
+            Size = DefaultWindowSize;
+            CenterToScreen();
+        }
+
+        private void CreateViews()
+        {
+            UrlValidationService urlValidationService = new UrlValidationService();
+
+            _routinesView = new RoutinesViewControl(_routineService)
+            {
+                Dock = DockStyle.Fill
+            };
+
+            _editorView = new RoutineEditorViewControl(_routineService, urlValidationService)
+            {
+                Dock = DockStyle.Fill
+            };
+        }
+
+        private void WireEvents()
+        {
+            _routinesView.NewRoutineClicked += OnNewRoutineClicked;
+            _routinesView.EditRoutineClicked += OnEditRoutineClicked;
+            _routinesView.DeleteRoutineClicked += OnDeleteRoutineClicked;
+            _routinesView.StartRoutineClicked += OnStartRoutineClicked;
+
+            _editorView.BackToRoutinesClicked += OnBackToRoutinesClicked;
+            _editorView.SaveChanges += OnSaveChanges;
+        }
+
+        private void AddViewsToContentPanel()
         {
             ContentPanel.Controls.Clear();
             ContentPanel.Padding = new Padding(5);
-
-            _routinesView = new RoutinesViewControl(_routineService);
-            _routinesView.Dock = DockStyle.Fill;
-            _routinesView.NewRoutineClicked += (s, routine) => ShowEditorView(routine, isNewRoutine: true);
-            _routinesView.EditRoutineClicked += (s, routine) => ShowEditorView(routine, isNewRoutine: false);
-            _routinesView.DeleteRoutineClicked += (s, routine) => DeleteRoutine(routine);
-            _routinesView.StartRoutineClicked += (s, routine) =>
-            {
-                ExecuteFullRoutine(routine);
-            };
-
-            var urlValidationService = new UrlValidationService();
-
-            _editorView = new RoutineEditorViewControl(_routineService, urlValidationService);
-            _editorView.Dock = DockStyle.Fill;
-            _editorView.BackToRoutinesClicked += (s, e) => ShowRoutinesView();
-            _editorView.SaveChanges += (s, routine) => SaveRoutine(routine);
 
             ContentPanel.Controls.Add(_routinesView);
             ContentPanel.Controls.Add(_editorView);
         }
 
-        private void ExecuteFullRoutine(Routine routine)
-        {
-            if (routine == null || routine.Steps.Count == 0)
-            {
-                CustomMessageBox.Show(
-                    "Diese Routine enthält keine Schritte.",
-                    "Info",
-                    CustomMessageBoxButtons.OK,
-                    CustomMessageBoxIcon.Info,
-                    FindForm());
-                return;
-            }
-            var session = new RoutineExecutionSession(routine);
-
-            if (!session.HasExecutableSteps)
-            {
-                CustomMessageBox.Show(
-                    "Alle Schritte dieser Routine sind derzeit deaktiviert.",
-                    "Routine nicht ausführbar",
-                    CustomMessageBoxButtons.OK,
-                    CustomMessageBoxIcon.Info,
-                    FindForm());
-
-                return;
-            }
-
-            routine.LastExecutionAt = DateTime.Now;
-            _routineService.SaveRoutine(routine);
-
-            var executionForm = new ExecutionForm(routine, step =>
-            {
-                return _routineService.ExecuteStep(step);
-            });
-            executionForm.ShowDialog(this);
-        }
-
-        private void SaveRoutine(Routine routine)
-        {
-            if (routine == null) return;
-
-            _routineService.SaveRoutine(routine);
-
-            // Frische Version mit garantiert korrekten Orders holen
-            if (_currentRoutine != null && _currentRoutine.Id == routine.Id)
-            {
-                _currentRoutine = _routineService.GetRoutine(routine.Id);
-            }
-
-            _routinesView.LoadRoutines();
-        }
-
-        // =======================================================================================================================================
-
         private void ShowRoutinesView()
         {
-            _routinesView.Show();
             _editorView.Hide();
+            _routinesView.Show();
             _routinesView.LoadRoutines();
         }
 
-        private void ShowEditorView(Routine routine, bool isNewRoutine = false)
+        private void ShowEditorView(Routine routine, bool isNewRoutine)
         {
             _currentRoutine = routine;
+
             _routinesView.Hide();
             _editorView.Show();
             _editorView.LoadRoutine(routine, isNewRoutine);
         }
 
+        private void SaveRoutine(Routine routine)
+        {
+            if (routine == null)
+                return;
+
+            _routineService.SaveRoutine(routine);
+            RefreshCurrentRoutineIfNeeded(routine);
+            _routinesView.LoadRoutines();
+        }
+
+        private void RefreshCurrentRoutineIfNeeded(Routine routine)
+        {
+            if (_currentRoutine == null)
+                return;
+
+            if (_currentRoutine.Id != routine.Id)
+                return;
+
+            _currentRoutine = _routineService.GetRoutine(routine.Id);
+        }
+
         private void DeleteRoutine(Routine routine)
         {
-            if (routine == null) return;
+            if (routine == null)
+                return;
 
-            if (CustomMessageBox.Show(
-                    $"Routine '{routine.Name}' wirklich löschen?",
-                    "Bestätigen",
-                    CustomMessageBoxButtons.YesNo,
-                    CustomMessageBoxIcon.Warning,
-                    FindForm()) == DialogResult.Yes)
+            DialogResult result = CustomMessageBox.Show(
+                $"Routine '{routine.Name}' wirklich löschen?",
+                "Bestätigen",
+                CustomMessageBoxButtons.YesNo,
+                CustomMessageBoxIcon.Warning,
+                this);
+
+            if (result != DialogResult.Yes)
+                return;
+
+            _routineService.DeleteRoutine(routine.Id);
+            _routinesView.LoadRoutines();
+        }
+
+        private void ExecuteFullRoutine(Routine routine)
+        {
+            if (!CanExecuteRoutine(routine))
+                return;
+
+            MarkRoutineAsExecuted(routine);
+
+            ExecutionForm executionForm = new ExecutionForm(
+                routine,
+                ExecuteRoutineStep);
+
+            try
             {
-                _routineService.DeleteRoutine(routine.Id);
-                _routinesView.LoadRoutines();
+                executionForm.ShowDialog(this);
+            }
+            finally
+            {
+                executionForm.Dispose();
             }
         }
 
+        private bool CanExecuteRoutine(Routine routine)
+        {
+            if (routine == null || routine.Steps.Count == 0)
+            {
+                ShowInfoMessage(
+                    "Diese Routine enthält keine Schritte.",
+                    "Info");
 
-        // ========== EVENT HANDLER ==========
-        protected override void OnFormClosing(FormClosingEventArgs e)
+                return false;
+            }
+
+            RoutineExecutionSession session = new RoutineExecutionSession(routine);
+
+            if (!session.HasExecutableSteps)
+            {
+                ShowInfoMessage(
+                    "Alle Schritte dieser Routine sind derzeit deaktiviert.",
+                    "Routine nicht ausführbar");
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private void MarkRoutineAsExecuted(Routine routine)
+        {
+            routine.LastExecutionAt = DateTime.Now;
+            _routineService.SaveRoutine(routine);
+        }
+
+        private StepExecutionResult ExecuteRoutineStep(RoutineStep step)
+        {
+            return _routineService.ExecuteStep(step);
+        }
+
+        private void ShowInfoMessage(string message, string title)
+        {
+            CustomMessageBox.Show(
+                message,
+                title,
+                CustomMessageBoxButtons.OK,
+                CustomMessageBoxIcon.Info,
+                this);
+        }
+
+        private void CleanupBeforeClose()
         {
             try
             {
@@ -178,11 +225,36 @@ namespace SmartRoutine.UI.Forms
             {
                 Console.WriteLine($"Fehler beim Cleanup: {ex.Message}");
             }
-            finally
-            {
-                base.OnFormClosing(e);
-            }
+        }
+
+        private void OnNewRoutineClicked(object sender, Routine routine)
+        {
+            ShowEditorView(routine, true);
+        }
+
+        private void OnEditRoutineClicked(object sender, Routine routine)
+        {
+            ShowEditorView(routine, false);
+        }
+
+        private void OnDeleteRoutineClicked(object sender, Routine routine)
+        {
+            DeleteRoutine(routine);
+        }
+
+        private void OnStartRoutineClicked(object sender, Routine routine)
+        {
+            ExecuteFullRoutine(routine);
+        }
+
+        private void OnBackToRoutinesClicked(object sender, EventArgs e)
+        {
+            ShowRoutinesView();
+        }
+
+        private void OnSaveChanges(object sender, Routine routine)
+        {
+            SaveRoutine(routine);
         }
     }
-
 }
