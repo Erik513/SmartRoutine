@@ -1,64 +1,85 @@
 ﻿using Microsoft.Web.WebView2.WinForms;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Services;
-using SmartRoutine.UI.Controls;
 using SmartRoutine.UI.Helpers;
 using System;
 using System.Drawing;
-using System.Linq;
+using System.IO;
 using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
     public partial class ExecutionForm : SmartRoutineForm
     {
+        private const int FooterHeight = 60;
+        private const int FooterInfoColumnWidth = 35;
+        private const int FooterCounterColumnWidth = 65;
+        private const int NavigationButtonSize = 50;
+
         private readonly Routine _routine;
         private readonly RoutineStep _specificStep;
         private readonly Func<RoutineStep, StepExecutionResult> _onStepExecute;
+
         private RoutineExecutionSession _session;
 
-        // WebView für interne URL-Anzeige
         private WebView2 _webView;
-        private Panel _contentPanel;
+        private Panel _stepContentPanel;
 
-        // Footer Controls
         private Label _stepCounterLabel;
         private Label _stepNameLabel;
         private Label _infoLabel;
-        private Button _prevBtn, _nextBtn, _executeBtn;
+
+        private Button _previousButton;
+        private Button _nextButton;
+        private Button _executeButton;
+
         private ToolTip _toolTip;
         private InfoPopupForm _infoPopup;
         private string _pendingToastMessage;
 
-        // Konstruktor für komplette Routine
         public ExecutionForm(
             Routine routine,
             Func<RoutineStep, StepExecutionResult> onExecute)
-            : base(
-                title: $"Routine: {routine.Name}",
-                titleBarBackColor: default)
+            : this(routine, null, onExecute)
         {
-            InitializeForm();
-            _routine = routine;
-            _specificStep = null;
-            _onStepExecute = onExecute;
-            InitializeExecution();
         }
 
-        // Konstruktor für einzelnen Step
         public ExecutionForm(
             Routine routine,
             RoutineStep step,
             Func<RoutineStep, StepExecutionResult> onExecute)
             : base(
-                title: $"Routine: {routine.Name}",
-                titleBarBackColor: default)
+                title: routine != null ? $"Routine: {routine.Name}" : "Routine",
+                titleBarBackColor: UIStyles.Colors.BackgroundBlack)
         {
-            InitializeForm();
             _routine = routine;
             _specificStep = step;
             _onStepExecute = onExecute;
+
+            InitializeForm();
             InitializeExecution();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            ShowPendingToastIfNeeded();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            StopAndDisposeWebView();
+            DisposePopup();
+
+            base.OnFormClosing(e);
+        }
+
+        private void InitializeForm()
+        {
+            ConfigureForm();
+
+            _toolTip = new ToolTip();
+            _infoPopup = new InfoPopupForm("Beschreibung:");
         }
 
         private void ConfigureForm()
@@ -69,46 +90,15 @@ namespace SmartRoutine.UI.Forms
             BackColor = UIStyles.Colors.BackgroundDark;
         }
 
-        private void InitializeForm()
-        {
-            ConfigureForm();
-
-            _toolTip = new ToolTip();
-            _infoPopup = new InfoPopupForm("Beschreibung:");
-
-            Shown += (s, e) =>
-            {
-                if (!string.IsNullOrEmpty(_pendingToastMessage))
-                {
-                    ToastForm.ShowToast(_pendingToastMessage, this);
-                    _pendingToastMessage = null;
-                }
-            };
-        }
-
         private void InitializeExecution()
         {
             _session = new RoutineExecutionSession(_routine, _specificStep);
 
-            var mainLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(0),
-                ColumnCount = 1,
-                RowCount = 2,
-                BackColor = Color.Transparent
-            };
+            TableLayoutPanel mainLayout = CreateMainLayout();
 
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
+            _stepContentPanel = CreateStepContentPanel();
 
-            _contentPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMedium
-            };
-
-            mainLayout.Controls.Add(_contentPanel, 0, 0);
+            mainLayout.Controls.Add(_stepContentPanel, 0, 0);
             mainLayout.Controls.Add(CreateFooterPanel(), 0, 1);
 
             ContentPanel.Controls.Clear();
@@ -116,36 +106,92 @@ namespace SmartRoutine.UI.Forms
 
             LoadCurrentStep();
         }
-        private Panel CreateFooterPanel()
-        {
-            var footer = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Height = 60,
-                BackColor = UIStyles.Colors.BackgroundDark,
-                Padding = new Padding(10, 8, 10, 8)
-            };
 
-            var layout = new TableLayoutPanel
+        private TableLayoutPanel CreateMainLayout()
+        {
+            TableLayoutPanel layout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 4,
-                RowCount = 1,
+                Padding = new Padding(0),
+                Margin = new Padding(0),
+                ColumnCount = 1,
+                RowCount = 2,
                 BackColor = Color.Transparent
             };
 
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, FooterHeight));
 
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 35));   // Info-Icon
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 65));   // Step-Counter
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));   // Step-Name
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));       // Navigation
+            return layout;
+        }
 
-            _infoLabel = new Label
+        private Panel CreateStepContentPanel()
+        {
+            return new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = UIStyles.Colors.BackgroundMedium,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+        }
+
+        private Panel CreateFooterPanel()
+        {
+            Panel footer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Height = FooterHeight,
+                BackColor = UIStyles.Colors.BackgroundDark,
+                Padding = new Padding(10, 8, 10, 8),
+                Margin = new Padding(0)
+            };
+
+            TableLayoutPanel layout = CreateFooterLayout();
+
+            _infoLabel = CreateInfoLabel();
+            _stepCounterLabel = CreateStepCounterLabel();
+            _stepNameLabel = CreateStepNameLabel();
+
+            layout.Controls.Add(_infoLabel, 0, 0);
+            layout.Controls.Add(_stepCounterLabel, 1, 0);
+            layout.Controls.Add(_stepNameLabel, 2, 0);
+            layout.Controls.Add(CreateNavigationPanel(), 3, 0);
+
+            footer.Controls.Add(layout);
+
+            return footer;
+        }
+
+        private TableLayoutPanel CreateFooterLayout()
+        {
+            TableLayoutPanel layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 4,
+                RowCount = 1,
+                BackColor = Color.Transparent,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, FooterInfoColumnWidth));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, FooterCounterColumnWidth));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+            return layout;
+        }
+
+        private Label CreateInfoLabel()
+        {
+            Label label = new Label
             {
                 Text = "ⓘ",
                 ForeColor = UIStyles.Colors.TextSecondary,
-                Font = new Font("Segoe UI", 12),
+                Font = UIStyles.Fonts.Icon,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent,
@@ -153,126 +199,198 @@ namespace SmartRoutine.UI.Forms
                 Margin = new Padding(0)
             };
 
-            _infoLabel.MouseEnter += (s, e) => ShowStepInfo();
-            _infoLabel.MouseLeave += (s, e) => _infoPopup.Hide();
-            _toolTip.SetToolTip(_infoLabel, "Schritt-Details anzeigen");
+            label.MouseEnter += OnInfoLabelMouseEnter;
+            label.MouseLeave += OnInfoLabelMouseLeave;
 
-            _stepCounterLabel = new Label
-            {
-                Text = "1/1",
-                ForeColor = UIStyles.Colors.TextSecondary,
-                Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0)
-            };
+            _toolTip.SetToolTip(label, "Schritt-Details anzeigen");
 
-            _stepNameLabel = new Label
-            {
-                Text = "",
-                ForeColor = UIStyles.Colors.TextPrimary,
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
-                AutoEllipsis = true,
-                Margin = new Padding(0)
-            };
+            return label;
+        }
 
-            var navPanel = new TableLayoutPanel
+        private Label CreateStepCounterLabel()
+        {
+            Label label = UIStyles.Labels.CreateNormal("1/1");
+
+            label.Dock = DockStyle.Fill;
+            label.ForeColor = UIStyles.Colors.TextSecondary;
+            label.Font = UIStyles.Fonts.Title;
+            label.TextAlign = ContentAlignment.MiddleLeft;
+            label.BackColor = Color.Transparent;
+            label.Margin = new Padding(0);
+
+            return label;
+        }
+
+        private Label CreateStepNameLabel()
+        {
+            Label label = UIStyles.Labels.CreateTitle("");
+
+            label.Dock = DockStyle.Fill;
+            label.TextAlign = ContentAlignment.MiddleCenter;
+            label.BackColor = Color.Transparent;
+            label.AutoEllipsis = true;
+            label.Margin = new Padding(0);
+
+            return label;
+        }
+
+        private TableLayoutPanel CreateNavigationPanel()
+        {
+            TableLayoutPanel navigationPanel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 3,
                 RowCount = 1,
                 BackColor = Color.Transparent,
-                Margin = new Padding(0)
+                Margin = new Padding(0),
+                Padding = new Padding(0),
+                AutoSize = true
             };
 
-            navPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            navPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-            navPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
-            navPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
+            navigationPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
+            navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
+            navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
 
-            _prevBtn = UIStyles.Buttons.CreatePrimary("⏮", "Vorheriger Schritt", new Size(50,50), isIcon: true);
-            _prevBtn.Click += (s, e) => NavigateToPreviousStep();
+            _previousButton = CreateNavigationButton("⏮", "Vorheriger Schritt", OnPreviousButtonClick);
+            _executeButton = CreateExecuteButton();
+            _nextButton = CreateNavigationButton("⏭", "Nächster Schritt", OnNextButtonClick);
 
-            _executeBtn = UIStyles.Buttons.CreateGreen("▶", "Schritt ausführen", new Size(50, 50), isIcon: true);
-            _executeBtn.Click += (s, e) => ExecuteCurrentStep();
+            navigationPanel.Controls.Add(_previousButton, 0, 0);
+            navigationPanel.Controls.Add(_executeButton, 1, 0);
+            navigationPanel.Controls.Add(_nextButton, 2, 0);
 
-            _nextBtn = UIStyles.Buttons.CreatePrimary("⏭", "Nächster Schritt",  new Size(50, 50), isIcon: true);
-            _nextBtn.Click += (s, e) => NavigateToNextStep();
-            
-            navPanel.Controls.Add(_prevBtn, 0, 0);
-            navPanel.Controls.Add(_executeBtn, 1, 0);
-            navPanel.Controls.Add(_nextBtn, 2, 0);
-
-            layout.Controls.Add(_infoLabel, 0, 0);
-            layout.Controls.Add(_stepCounterLabel, 1, 0);
-            layout.Controls.Add(_stepNameLabel, 2, 0);
-            layout.Controls.Add(navPanel, 3, 0);
-
-            footer.Controls.Add(layout);
-
-            return footer;
+            return navigationPanel;
         }
 
-
-        private Button CreateFooterButton(string text, string tooltip)
+        private Button CreateNavigationButton(string text, string tooltip, EventHandler clickHandler)
         {
-            var button = new Button
-            {
-                FlatStyle = FlatStyle.Flat,
-                BackColor = UIStyles.Colors.BackgroundLight,
-                ForeColor = UIStyles.Colors.TextPrimary,
-                Text = text,
-                Font = new Font("Segoe UI", 12),
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Cursor = Cursors.Hand,
-                Margin = new Padding(3, 2, 3, 2),
-                Padding = new Padding(0)
-            };
+            Button button = UIStyles.Buttons.CreatePrimary(
+                text,
+                tooltip,
+                new Size(NavigationButtonSize, NavigationButtonSize),
+                true);
 
-            button.FlatAppearance.BorderSize = 0;
-            _toolTip.SetToolTip(button, tooltip);
+            button.Dock = DockStyle.Fill;
+            button.Margin = new Padding(3, 0, 3, 0);
+            button.Click += clickHandler;
+
+            return button;
+        }
+
+        private Button CreateExecuteButton()
+        {
+            Button button = UIStyles.Buttons.CreateGreen(
+                "▶",
+                "Schritt ausführen",
+                new Size(NavigationButtonSize, NavigationButtonSize),
+                true);
+
+            button.Dock = DockStyle.Fill;
+            button.Margin = new Padding(3, 0, 3, 0);
+            button.Click += OnExecuteButtonClick;
 
             return button;
         }
 
         private void LoadCurrentStep()
         {
-            var currentStep = _session.CurrentStep;
+            if (_session == null || _session.CurrentStep == null)
+                return;
 
-            _stepCounterLabel.Text = _session.StepCounterText;
-            _stepNameLabel.Text = currentStep.Name;
+            RoutineStep currentStep = _session.CurrentStep;
 
-            _prevBtn.Enabled = _session.CanGoPrevious;
-            _nextBtn.Enabled = _session.CanGoNext;
-
-            bool canExecuteManually = _session.CanExecuteCurrentStepManually;
-
-            _executeBtn.Enabled = canExecuteManually;
-            _executeBtn.BackColor = canExecuteManually
-                ? UIStyles.Colors.Green
-                : UIStyles.Colors.BackgroundLight;
-
-            _executeBtn.ForeColor = canExecuteManually
-                ? UIStyles.Colors.White
-                : UIStyles.Colors.TextSecondary;
-
+            UpdateFooter(currentStep);
             StopWebViewAudio();
             LoadStepContent(currentStep);
 
             if (_session.ShouldAutoExecuteCurrentStep)
-            {
                 ExecuteCurrentStep();
+        }
+
+        private void UpdateFooter(RoutineStep currentStep)
+        {
+            _stepCounterLabel.Text = _session.StepCounterText;
+            _stepNameLabel.Text = currentStep.Name ?? "";
+
+            _previousButton.Enabled = _session.CanGoPrevious;
+            _nextButton.Enabled = _session.CanGoNext;
+
+            UpdateExecuteButtonState();
+        }
+
+        private void UpdateExecuteButtonState()
+        {
+            bool canExecuteManually = _session.CanExecuteCurrentStepManually;
+
+            _executeButton.Enabled = canExecuteManually;
+            _executeButton.BackColor = canExecuteManually
+                ? UIStyles.Colors.Green
+                : UIStyles.Colors.BackgroundLight;
+
+            _executeButton.ForeColor = canExecuteManually
+                ? UIStyles.Colors.White
+                : UIStyles.Colors.TextSecondary;
+        }
+
+        private void LoadStepContent(RoutineStep step)
+        {
+            _stepContentPanel.Controls.Clear();
+            ShowEmptyPanel();
+        }
+
+        private void ShowEmptyPanel()
+        {
+            Panel panel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = UIStyles.Colors.BackgroundMedium
+            };
+
+            _stepContentPanel.Controls.Add(panel);
+        }
+
+        private async void ShowWebView(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return;
+
+            try
+            {
+                if (_webView == null)
+                    await CreateWebView();
+
+                ShowWebViewControl();
+                _webView.CoreWebView2.Navigate(url);
             }
+            catch
+            {
+                ShowToastWhenReady("WebView konnte nicht geöffnet werden.");
+            }
+        }
+
+        private async System.Threading.Tasks.Task CreateWebView()
+        {
+            _webView = new WebView2
+            {
+                Dock = DockStyle.Fill
+            };
+
+            await _webView.EnsureCoreWebView2Async();
+        }
+
+        private void ShowWebViewControl()
+        {
+            if (_stepContentPanel.Controls.Contains(_webView))
+                return;
+
+            _stepContentPanel.Controls.Clear();
+            _stepContentPanel.Controls.Add(_webView);
         }
 
         private void StopWebViewAudio()
         {
-            if (_webView?.CoreWebView2 == null)
+            if (_webView == null || _webView.CoreWebView2 == null)
                 return;
 
             try
@@ -282,52 +400,52 @@ namespace SmartRoutine.UI.Forms
             }
             catch
             {
-                // WebView ist evtl. gerade noch nicht bereit oder schon disposed
             }
         }
-        private void LoadStepContent(RoutineStep step)
-        {
-            _contentPanel.Controls.Clear();
-            ShowEmptyPanel();
-        }
 
-        private void ShowEmptyPanel()
-        {
-            var panel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMedium
-            };
-
-            _contentPanel.Controls.Add(panel);
-        }
-
-        private async void ShowWebView(string url)
+        private void StopAndDisposeWebView()
         {
             if (_webView == null)
+                return;
+
+            try
             {
-                _webView = new WebView2
-                {
-                    Dock = DockStyle.Fill
-                };
-
-                await _webView.EnsureCoreWebView2Async();
+                StopWebViewAudio();
+                _webView.Dispose();
+                _webView = null;
             }
-
-            if (!_contentPanel.Controls.Contains(_webView))
+            catch
             {
-                _contentPanel.Controls.Clear();
-                _contentPanel.Controls.Add(_webView);
             }
-
-            _webView.CoreWebView2.Navigate(url);
         }
 
-        private void ShowStepInfo()
+        private void ExecuteCurrentStep()
         {
-            var step = _session.CurrentStep;
+            if (_session == null || _session.CurrentStep == null)
+                return;
 
-            _infoPopup.ShowInfo(step.Description, _infoLabel);
+            RoutineStep step = _session.CurrentStep;
+
+            StepExecutionResult result = null;
+
+            if (_onStepExecute != null)
+                result = _onStepExecute(step);
+
+            _session.MarkCurrentStepExecuted();
+
+            if (result != null && result.ShouldOpenInInternalBrowser)
+                ShowWebView(result.InternalBrowserUrl);
+
+            UpdateExecuteButtonAsExecuted();
+
+            ShowToastWhenReady(GetSuccessMessage(step));
+        }
+
+        private void UpdateExecuteButtonAsExecuted()
+        {
+            _executeButton.Enabled = true;
+            _executeButton.BackColor = UIStyles.Colors.Green;
+            _executeButton.ForeColor = UIStyles.Colors.White;
         }
 
         private void NavigateToPreviousStep()
@@ -342,79 +460,96 @@ namespace SmartRoutine.UI.Forms
             LoadCurrentStep();
         }
 
-        private void ExecuteCurrentStep()
+        private void ShowStepInfo()
         {
-            var step = _session.CurrentStep;
+            if (_session == null || _session.CurrentStep == null || _infoPopup == null)
+                return;
 
-            var result = _onStepExecute?.Invoke(step);
-            _session.MarkCurrentStepExecuted();
-
-            if (result?.ShouldOpenInInternalBrowser == true)
-            {
-                ShowWebView(result.InternalBrowserUrl);
-            }
-
-            _executeBtn.Enabled = true;
-            _executeBtn.BackColor = UIStyles.Colors.Green;
-            _executeBtn.ForeColor = UIStyles.Colors.White;
-
-            string message = GetSuccessMessage(step);
-            ShowToastWhenReady(message);
+            _infoPopup.ShowInfo(_session.CurrentStep.Description, _infoLabel);
         }
 
         private void ShowToastWhenReady(string message)
         {
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
             if (!IsHandleCreated || !Visible)
             {
                 _pendingToastMessage = message;
                 return;
             }
 
-            BeginInvoke(new Action(() =>
+            BeginInvoke(new Action(delegate
             {
                 ToastForm.ShowToast(message, this);
             }));
         }
 
+        private void ShowPendingToastIfNeeded()
+        {
+            if (string.IsNullOrWhiteSpace(_pendingToastMessage))
+                return;
+
+            string message = _pendingToastMessage;
+            _pendingToastMessage = null;
+
+            ToastForm.ShowToast(message, this);
+        }
+
         private string GetSuccessMessage(RoutineStep step)
         {
-            if (step is OpenUrlStep urlStep)
+            OpenUrlStep urlStep = step as OpenUrlStep;
+            if (urlStep != null)
                 return $"✓ URL geöffnet: {urlStep.Url}";
-            if (step is OpenFolderStep folderStep)
+
+            OpenFolderStep folderStep = step as OpenFolderStep;
+            if (folderStep != null)
                 return $"✓ Ordner geöffnet: {folderStep.FolderPath}";
-            if (step is OpenApplicationStep appStep)
-                return $"✓ Gestartet: {System.IO.Path.GetFileName(appStep.ApplicationPath)}";
-            if (step is OpenDocumentStep docStep)
-                return $"✓ Geöffnet: {System.IO.Path.GetFileName(docStep.FilePath)}";
+
+            OpenApplicationStep appStep = step as OpenApplicationStep;
+            if (appStep != null)
+                return $"✓ Gestartet: {Path.GetFileName(appStep.ApplicationPath)}";
+
+            OpenDocumentStep documentStep = step as OpenDocumentStep;
+            if (documentStep != null)
+                return $"✓ Geöffnet: {Path.GetFileName(documentStep.FilePath)}";
+
             return $"✓ {step.Name} ausgeführt";
         }
 
-        protected override void OnFormClosing(FormClosingEventArgs e)
+        private void DisposePopup()
         {
-            StopAndDisposeWebView();
-            base.OnFormClosing(e);
-        }
-
-        private void StopAndDisposeWebView()
-        {
-            if (_webView == null)
+            if (_infoPopup == null)
                 return;
 
-            try
-            {
-                if (_webView.CoreWebView2 != null)
-                {
-                    _webView.CoreWebView2.Stop();
-                    _webView.CoreWebView2.Navigate("about:blank");
-                }
+            _infoPopup.Dispose();
+            _infoPopup = null;
+        }
 
-                _webView.Dispose();
-                _webView = null;
-            }
-            catch
-            {
-                // Falls WebView beim Schließen schon disposed ist
-            }
+        private void OnInfoLabelMouseEnter(object sender, EventArgs e)
+        {
+            ShowStepInfo();
+        }
+
+        private void OnInfoLabelMouseLeave(object sender, EventArgs e)
+        {
+            if (_infoPopup != null)
+                _infoPopup.Hide();
+        }
+
+        private void OnPreviousButtonClick(object sender, EventArgs e)
+        {
+            NavigateToPreviousStep();
+        }
+
+        private void OnNextButtonClick(object sender, EventArgs e)
+        {
+            NavigateToNextStep();
+        }
+
+        private void OnExecuteButtonClick(object sender, EventArgs e)
+        {
+            ExecuteCurrentStep();
         }
     }
 }
