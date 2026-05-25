@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SmartRoutine.UI.Helpers
+﻿namespace SmartRoutine.UI.Helpers
 {
     public static class AppSettings
     {
