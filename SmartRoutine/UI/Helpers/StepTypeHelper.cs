@@ -1,44 +1,51 @@
 ﻿using SmartRoutine.Data.Models;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SmartRoutine.UI.Helpers
 {
     public static class StepTypeHelper
     {
+        private static readonly Dictionary<StepType, string> StepTypeDisplayNames =
+            new Dictionary<StepType, string>
+            {
+                { StepType.OpenUrl, "Webseite öffnen" },
+                { StepType.OpenFolder, "Ordner öffnen" },
+                { StepType.OpenApplication, "Programm starten" },
+                { StepType.OpenDocument, "Dokument öffnen" }
+            };
+
         public static Dictionary<StepType, string> GetStepTypeDisplayNames()
         {
-            return new Dictionary<StepType, string>
-        {
-            { StepType.OpenUrl, "Webseite öffnen" },
-            { StepType.OpenFolder, "Ordner öffnen" },
-            { StepType.OpenApplication, "Programm starten" },
-            { StepType.OpenDocument, "Dokument öffnen" },
-        };
+            return new Dictionary<StepType, string>(StepTypeDisplayNames);
         }
 
         public static List<KeyValuePair<StepType, string>> GetStepTypeListWithEmpty()
         {
-            var list = new List<KeyValuePair<StepType, string>>();
-            // Alle Enum-Werte mit Anzeigenamen
-            var displayNames = GetStepTypeDisplayNames();
+            List<KeyValuePair<StepType, string>> list =
+                new List<KeyValuePair<StepType, string>>();
+
             foreach (StepType type in Enum.GetValues(typeof(StepType)))
             {
-                if (displayNames.ContainsKey(type))
-                {
-                    list.Add(new KeyValuePair<StepType, string>(type, displayNames[type]));
-                }
-                else
-                {
-                    list.Add(new KeyValuePair<StepType, string>(type, type.ToString()));
-                }
+                string displayName;
+
+                if (!StepTypeDisplayNames.TryGetValue(type, out displayName))
+                    displayName = type.ToString();
+
+                list.Add(new KeyValuePair<StepType, string>(type, displayName));
             }
+
             return list;
+        }
+
+        public static string GetDisplayName(StepType type)
+        {
+            string displayName;
+
+            if (StepTypeDisplayNames.TryGetValue(type, out displayName))
+                return displayName;
+
+            return type.ToString();
         }
     }
 }
