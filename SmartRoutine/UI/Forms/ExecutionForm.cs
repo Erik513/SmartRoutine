@@ -72,7 +72,7 @@ namespace SmartRoutine.UI.Forms
             ConfigureForm();
 
             _toolTip = new ToolTip();
-            _infoPopup = new InfoPopupForm();
+            _infoPopup = new InfoPopupForm("Beschreibung:");
 
             Shown += (s, e) =>
             {
