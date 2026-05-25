@@ -1,129 +1,265 @@
-﻿using System;
+﻿using SmartRoutine.UI.Helpers;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
-using SmartRoutine.UI.Helpers;
 
 namespace SmartRoutine.UI.Controls
 {
     public partial class StyledListBoxControl : UserControl
     {
-        private Panel headerPanel;
-        private Label lblTitle;
-        private StyledListBox listBox;
+        private const int DefaultHeaderHeight = 30;
+        private const int HeaderSidePadding = 10;
 
+        private readonly Panel _headerPanel;
+        private readonly Label _titleLabel;
+        private readonly StyledListBox _listBox;
 
-        private int _headerHeight = 30;
-        private Color _headerBackColor = UIStyles.Colors.BackgroundDark;
-        private Color _headerForeColor = UIStyles.Colors.TextPrimary;
-        private Font _headerFont = UIStyles.Fonts.Title;
-
-        // Events der inneren ListBox nach außen weiterleiten
         public event EventHandler SelectedIndexChanged;
         public event EventHandler ItemsReordered;
 
-        private readonly string _displayTextMember;
-        private readonly bool _allowReorder;
-        private readonly bool _showEnumeration;
-        private string _headerTitle;
-        private readonly ContentAlignment _headerTextAlign;
-
-        public StyledListBox InnerListBox => listBox;
-        public new event MouseEventHandler MouseMove
+        public StyledListBoxControl()
+            : this(null, false, false, null, ContentAlignment.MiddleLeft)
         {
-            add => listBox.MouseMove += value;
-            remove => listBox.MouseMove -= value;
         }
-
-        public new event EventHandler MouseLeave
-        {
-            add => listBox.MouseLeave += value;
-            remove => listBox.MouseLeave -= value;
-        }
-
-        public Func<object, bool> IsItemDisabled
-        {
-            get => listBox.IsItemDisabled;
-            set => listBox.IsItemDisabled = value;
-        }
-
-        public Func<object, Image> IconProvider
-        {
-            get => listBox.IconProvider;
-            set => listBox.IconProvider = value;
-        }
-
-        public StyledListBoxControl() { }
 
         public StyledListBoxControl(
             string displayTextMember = null,
             bool allowReorder = false,
             bool showEnumeration = false,
             string headerTitle = null,
-            ContentAlignment headerTextAlign = ContentAlignment.MiddleLeft) : this()
+            ContentAlignment headerTextAlign = ContentAlignment.MiddleLeft)
         {
+            ConfigureControl();
 
-            _displayTextMember = displayTextMember;
-            _allowReorder = allowReorder;
-            _showEnumeration = showEnumeration;
-            _headerTitle = headerTitle ?? "";
-            _headerTextAlign = headerTextAlign;
-            InitializeControl();
+            _headerPanel = CreateHeaderPanel();
+            _titleLabel = CreateTitleLabel(headerTextAlign);
+            _listBox = CreateListBox(displayTextMember, allowReorder, showEnumeration);
 
+            _headerPanel.Controls.Add(_titleLabel);
 
-            SetStyle(ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.AllPaintingInWmPaint |
-            ControlStyles.ResizeRedraw, true);
+            Controls.Add(_listBox);
+            Controls.Add(_headerPanel);
+
+            WireEvents();
+
+            Title = headerTitle;
+            HeaderTextAlign = headerTextAlign;
+
+            SetStyle(
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.ResizeRedraw,
+                true);
 
             UpdateStyles();
         }
 
-        public int IndexFromPoint(Point point)
+        public StyledListBox InnerListBox
         {
-            return listBox.IndexFromPoint(point);
+            get { return _listBox; }
         }
 
-        private void InitializeControl()
+        public Func<object, bool> IsItemDisabled
         {
-            this.Dock = DockStyle.Fill;
-            this.BackColor = Color.Transparent;
+            get { return _listBox.IsItemDisabled; }
+            set { _listBox.IsItemDisabled = value; }
+        }
 
-            bool showHeader = !string.IsNullOrWhiteSpace(_headerTitle);
+        public Func<object, Image> IconProvider
+        {
+            get { return _listBox.IconProvider; }
+            set { _listBox.IconProvider = value; }
+        }
 
-            headerPanel = new Panel
+        public string Title
+        {
+            get { return _titleLabel.Text; }
+            set
+            {
+                string title = value ?? "";
+
+                _titleLabel.Text = title;
+                _headerPanel.Visible = !string.IsNullOrWhiteSpace(title);
+            }
+        }
+
+        public int HeaderHeight
+        {
+            get { return _headerPanel.Height; }
+            set { _headerPanel.Height = Math.Max(0, value); }
+        }
+
+        public Color HeaderBackColor
+        {
+            get { return _headerPanel.BackColor; }
+            set { _headerPanel.BackColor = value; }
+        }
+
+        public Color HeaderForeColor
+        {
+            get { return _titleLabel.ForeColor; }
+            set { _titleLabel.ForeColor = value; }
+        }
+
+        public Font HeaderFont
+        {
+            get { return _titleLabel.Font; }
+            set { _titleLabel.Font = value; }
+        }
+
+        public ContentAlignment HeaderTextAlign
+        {
+            get { return _titleLabel.TextAlign; }
+            set
+            {
+                _titleLabel.TextAlign = value;
+                _titleLabel.Padding = GetHeaderPadding(value);
+            }
+        }
+
+        public ListBox.ObjectCollection Items
+        {
+            get { return _listBox.Items; }
+        }
+
+        public object SelectedItem
+        {
+            get { return _listBox.SelectedItem; }
+            set { _listBox.SelectedItem = value; }
+        }
+
+        public int SelectedIndex
+        {
+            get { return _listBox.SelectedIndex; }
+            set { _listBox.SelectedIndex = value; }
+        }
+
+        public int ItemHeightCustom
+        {
+            get { return _listBox.ItemHeightCustom; }
+            set { _listBox.ItemHeightCustom = value; }
+        }
+
+        public Color DragIndicatorColor
+        {
+            get { return _listBox.DragIndicatorColor; }
+            set { _listBox.DragIndicatorColor = value; }
+        }
+
+        public int IndexFromPoint(Point point)
+        {
+            return _listBox.IndexFromPoint(point);
+        }
+
+        public void ClearSelected()
+        {
+            _listBox.ClearSelected();
+        }
+
+        public void MoveItem(int fromIndex, int toIndex)
+        {
+            _listBox.MoveItem(fromIndex, toIndex);
+        }
+
+        public void BeginUpdate()
+        {
+            if (_listBox == null)
+                return;
+
+            _listBox.BeginUpdate();
+        }
+
+        public void EndUpdate()
+        {
+            if (_listBox == null)
+                return;
+
+            _listBox.EndUpdate();
+        }
+
+        private void ConfigureControl()
+        {
+            BackColor = Color.Transparent;
+            Margin = new Padding(0);
+            Padding = new Padding(0);
+        }
+
+        private Panel CreateHeaderPanel()
+        {
+            return new Panel
             {
                 Dock = DockStyle.Top,
-                Height = _headerHeight,
-                BackColor = _headerBackColor,
-                Visible = showHeader
+                Height = DefaultHeaderHeight,
+                BackColor = UIStyles.Colors.BackgroundDark,
+                Visible = false,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
             };
+        }
 
-            lblTitle = new Label
-            {
-                Text = _headerTitle,
-                Dock = DockStyle.Fill,
-                ForeColor = _headerForeColor,
-                Font = _headerFont,
-                TextAlign = _headerTextAlign,
-                Padding = GetHeaderPadding(_headerTextAlign),
-                BackColor = Color.Transparent
-            };
-
-            headerPanel.Controls.Add(lblTitle);
-
-            listBox = new StyledListBox
+        private Label CreateTitleLabel(ContentAlignment textAlign)
+        {
+            return new Label
             {
                 Dock = DockStyle.Fill,
-                DisplayTextMember = _displayTextMember,
-                ShowEnumeration = _showEnumeration,
-                AllowReorder = _allowReorder
+                AutoSize = false,
+                Text = "",
+                ForeColor = UIStyles.Colors.TextPrimary,
+                Font = UIStyles.Fonts.Title,
+                TextAlign = textAlign,
+                Padding = GetHeaderPadding(textAlign),
+                BackColor = Color.Transparent,
+                AutoEllipsis = true,
+                UseMnemonic = false
             };
+        }
 
-            // Events weiterleiten
-            listBox.SelectedIndexChanged += (s, e) => SelectedIndexChanged?.Invoke(s, e);
-            listBox.ItemsReordered += (s, e) => ItemsReordered?.Invoke(s, e);
+        private StyledListBox CreateListBox(
+            string displayTextMember,
+            bool allowReorder,
+            bool showEnumeration)
+        {
+            return new StyledListBox
+            {
+                Dock = DockStyle.Fill,
+                DisplayTextMember = displayTextMember,
+                AllowReorder = allowReorder,
+                ShowEnumeration = showEnumeration,
+                Margin = new Padding(0)
+            };
+        }
 
-            this.Controls.Add(listBox);
-            this.Controls.Add(headerPanel);
+        private void WireEvents()
+        {
+            if (_listBox == null)
+                return;
+
+            _listBox.SelectedIndexChanged += OnListBoxSelectedIndexChanged;
+            _listBox.ItemsReordered += OnListBoxItemsReordered;
+            _listBox.MouseMove += OnListBoxMouseMove;
+            _listBox.MouseLeave += OnListBoxMouseLeave;
+        }
+
+        private void OnListBoxSelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (SelectedIndexChanged != null)
+                SelectedIndexChanged(sender, e);
+        }
+
+        private void OnListBoxItemsReordered(object sender, EventArgs e)
+        {
+            if (ItemsReordered != null)
+                ItemsReordered(sender, e);
+        }
+
+        private void OnListBoxMouseMove(object sender, MouseEventArgs e)
+        {
+            OnMouseMove(e);
+        }
+
+        private void OnListBoxMouseLeave(object sender, EventArgs e)
+        {
+            OnMouseLeave(e);
         }
 
         private Padding GetHeaderPadding(ContentAlignment textAlign)
@@ -133,105 +269,36 @@ namespace SmartRoutine.UI.Controls
                 case ContentAlignment.MiddleLeft:
                 case ContentAlignment.TopLeft:
                 case ContentAlignment.BottomLeft:
-                    return new Padding(10, 0, 0, 0);
+                    return new Padding(HeaderSidePadding, 0, 0, 0);
 
                 case ContentAlignment.MiddleRight:
                 case ContentAlignment.TopRight:
                 case ContentAlignment.BottomRight:
-                    return new Padding(0, 0, 10, 0);
+                    return new Padding(0, 0, HeaderSidePadding, 0);
 
                 default:
                     return new Padding(0);
             }
         }
-
-        // ========== Öffentliche Eigenschaften ==========
-
-        public string Title
+        protected override void Dispose(bool disposing)
         {
-            get => _headerTitle;
-            set
+            if (disposing)
             {
-                _headerTitle = value;
-                lblTitle.Text = value;
-                headerPanel.Visible = !string.IsNullOrWhiteSpace(value);
+                UnwireEvents();
             }
+
+            base.Dispose(disposing);
         }
 
-        public int HeaderHeight
+        private void UnwireEvents()
         {
-            get => _headerHeight;
-            set
-            {
-                _headerHeight = value;
-                headerPanel.Height = value;
-            }
+            if (_listBox == null)
+                return;
+
+            _listBox.SelectedIndexChanged -= OnListBoxSelectedIndexChanged;
+            _listBox.ItemsReordered -= OnListBoxItemsReordered;
+            _listBox.MouseMove -= OnListBoxMouseMove;
+            _listBox.MouseLeave -= OnListBoxMouseLeave;
         }
-
-        public Color HeaderBackColor
-        {
-            get => _headerBackColor;
-            set
-            {
-                _headerBackColor = value;
-                headerPanel.BackColor = value;
-            }
-        }
-
-        public Color HeaderForeColor
-        {
-            get => _headerForeColor;
-            set
-            {
-                _headerForeColor = value;
-                lblTitle.ForeColor = value;
-            }
-        }
-
-        public Font HeaderFont
-        {
-            get => _headerFont;
-            set
-            {
-                _headerFont = value;
-                lblTitle.Font = value;
-            }
-        }
-
-        // ListBox Eigenschaften durchreichen
-        public ListBox.ObjectCollection Items => listBox.Items;
-
-        public object SelectedItem
-        {
-            get => listBox.SelectedItem;
-            set => listBox.SelectedItem = value;
-        }
-
-        public int SelectedIndex
-        {
-            get => listBox.SelectedIndex;
-            set => listBox.SelectedIndex = value;
-        }
-
-        public int ItemHeightCustom
-        {
-            get => listBox.ItemHeightCustom;
-            set => listBox.ItemHeightCustom = value;
-        }
-
-        public Color DragIndicatorColor
-        {
-            get => listBox.DragIndicatorColor;
-            set => listBox.DragIndicatorColor = value;
-        }
-
-        // ListBox Methoden durchreichen
-        public void ClearSelected() => listBox.ClearSelected();
-
-        public void MoveItem(int fromIndex, int toIndex) => listBox.MoveItem(fromIndex, toIndex);
-
-        public void BeginUpdate() => listBox.BeginUpdate();
-
-        public void EndUpdate() => listBox.EndUpdate();
     }
 }

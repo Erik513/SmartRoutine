@@ -195,9 +195,6 @@
     <Compile Include="UI\Controls\StyledListBoxControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="UI\Controls\StyledListBoxControl.Designer.cs">
-      <DependentUpon>StyledListBoxControl.cs</DependentUpon>
-    </Compile>
     <Compile Include="UI\Controls\TitleBarControl.cs">
       <SubType>Component</SubType>
     </Compile>
