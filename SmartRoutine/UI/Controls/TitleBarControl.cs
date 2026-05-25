@@ -1,76 +1,86 @@
-﻿using System;
+﻿using SmartRoutine.UI.Helpers;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
-using SmartRoutine.UI.Helpers;
 
 namespace SmartRoutine.UI.Controls
 {
     public class TitleBarControl : Panel
     {
-        private Label lblTitle;
-        private PictureBox picIcon;
-        private Button btnMinimize;
-        private Button btnMaximize;
-        private Button btnClose;
-        private FormDragHandle titleBarDragHandle;
-        private FormDragHandle titleLabelDragHandle;
-        private FormDragHandle iconDragHandle;
-        private Form parentForm;
+        private const int TitleBarHeight = 30;
+        private const int IconSize = TitleBarHeight;
+        private const int IconLeftMargin = 0;
+        private const int TitleHorizontalPadding = 10;
 
-        private const int TITLE_BAR_HEIGHT = 30;
-        private static readonly Size BUTTON_SIZE = new Size(30, 30);
-        private const int ICON_SIZE = TITLE_BAR_HEIGHT;
-        private const int ICON_LEFT_MARGIN = 0;
+        private static readonly Size ButtonSize = new Size(30, 30);
+
+        private readonly bool _allowWindowSnapAndMaximize;
+
+        private Label _titleLabel;
+        private PictureBox _iconPictureBox;
+        private Button _minimizeButton;
+        private Button _maximizeButton;
+        private Button _closeButton;
+
+        private FormDragHandle _titleBarDragHandle;
+        private FormDragHandle _titleLabelDragHandle;
+        private FormDragHandle _iconDragHandle;
+
+        private Form _parentForm;
 
         public string Title
         {
-            get => lblTitle.Text;
-            set => lblTitle.Text = value;
+            get { return _titleLabel.Text; }
+            set { _titleLabel.Text = value ?? ""; }
         }
-        
+
         public Image IconImage
         {
-            get => picIcon.Image;
+            get { return _iconPictureBox.Image; }
             set
             {
-                picIcon.Image = value;
-                picIcon.Visible = value != null;
+                _iconPictureBox.Image = value;
+                _iconPictureBox.Visible = value != null;
                 UpdateLayout();
             }
         }
+
         public ContentAlignment TitleTextAlign
         {
-            get => lblTitle.TextAlign;
-            set => lblTitle.TextAlign = value;
+            get { return _titleLabel.TextAlign; }
+            set { _titleLabel.TextAlign = value; }
         }
+
         public bool ShowMinimizeButton
         {
-            get => btnMinimize.Visible;
+            get { return _minimizeButton.Visible; }
             set
             {
-                btnMinimize.Visible = value;
+                _minimizeButton.Visible = value;
                 UpdateLayout();
             }
         }
+
         public bool ShowMaximizeButton
         {
-            get => btnMaximize.Visible;
+            get { return _maximizeButton.Visible; }
             set
             {
-                btnMaximize.Visible = value;
+                _maximizeButton.Visible = value;
                 UpdateLayout();
             }
         }
+
         public bool ShowCloseButton
         {
-            get => btnClose.Visible;
+            get { return _closeButton.Visible; }
             set
             {
-                btnClose.Visible = value;
+                _closeButton.Visible = value;
                 UpdateLayout();
             }
         }
-        private readonly bool _allowWindowSnapAndMaximize;
+
         public TitleBarControl(
             Image icon = null,
             string title = "",
@@ -78,82 +88,262 @@ namespace SmartRoutine.UI.Controls
             bool showMinimizeButton = true,
             bool showMaximizeButton = true,
             bool showCloseButton = true,
-            bool allowWindowSnapAndMaximize = true)
+            bool allowWindowSnapAndMaximize = true,
+            Color? backColor = null)
         {
+            Color resolvedBackColor = backColor ?? UIStyles.Colors.BackgroundBlack;
             _allowWindowSnapAndMaximize = allowWindowSnapAndMaximize;
-            Height = TITLE_BAR_HEIGHT;
-            Dock = DockStyle.Top;
-            BackColor = UIStyles.Colors.BackgroundBlack;
-            Visible = true;
 
-            lblTitle = new Label
+            ConfigureControl(resolvedBackColor);
+
+            _titleLabel = CreateTitleLabel(
+                title,
+                titleTextAlign,
+                resolvedBackColor);
+            _iconPictureBox = CreateIconPictureBox(icon);
+            _minimizeButton = CreateTitleBarButton("🗕", "Minimize window", showMinimizeButton);
+            _maximizeButton = CreateTitleBarButton("🗖", "Maximize window", showMaximizeButton);
+            _closeButton = CreateTitleBarButton("✕", "Close window", showCloseButton);
+
+            AddControls();
+            CreateDragHandles();
+            WireControlEvents();
+
+            UpdateLayout();
+            RunWhenHandleReady(UpdateLayout);
+        }
+
+        public void UpdateMaximizeButton(bool isMaximized)
+        {
+            if (_maximizeButton == null)
+                return;
+
+            _maximizeButton.Text = isMaximized ? "❐" : "🗖";
+        }
+
+        public void DisposeDragHandle()
+        {
+            if (_titleBarDragHandle != null)
             {
-                Text = title,
+                _titleBarDragHandle.Dispose();
+                _titleBarDragHandle = null;
+            }
+
+            if (_titleLabelDragHandle != null)
+            {
+                _titleLabelDragHandle.Dispose();
+                _titleLabelDragHandle = null;
+            }
+
+            if (_iconDragHandle != null)
+            {
+                _iconDragHandle.Dispose();
+                _iconDragHandle = null;
+            }
+        }
+
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+
+            if (!Visible)
+                return;
+
+            RunWhenHandleReady(UpdateLayout);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                UnwireControlEvents();
+                UnwireParentFormEvents();
+                DisposeDragHandle();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        private void ConfigureControl(Color backColor)
+        {
+            Height = TitleBarHeight;
+            Dock = DockStyle.Top;
+            BackColor = backColor;
+            Visible = true;
+            Margin = new Padding(0);
+            Padding = new Padding(0);
+
+            SetStyle(
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.ResizeRedraw,
+                true);
+
+            UpdateStyles();
+        }
+
+        private Label CreateTitleLabel(
+            string title,
+            ContentAlignment textAlign,
+            Color backColor)
+        {
+            return new Label
+            {
+                Text = title ?? "",
                 Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundBlack,
+                BackColor = backColor,
                 ForeColor = UIStyles.Colors.TextPrimary,
                 Font = UIStyles.Fonts.Title,
-                TextAlign = titleTextAlign,
-                Padding = new Padding(10, 0, 10, 0)
+                TextAlign = textAlign,
+                Padding = new Padding(TitleHorizontalPadding, 0, TitleHorizontalPadding, 0),
+                AutoEllipsis = true,
+                UseMnemonic = false
             };
+        }
 
-            picIcon = new PictureBox
+        private PictureBox CreateIconPictureBox(Image icon)
+        {
+            return new PictureBox
             {
                 Image = icon,
-                Size = new Size(ICON_SIZE, ICON_SIZE),
+                Size = new Size(IconSize, IconSize),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.Transparent,
                 Visible = icon != null
             };
-
-            btnClose = UIStyles.Buttons.CreateStandard("✕", "Close window", BUTTON_SIZE);
-            btnMaximize = UIStyles.Buttons.CreateStandard("🗖", "Maximize window", BUTTON_SIZE);
-            btnMinimize = UIStyles.Buttons.CreateStandard("🗕", "Minimize window", BUTTON_SIZE);
-
-            btnMinimize.Visible = showMinimizeButton;
-            btnMaximize.Visible = showMaximizeButton;
-            btnClose.Visible = showCloseButton;
-
-            Controls.Add(lblTitle);
-            Controls.Add(picIcon);
-            Controls.Add(btnMinimize);
-            Controls.Add(btnMaximize);
-            Controls.Add(btnClose);
-
-            lblTitle.SendToBack();
-            picIcon.BringToFront();
-            btnMinimize.BringToFront();
-            btnMaximize.BringToFront();
-            btnClose.BringToFront();
-
-            var toolTip = new ToolTip();
-            toolTip.SetToolTip(btnMinimize, "Minimize window");
-            toolTip.SetToolTip(btnMaximize, "Maximize window");
-            toolTip.SetToolTip(btnClose, "Close window");
-
-            CreateDragHandles();
-
-            Resize += (s, e) => UpdateLayout();
-            ParentChanged += OnParentChanged;
-            HandleCreated += TitleBarControl_HandleCreated;
-
-            UpdateLayout();
-
-            RunWhenHandleReady(UpdateLayout);
         }
+
+        private Button CreateTitleBarButton(string text, string tooltip, bool visible)
+        {
+            Button button = UIStyles.Buttons.CreateStandard(text, tooltip, ButtonSize);
+            button.Visible = visible;
+
+            return button;
+        }
+
+        private void AddControls()
+        {
+            Controls.Add(_titleLabel);
+            Controls.Add(_iconPictureBox);
+            Controls.Add(_minimizeButton);
+            Controls.Add(_maximizeButton);
+            Controls.Add(_closeButton);
+
+            _titleLabel.SendToBack();
+            _iconPictureBox.BringToFront();
+            _minimizeButton.BringToFront();
+            _maximizeButton.BringToFront();
+            _closeButton.BringToFront();
+        }
+
+        private void WireControlEvents()
+        {
+            Resize += OnTitleBarResize;
+            ParentChanged += OnTitleBarParentChanged;
+            HandleCreated += OnTitleBarHandleCreated;
+
+            _minimizeButton.Click += OnMinimizeButtonClick;
+            _maximizeButton.Click += OnMaximizeButtonClick;
+            _closeButton.Click += OnCloseButtonClick;
+        }
+
+        private void UnwireControlEvents()
+        {
+            Resize -= OnTitleBarResize;
+            ParentChanged -= OnTitleBarParentChanged;
+            HandleCreated -= OnTitleBarHandleCreated;
+
+            if (_minimizeButton != null)
+                _minimizeButton.Click -= OnMinimizeButtonClick;
+
+            if (_maximizeButton != null)
+                _maximizeButton.Click -= OnMaximizeButtonClick;
+
+            if (_closeButton != null)
+                _closeButton.Click -= OnCloseButtonClick;
+        }
+
         private void CreateDragHandles()
         {
             DisposeDragHandle();
 
-            titleBarDragHandle = new FormDragHandle(this, _allowWindowSnapAndMaximize);
-            titleLabelDragHandle = new FormDragHandle(lblTitle, _allowWindowSnapAndMaximize);
+            _titleBarDragHandle = new FormDragHandle(this, _allowWindowSnapAndMaximize);
+            _titleLabelDragHandle = new FormDragHandle(_titleLabel, _allowWindowSnapAndMaximize);
 
-            if (picIcon != null)
-                iconDragHandle = new FormDragHandle(picIcon, _allowWindowSnapAndMaximize);
+            if (_iconPictureBox != null)
+                _iconDragHandle = new FormDragHandle(_iconPictureBox, _allowWindowSnapAndMaximize);
+        }
+
+        private void UpdateLayout()
+        {
+            if (_closeButton == null || _maximizeButton == null || _minimizeButton == null || _iconPictureBox == null)
+                return;
+
+            int right = Width;
+
+            right = PositionButtonFromRight(_closeButton, right);
+            right = PositionButtonFromRight(_maximizeButton, right);
+            right = PositionButtonFromRight(_minimizeButton, right);
+
+            if (_iconPictureBox.Visible)
+            {
+                _iconPictureBox.Location = new Point(IconLeftMargin, 0);
+                _iconPictureBox.BringToFront();
+            }
+        }
+
+        private int PositionButtonFromRight(Button button, int right)
+        {
+            if (!button.Visible)
+                return right;
+
+            button.Location = new Point(right - ButtonSize.Width, 0);
+            button.BringToFront();
+
+            return right - ButtonSize.Width;
+        }
+
+        private void AttachToParentFormWhenReady()
+        {
+            Form form = FindForm();
+
+            if (form == null)
+            {
+                RunWhenHandleReady(AttachToParentFormWhenReady);
+                return;
+            }
+
+            if (_parentForm == form)
+            {
+                UpdateMaximizeButton(form.WindowState == FormWindowState.Maximized);
+                return;
+            }
+
+            UnwireParentFormEvents();
+
+            _parentForm = form;
+            _parentForm.Resize += OnParentFormResize;
+
+            UpdateMaximizeButton(_parentForm.WindowState == FormWindowState.Maximized);
+        }
+
+        private void UnwireParentFormEvents()
+        {
+            if (_parentForm == null)
+                return;
+
+            _parentForm.Resize -= OnParentFormResize;
+            _parentForm = null;
         }
 
         private void RunWhenHandleReady(Action action)
         {
+            if (action == null)
+                return;
+
+            if (IsDisposed)
+                return;
+
             if (IsHandleCreated)
             {
                 BeginInvoke(action);
@@ -162,176 +352,68 @@ namespace SmartRoutine.UI.Controls
 
             EventHandler handler = null;
 
-            handler = (s, e) =>
+            handler = delegate
             {
                 HandleCreated -= handler;
-                BeginInvoke(action);
+
+                if (!IsDisposed && IsHandleCreated)
+                    BeginInvoke(action);
             };
 
             HandleCreated += handler;
         }
 
-        private void UpdateLayout()
-        {
-            if (btnClose == null || btnMaximize == null || btnMinimize == null || picIcon == null)
-                return;
-
-            int right = Width;
-
-            if (btnClose.Visible)
-            {
-                btnClose.Location = new Point(right - BUTTON_SIZE.Width, 0);
-                right -= BUTTON_SIZE.Width;
-                btnClose.BringToFront();
-            }
-
-            if (btnMaximize.Visible)
-            {
-                btnMaximize.Location = new Point(right - BUTTON_SIZE.Width, 0);
-                right -= BUTTON_SIZE.Width;
-                btnMaximize.BringToFront();
-            }
-
-            if (btnMinimize.Visible)
-            {
-                btnMinimize.Location = new Point(right - BUTTON_SIZE.Width, 0);
-                right -= BUTTON_SIZE.Width;
-                btnMinimize.BringToFront();
-            }
-
-            if (picIcon.Visible)
-            {
-                picIcon.Location = new Point(
-                ICON_LEFT_MARGIN,
-                0);
-
-                picIcon.BringToFront();
-            }
-        }
-
-        private void OnParentChanged(object sender, EventArgs e)
-        {
-            AttachToParentFormWhenReady();
-        }
-
-        private void AttachToParentFormWhenReady()
-        {
-            var form = FindForm();
-
-            if (form == null)
-            {
-                if (IsHandleCreated)
-                {
-                    BeginInvoke(new Action(AttachToParentFormWhenReady));
-                }
-                else
-                {
-                    HandleCreated += TitleBarControl_HandleCreated;
-                }
-
-                return;
-            }
-
-            parentForm = form;
-
-            btnMinimize.Click -= BtnMinimize_Click;
-            btnMaximize.Click -= BtnMaximize_Click;
-            btnClose.Click -= BtnClose_Click;
-
-            btnMinimize.Click += BtnMinimize_Click;
-            btnMaximize.Click += BtnMaximize_Click;
-            btnClose.Click += BtnClose_Click;
-
-            parentForm.Resize -= ParentForm_Resize;
-            parentForm.Resize += ParentForm_Resize;
-
-            UpdateMaximizeButton(parentForm.WindowState == FormWindowState.Maximized);
-        }
-
-        private void TitleBarControl_HandleCreated(object sender, EventArgs e)
-        {
-            HandleCreated -= TitleBarControl_HandleCreated;
-            BeginInvoke(new Action(AttachToParentFormWhenReady));
-        }
-
-        private void BtnMinimize_Click(object sender, EventArgs e)
-        {
-            if (parentForm != null)
-                parentForm.WindowState = FormWindowState.Minimized;
-        }
-
-        private void BtnMaximize_Click(object sender, EventArgs e)
-        {
-            ToggleMaximize();
-        }
-
-        private void BtnClose_Click(object sender, EventArgs e)
-        {
-            parentForm?.Close();
-        }
-
-        private void ParentForm_Resize(object sender, EventArgs e)
-        {
-            var form = parentForm ?? FindForm();
-
-            if (form == null)
-                return;
-
-            parentForm = form;
-
-            UpdateMaximizeButton(form.WindowState == FormWindowState.Maximized);
-        }
-
         private void ToggleMaximize()
         {
-            if (parentForm == null)
+            if (_parentForm == null)
                 return;
 
-            parentForm.WindowState = parentForm.WindowState == FormWindowState.Maximized
+            _parentForm.WindowState = _parentForm.WindowState == FormWindowState.Maximized
                 ? FormWindowState.Normal
                 : FormWindowState.Maximized;
         }
 
-        public void UpdateMaximizeButton(bool isMaximized)
+        private void OnTitleBarResize(object sender, EventArgs e)
         {
-            if (btnMaximize != null)
-                btnMaximize.Text = isMaximized ? "❐" : "🗖";
+            UpdateLayout();
         }
 
-        protected override void OnVisibleChanged(EventArgs e)
+        private void OnTitleBarParentChanged(object sender, EventArgs e)
         {
-            base.OnVisibleChanged(e);
-
-            if (Visible)
-            {
-                BeginInvoke(new Action(() =>
-                {
-                    UpdateLayout();
-                }));
-            }
+            AttachToParentFormWhenReady();
         }
 
-        protected override void Dispose(bool disposing)
+        private void OnTitleBarHandleCreated(object sender, EventArgs e)
         {
-            if (disposing)
-            {
-                DisposeDragHandle();
-
-                if (parentForm != null)
-                    parentForm.Resize -= ParentForm_Resize;
-            }
-
-            base.Dispose(disposing);
+            AttachToParentFormWhenReady();
         }
-        public void DisposeDragHandle()
-        {
-            titleBarDragHandle?.Dispose();
-            titleLabelDragHandle?.Dispose();
-            iconDragHandle?.Dispose();
 
-            titleBarDragHandle = null;
-            titleLabelDragHandle = null;
-            iconDragHandle = null;
+        private void OnParentFormResize(object sender, EventArgs e)
+        {
+            Form form = _parentForm ?? FindForm();
+
+            if (form == null)
+                return;
+
+            _parentForm = form;
+            UpdateMaximizeButton(form.WindowState == FormWindowState.Maximized);
+        }
+
+        private void OnMinimizeButtonClick(object sender, EventArgs e)
+        {
+            if (_parentForm != null)
+                _parentForm.WindowState = FormWindowState.Minimized;
+        }
+
+        private void OnMaximizeButtonClick(object sender, EventArgs e)
+        {
+            ToggleMaximize();
+        }
+
+        private void OnCloseButtonClick(object sender, EventArgs e)
+        {
+            if (_parentForm != null)
+                _parentForm.Close();
         }
     }
 }

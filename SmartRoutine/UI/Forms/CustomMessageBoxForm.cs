@@ -57,7 +57,8 @@ namespace SmartRoutine.UI.Forms
                 showMinimize: false,
                 showMaximize: false,
                 showClose: true,
-                allowWindowSnapAndMaximize: false)
+                allowWindowSnapAndMaximize: false,
+                titleBarBackColor: UIStyles.Colors.PrimaryDarkDark)
         {
             _message = message;
             _buttons = buttons;

@@ -35,7 +35,8 @@ namespace SmartRoutine.UI.Forms
             Routine routine,
             Func<RoutineStep, StepExecutionResult> onExecute)
             : base(
-                title: $"Routine: {routine.Name}")
+                title: $"Routine: {routine.Name}",
+                titleBarBackColor: default)
         {
             InitializeForm();
             _routine = routine;
@@ -50,7 +51,8 @@ namespace SmartRoutine.UI.Forms
             RoutineStep step,
             Func<RoutineStep, StepExecutionResult> onExecute)
             : base(
-                title: $"Routine: {routine.Name}")
+                title: $"Routine: {routine.Name}",
+                titleBarBackColor: default)
         {
             InitializeForm();
             _routine = routine;

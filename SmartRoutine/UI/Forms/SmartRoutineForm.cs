@@ -16,7 +16,8 @@ namespace SmartRoutine.UI.Forms
             bool showMinimize = true,
             bool showMaximize = true,
             bool showClose = true,
-            bool allowWindowSnapAndMaximize = true)
+            bool allowWindowSnapAndMaximize = true,
+            Color? titleBarBackColor = null)
         {
             InitializeSmartRoutineForm(
                 icon,
@@ -24,16 +25,18 @@ namespace SmartRoutine.UI.Forms
                 showMinimize,
                 showMaximize,
                 showClose,
-                allowWindowSnapAndMaximize);
+                allowWindowSnapAndMaximize,
+                titleBarBackColor);
         }
 
         private void InitializeSmartRoutineForm(
-            Image icon, 
+            Image icon,
             string title,
             bool showMinimize,
             bool showMaximize,
             bool showClose,
-            bool allowWindowSnapAndMaximize)
+            bool allowWindowSnapAndMaximize,
+            Color? titleBarBackColor)
         {
             FormBorderStyle = FormBorderStyle.None;
             BackColor = UIStyles.Colors.BackgroundDark;
@@ -63,7 +66,8 @@ namespace SmartRoutine.UI.Forms
                 showMinimizeButton: showMinimize,
                 showMaximizeButton: showMaximize,
                 showCloseButton: showClose,
-                allowWindowSnapAndMaximize: allowWindowSnapAndMaximize)
+                allowWindowSnapAndMaximize: allowWindowSnapAndMaximize,
+                backColor: titleBarBackColor ?? UIStyles.Colors.BackgroundBlack)
             {
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0)
