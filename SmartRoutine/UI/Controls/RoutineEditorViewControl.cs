@@ -36,8 +36,7 @@ namespace SmartRoutine.UI.Controls
 
         // Linke Seite
         private TableLayoutPanel leftTlp;
-        private TableLayoutPanel leftRoutineTitleTlp;
-        private Label lblRoutineName;
+        private StyledPropertyTable routineInfoTable;
         private TextBox txtRoutineName;
         private StyledListBoxControl lstSteps;
 
@@ -146,22 +145,21 @@ namespace SmartRoutine.UI.Controls
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            leftRoutineTitleTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
-            leftRoutineTitleTlp.Dock = DockStyle.Fill;
-
-            leftRoutineTitleTlp.ColumnStyles.Clear();
-            leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            leftRoutineTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-
-            lblRoutineName = UIStyles.Labels.CreateTitle("Routinenname:");
-            lblRoutineName.Dock = DockStyle.Fill;
+            routineInfoTable = new StyledPropertyTable
+            {
+                Dock = DockStyle.Fill,
+                AutoSize = true,
+                Margin = new Padding(0)
+            };
 
             txtRoutineName = UIStyles.TextBoxes.CreateStandard();
             txtRoutineName.Dock = DockStyle.Fill;
             txtRoutineName.MaxLength = 30;
 
-            leftRoutineTitleTlp.Controls.Add(lblRoutineName, 0, 0);
-            leftRoutineTitleTlp.Controls.Add(txtRoutineName, 1, 0);
+            routineInfoTable.AddRow(
+                "Routinenname",
+                txtRoutineName,
+                true);
 
             lstSteps = new StyledListBoxControl(
                 displayTextMember: "Name",
@@ -180,7 +178,7 @@ namespace SmartRoutine.UI.Controls
             lstSteps.ItemsReordered += LstSteps_ItemsReordered;
             lstSteps.IconProvider = GetStepIcon;
 
-            leftTlp.Controls.Add(leftRoutineTitleTlp, 0, 0);
+            leftTlp.Controls.Add(routineInfoTable, 0, 0);
             leftTlp.Controls.Add(lstSteps, 0, 1);
         }
         private void InitializeRightPanel()

@@ -29,14 +29,17 @@ namespace SmartRoutine.UI.Controls
             _layout.RowCount = 0;
         }
 
-        public void AddRow(string labelText, Control editorControl)
+        public void AddRow(
+             string labelText,
+             Control editorControl,
+             bool emphasizeLabel = false)
         {
             if (editorControl == null)
                 return;
 
             int row = AddRowStyle(RowHeight);
 
-            Label label = CreateRowLabel(labelText);
+            Label label = CreateRowLabel(labelText, emphasizeLabel);
 
             ConfigureEditorControl(editorControl);
 
@@ -91,14 +94,17 @@ namespace SmartRoutine.UI.Controls
             return row;
         }
 
-        private Label CreateRowLabel(string labelText)
+        private Label CreateRowLabel(string labelText, bool emphasizeLabel)
         {
-            Label label = UIStyles.Labels.CreateNormal(labelText ?? "");
+            Label label = emphasizeLabel
+                ? UIStyles.Labels.CreateTitle(labelText ?? "")
+                : UIStyles.Labels.CreateNormal(labelText ?? "");
 
             label.Dock = DockStyle.Fill;
             label.TextAlign = ContentAlignment.MiddleLeft;
             label.Padding = new Padding(LabelLeftPadding, 0, 0, 0);
             label.Margin = new Padding(0);
+            label.BackColor = Color.Transparent;
 
             return label;
         }
