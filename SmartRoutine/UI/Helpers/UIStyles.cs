@@ -1,315 +1,303 @@
 ﻿using SmartRoutine.UI.Controls;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Printing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SmartRoutine.UI.Helpers
 {
     public static class UIStyles
     {
-        // Farbpalette für Dark Theme
         public static class Colors
         {
-            // ===== HINTERGRUNDFARBEN (Dunkle Grautöne) =====
+            public static readonly Color Black = Color.Black;
 
+            public static readonly Color BackgroundBlack = Color.FromArgb(10, 10, 10);
+            public static readonly Color BackgroundDark = Color.FromArgb(20, 20, 20);
+            public static readonly Color BackgroundDarkElevated = Color.FromArgb(25, 25, 25);
+            public static readonly Color BackgroundMedium = Color.FromArgb(35, 35, 35);
+            public static readonly Color BackgroundMediumElevated = Color.FromArgb(40, 40, 40);
+            public static readonly Color BackgroundLight = Color.FromArgb(50, 50, 50);
+            public static readonly Color BackgroundLighter = Color.FromArgb(60, 60, 60);
 
-            public static Color Black = Color.Black;                            // Schwarz
-            // Haupt-Hintergrund (tiefstes Schwarz)
-            public static Color BackgroundBlack = Color.FromArgb(10, 10, 10);   
-            // Dunkle Ebenen
-            public static Color BackgroundDark = Color.FromArgb(20, 20, 20);
-            public static Color BackgroundDarkElevated = Color.FromArgb(25, 25, 25);
-            // Mittlere Ebenen
-            public static Color BackgroundMedium = Color.FromArgb(35, 35, 35);
-            public static Color BackgroundMediumElevated = Color.FromArgb(40, 40, 40);
-            // Helle Ebenen (für Hover/Active States)
-            public static Color BackgroundLight = Color.FromArgb(50, 50, 50);
-            public static Color BackgroundLighter = Color.FromArgb(60, 60, 60);
+            public static readonly Color PrimaryDarkDark = Color.FromArgb(0, 30, 60);
+            public static readonly Color PrimaryDark = Color.FromArgb(0, 50, 90);
+            public static readonly Color Primary = Color.FromArgb(0, 90, 158);
+            public static readonly Color PrimaryLight = Color.FromArgb(0, 120, 215);
 
+            public static readonly Color SecondaryDark = Color.FromArgb(20, 80, 140);
+            public static readonly Color Secondary = Color.FromArgb(30, 100, 180);
+            public static readonly Color SecondaryLight = Color.FromArgb(50, 130, 210);
 
-            // ===== AKZENTFARBEN (Dunkelblau-Töne) =====
+            public static readonly Color GreenDark = Color.FromArgb(20, 100, 50);
+            public static readonly Color Green = Color.FromArgb(30, 150, 70);
+            public static readonly Color GreenLight = Color.FromArgb(40, 180, 90);
+            public static readonly Color GreenLighter = Color.FromArgb(50, 210, 110);
 
-            // Primäres Blau (Hauptakzent)
-            public static Color PrimaryDarkDark = Color.FromArgb(0, 30, 60);
-            public static Color PrimaryDark = Color.FromArgb(0, 50, 90);        // Dunkleres Blau
-            public static Color Primary = Color.FromArgb(0, 90, 158);           // Dunkelblau
-            public static Color PrimaryLight = Color.FromArgb(0, 120, 215);     // Helleres Blau
+            public static readonly Color YellowDark = Color.FromArgb(170, 125, 0);
+            public static readonly Color Yellow = Color.FromArgb(200, 150, 0);
+            public static readonly Color YellowLight = Color.FromArgb(230, 180, 30);
+            public static readonly Color YellowLighter = Color.FromArgb(255, 210, 60);
 
-            // Sekundäres Blau (für weniger wichtige Elemente)
-            public static Color SecondaryDark = Color.FromArgb(20, 80, 140);
-            public static Color Secondary = Color.FromArgb(30, 100, 180);
-            public static Color SecondaryLight = Color.FromArgb(50, 130, 210);
+            public static readonly Color RedDark = Color.FromArgb(150, 20, 30);
+            public static readonly Color Red = Color.FromArgb(180, 40, 50);
+            public static readonly Color RedLight = Color.FromArgb(210, 60, 70);
 
+            public static readonly Color White = Color.White;
+            public static readonly Color TextPrimary = Color.FromArgb(240, 240, 240);
+            public static readonly Color TextPrimaryDim = Color.FromArgb(220, 220, 220);
+            public static readonly Color TextSecondary = Color.FromArgb(180, 180, 180);
+            public static readonly Color TextTertiary = Color.FromArgb(140, 140, 140);
+            public static readonly Color TextDisabled = Color.FromArgb(100, 100, 100);
+            public static readonly Color TextMuted = Color.FromArgb(120, 120, 120);
 
-            // ===== FUNKTIONSFARBEN =====
+            public static readonly Color BorderDark = Color.FromArgb(50, 50, 50);
+            public static readonly Color BorderMedium = Color.FromArgb(70, 70, 70);
+            public static readonly Color BorderLight = Color.FromArgb(90, 90, 90);
+            public static readonly Color BorderPrimary = Color.FromArgb(0, 100, 180);
+            public static readonly Color BorderRed = Color.FromArgb(180, 40, 50);
 
-            // Erfolg/Positive Aktionen
-            public static Color GreenDark = Color.FromArgb(20, 100, 50);        // Dunkles Grün
-            public static Color Green = Color.FromArgb(30, 150, 70);      
-            public static Color GreenLight = Color.FromArgb(40, 180, 90);
-            public static Color GreenLighter = Color.FromArgb(50, 210, 110);
+            public static readonly Color HoverOverlay = Color.FromArgb(30, 30, 30, 80);
+            public static readonly Color ActiveOverlay = Color.FromArgb(40, 40, 40, 120);
+            public static readonly Color Selection = Color.FromArgb(0, 90, 158, 60);
 
-
-            // Warnungen
-            public static Color YellowDark = Color.FromArgb(170, 125, 0);
-            public static Color Yellow = Color.FromArgb(200, 150, 0);
-            public static Color YellowLight = Color.FromArgb(230, 180, 30);
-            public static Color YellowLighter = Color.FromArgb(255, 210, 60);
-
-            // Fehler/Negative Aktionen
-            public static Color RedDark = Color.FromArgb(150, 20, 30);          // Dunkles Rot
-            public static Color Red = Color.FromArgb(180, 40, 50);        
-            public static Color RedLight = Color.FromArgb(210, 60, 70);
-
-
-            // ===== TEXTFARBEN =====
-
-            // Primärer Text (am hellsten)
-            public static Color White = Color.White;
-            public static Color TextPrimary = Color.FromArgb(240, 240, 240); // Fast weiß
-            public static Color TextPrimaryDim = Color.FromArgb(220, 220, 220);
-
-            // Sekundärer Text (für weniger wichtige Texte)
-            public static Color TextSecondary = Color.FromArgb(180, 180, 180);
-            public static Color TextTertiary = Color.FromArgb(140, 140, 140);
-
-            // Deaktivierter Text
-            public static Color TextDisabled = Color.FromArgb(100, 100, 100);
-
-
-            // ===== RAHMEN & LINIEN =====
-
-            // Rahmen für dunkle Hintergründe
-            public static Color BorderDark = Color.FromArgb(50, 50, 50);
-            public static Color BorderMedium = Color.FromArgb(70, 70, 70);
-            public static Color BorderLight = Color.FromArgb(90, 90, 90);
-
-            // Spezielle Rahmen
-            public static Color BorderPrimary = Color.FromArgb(0, 100, 180); // Blauer Rahmen
-            public static Color BorderRed = Color.FromArgb(180, 40, 50);   // Roter Rahmen
-
-
-            // ===== ÜBERLAGERUNGEN & EFFEKTE =====
-
-            // Hover-Effekte
-            public static Color HoverOverlay = Color.FromArgb(30, 30, 30, 80);
-            public static Color ActiveOverlay = Color.FromArgb(40, 40, 40, 120);
-
-            // Auswahl-Highlight
-            public static Color Selection = Color.FromArgb(0, 90, 158, 60); // Transparentes Blau
-
-            // Schatten/Transparenz
-            public static Color Transparent = Color.Transparent;
-            public static Color OverlayDark = Color.FromArgb(0, 0, 0, 180);
-            public static Color OverlayMedium = Color.FromArgb(0, 0, 0, 120);
-            public static Color OverlayLight = Color.FromArgb(0, 0, 0, 60);
-            public static Color TextMuted = Color.FromArgb(120, 120, 120);
+            public static readonly Color Transparent = Color.Transparent;
+            public static readonly Color OverlayDark = Color.FromArgb(0, 0, 0, 180);
+            public static readonly Color OverlayMedium = Color.FromArgb(0, 0, 0, 120);
+            public static readonly Color OverlayLight = Color.FromArgb(0, 0, 0, 60);
         }
 
-        // Schriftarten
         public static class Fonts
         {
-            public static Font Title = new Font("Segoe UI", 10, FontStyle.Bold);
-            public static Font Normal = new Font("Segoe UI", 9);
-            public static Font Small = new Font("Segoe UI", 8);
-            public static Font Monospace = new Font("Consolas", 9);
-            public static Font Icon = new Font("Segoe UI Symbol", 13f);
+            public static readonly Font Title = new Font("Segoe UI", 10, FontStyle.Bold);
+            public static readonly Font Normal = new Font("Segoe UI", 9);
+            public static readonly Font Small = new Font("Segoe UI", 8);
+            public static readonly Font Monospace = new Font("Consolas", 9);
+            public static readonly Font Icon = new Font("Segoe UI Symbol", 13f);
+            public static readonly Font Emoji = new Font("Segoe UI Emoji", 11);
         }
 
-        // Button-Styles
         public static class Buttons
         {
+            private static readonly Size DefaultButtonSize = new Size(30, 30);
+            private static readonly Size DefaultIconButtonSize = new Size(32, 32);
 
-            // Standard-Button
-            public static Button CreateStandard(string text = "", string tooltip = "", Size? size = null, bool isIcon = false)
+            public static Button CreateStandard(
+                string text = "",
+                string tooltip = "",
+                Size? size = null,
+                bool isIcon = false)
             {
-                var button = new Button
-                {
-                    Text = text,
-                    Size = size ?? new Size(30, 30),
-                    FlatStyle = FlatStyle.Flat,
-                    BackColor = Colors.BackgroundMedium,
-                    ForeColor = Colors.TextPrimary,
-                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
-                    TabStop = false,
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(0),
-                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-                button.FlatAppearance.BorderSize = 1;
-                button.FlatAppearance.BorderColor = Colors.BorderDark;
-                button.FlatAppearance.MouseOverBackColor = Colors.BackgroundLight;
-                button.FlatAppearance.MouseDownBackColor = Colors.Primary;
-                SetEnabledStyle(button,
-                    Colors.BackgroundMedium,     // enabled BackColor
-                    Colors.TextPrimary,         // enabled ForeColor
-                    Colors.BackgroundMedium,    // disabled BackColor
-                    Colors.TextPrimary);        // disabled ForeColor
-
-                AddToolTip(button, tooltip);
-
-                return button;
+                return CreateStyledButton(
+                    text,
+                    tooltip,
+                    size,
+                    isIcon,
+                    Colors.BackgroundMedium,
+                    Colors.TextPrimary,
+                    Colors.BorderDark,
+                    1,
+                    Colors.BackgroundLight,
+                    Colors.Primary,
+                    Colors.BackgroundMedium,
+                    Colors.TextPrimary);
             }
 
-            // Primary-Button (hervorstehend)
-            public static Button CreatePrimary(string text = "", string tooltip = "", Size? size = null, bool isIcon = false)
+            public static Button CreatePrimary(
+                string text = "",
+                string tooltip = "",
+                Size? size = null,
+                bool isIcon = false)
             {
-                var button = new Button
-                {
-                    Text = text,
-                    Size = size ?? new Size(30, 30),
-                    FlatStyle = FlatStyle.Flat,
-                    BackColor = Colors.PrimaryDark,
-                    ForeColor = Colors.TextPrimary,
-                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
-                    TabStop = false,
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(0),
-                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-                button.FlatAppearance.BorderSize = 0;
-                button.FlatAppearance.BorderColor = Colors.BorderDark;
-                button.FlatAppearance.MouseOverBackColor = Colors.Primary;
-                button.FlatAppearance.MouseDownBackColor = Colors.PrimaryLight;
-                SetEnabledStyle(button,
-                    Colors.PrimaryDark,             // enabled BackColor
-                    Colors.TextPrimary,         // enabled ForeColor
-                    Colors.PrimaryDark,         // disabled BackColor
-                    Colors.TextPrimary);        // disabled ForeColor
-
-                AddToolTip(button, tooltip);
-
-                return button;
-            }
-            public static Button CreateGreen(string text = "", string tooltip = "", Size? size = null, bool isIcon = false)
-            {
-                var button = new Button
-                {
-                    Text = text,
-                    Size = size ?? new Size(30, 30),
-                    FlatStyle = FlatStyle.Flat,
-                    BackColor = Colors.GreenDark,
-                    ForeColor = Colors.TextPrimary,
-                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
-                    TabStop = false,
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(0),
-                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-                button.FlatAppearance.BorderSize = 1;
-                button.FlatAppearance.BorderColor = Colors.BorderDark;
-                button.FlatAppearance.MouseOverBackColor = Colors.Green;
-                button.FlatAppearance.MouseDownBackColor = Colors.GreenLight;
-                SetEnabledStyle(button,
-                    Colors.GreenDark,           // enabled BackColor
-                    Colors.TextPrimary,         // enabled ForeColor
-                    Colors.PrimaryDark,         // disabled BackColor
-                    Colors.TextPrimary);        // disabled ForeColor
-
-                AddToolTip(button, tooltip);
-
-                return button;
+                return CreateStyledButton(
+                    text,
+                    tooltip,
+                    size,
+                    isIcon,
+                    Colors.PrimaryDark,
+                    Colors.TextPrimary,
+                    Colors.BorderDark,
+                    0,
+                    Colors.Primary,
+                    Colors.PrimaryLight,
+                    Colors.PrimaryDark,
+                    Colors.TextPrimary);
             }
 
-            // Danger-Button (für Close/Actions)
-            public static Button CreateDanger(string text = "", string tooltip = "", Size? size = null, bool isIcon = false)
+            public static Button CreateGreen(
+                string text = "",
+                string tooltip = "",
+                Size? size = null,
+                bool isIcon = false)
             {
-                var button = new Button
-                {
-                    Text = text,
-                    Size = size ?? new Size(30, 30),
-                    FlatStyle = FlatStyle.Flat,
-                    BackColor = Colors.RedDark,
-                    ForeColor = Colors.TextPrimary,
-                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
-                    TabStop = false,
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(0),
-                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-                button.FlatAppearance.BorderSize = 1;
-                button.FlatAppearance.BorderColor = Colors.BorderDark;
-                button.FlatAppearance.MouseOverBackColor = Colors.Red;
-                button.FlatAppearance.MouseDownBackColor = Colors.RedLight;
-                SetEnabledStyle(button,
-                    Colors.RedDark,             // enabled BackColor
-                    Colors.TextPrimary,         // enabled ForeColor
-                    Colors.PrimaryDark,         // disabled BackColor
-                    Colors.TextDisabled);        // disabled ForeColor
-
-                AddToolTip(button, tooltip);
-
-                return button;
+                return CreateStyledButton(
+                    text,
+                    tooltip,
+                    size,
+                    isIcon,
+                    Colors.GreenDark,
+                    Colors.TextPrimary,
+                    Colors.BorderDark,
+                    1,
+                    Colors.Green,
+                    Colors.GreenLight,
+                    Colors.GreenDark,
+                    Colors.TextPrimary);
             }
-            public static Button CreateBrowseInFolder(string tooltip = "", Size? size = null, bool isIcon = true)
+
+            public static Button CreateDanger(
+                string text = "",
+                string tooltip = "",
+                Size? size = null,
+                bool isIcon = false)
             {
-                var button = new Button
-                {
-                    Text = "📁",
-                    Size = size ?? new Size(30, 30),
-                    FlatStyle = FlatStyle.Flat,
-                    BackColor = Colors.Yellow,
-                    ForeColor = Colors.TextPrimary,
-                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
-                    TabStop = false,
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(0),
-                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-                button.FlatAppearance.BorderSize = 1;
-                button.FlatAppearance.BorderColor = Colors.BorderDark;
-                button.FlatAppearance.MouseOverBackColor = Colors.YellowLight;
-                button.FlatAppearance.MouseDownBackColor = Colors.YellowLighter;
-                SetEnabledStyle(button,
-                    Colors.Yellow,              // enabled BackColor
-                    Colors.TextPrimary,         // enabled ForeColor
-                    Colors.Primary,             // disabled BackColor
-                    Colors.TextDisabled);       // disabled ForeColor
-                AddToolTip(button, tooltip);
-
-                return button;
+                return CreateStyledButton(
+                    text,
+                    tooltip,
+                    size,
+                    isIcon,
+                    Colors.RedDark,
+                    Colors.TextPrimary,
+                    Colors.BorderDark,
+                    1,
+                    Colors.Red,
+                    Colors.RedLight,
+                    Colors.RedDark,
+                    Colors.TextDisabled);
             }
+
+            public static Button CreateBrowseInFolder(
+                string tooltip = "",
+                Size? size = null,
+                bool isIcon = true)
+            {
+                return CreateStyledButton(
+                    "📁",
+                    tooltip,
+                    size,
+                    isIcon,
+                    Colors.Yellow,
+                    Colors.TextPrimary,
+                    Colors.BorderDark,
+                    1,
+                    Colors.YellowLight,
+                    Colors.YellowLighter,
+                    Colors.Yellow,
+                    Colors.TextDisabled);
+            }
+
             public static Button CreateIconButton(string text, int size = 32)
             {
-                var button = new Button
+                Button button = new Button
                 {
                     Text = text,
-                    Width = size,
-                    Height = size,
+                    Size = size > 0 ? new Size(size, size) : DefaultIconButtonSize,
                     FlatStyle = FlatStyle.Flat,
                     BackColor = Color.FromArgb(40, 255, 255, 255),
                     ForeColor = Colors.TextPrimary,
-                    Font = new Font("Segoe UI Emoji", 11),
+                    Font = Fonts.Emoji,
                     Cursor = Cursors.Hand,
-                    Margin = new Padding(4)
+                    Margin = new Padding(4),
+                    TextAlign = ContentAlignment.MiddleCenter
                 };
 
                 button.FlatAppearance.BorderSize = 0;
                 button.FlatAppearance.MouseOverBackColor = Color.FromArgb(70, 255, 255, 255);
                 button.FlatAppearance.MouseDownBackColor = Color.FromArgb(90, 255, 255, 255);
 
-                button.Resize += (s, e) =>
+                button.Resize += OnRoundIconButtonResize;
+                ApplyRoundRegion(button);
+
+                return button;
+            }
+
+            private static Button CreateStyledButton(
+                string text,
+                string tooltip,
+                Size? size,
+                bool isIcon,
+                Color backColor,
+                Color foreColor,
+                Color borderColor,
+                int borderSize,
+                Color mouseOverBackColor,
+                Color mouseDownBackColor,
+                Color disabledBackColor,
+                Color disabledForeColor)
+            {
+                Button button = new Button
                 {
-                    var path = new System.Drawing.Drawing2D.GraphicsPath();
-                    path.AddEllipse(0, 0, button.Width, button.Height);
-                    button.Region = new Region(path);
+                    Text = text ?? "",
+                    Size = size ?? DefaultButtonSize,
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = backColor,
+                    ForeColor = foreColor,
+                    Font = isIcon ? Fonts.Icon : Fonts.Normal,
+                    TabStop = false,
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0),
+                    Padding = isIcon ? new Padding(0) : new Padding(6, 0, 6, 0),
+                    TextAlign = ContentAlignment.MiddleCenter
                 };
+
+                button.FlatAppearance.BorderSize = borderSize;
+                button.FlatAppearance.BorderColor = borderColor;
+                button.FlatAppearance.MouseOverBackColor = mouseOverBackColor;
+                button.FlatAppearance.MouseDownBackColor = mouseDownBackColor;
+
+                SetEnabledStyle(button, backColor, foreColor);
+
+                AddToolTip(button, tooltip);
 
                 return button;
             }
 
             private static void SetEnabledStyle(
+                Button button,
+                Color enabledBackColor,
+                Color enabledForeColor)
+            {
+                if (button == null)
+                    return;
+
+                Color disabledBackColor = GetDisabledBackColor(enabledBackColor);
+                Color disabledForeColor = Colors.TextDisabled;
+
+                ApplyEnabledStyle(
+                    button,
+                    enabledBackColor,
+                    enabledForeColor,
+                    disabledBackColor,
+                    disabledForeColor);
+
+                button.EnabledChanged += delegate
+                {
+                    ApplyEnabledStyle(
+                        button,
+                        enabledBackColor,
+                        enabledForeColor,
+                        disabledBackColor,
+                        disabledForeColor);
+                };
+            }
+
+            private static Color Darken(Color color, double factor)
+            {
+                factor = Math.Max(0, Math.Min(1, factor));
+
+                return Color.FromArgb(
+                    color.A,
+                    Math.Max(0, Math.Min(255, (int)(color.R * factor))),
+                    Math.Max(0, Math.Min(255, (int)(color.G * factor))),
+                    Math.Max(0, Math.Min(255, (int)(color.B * factor))));
+            }
+
+            private static Color GetDisabledBackColor(Color enabledBackColor)
+            {
+                return Darken(enabledBackColor, 0.65);
+            }
+
+            private static void ApplyEnabledStyle(
                 Button button,
                 Color enabledBackColor,
                 Color enabledForeColor,
@@ -319,42 +307,69 @@ namespace SmartRoutine.UI.Helpers
                 if (button == null)
                     return;
 
-                void Apply()
-                {
-                    button.BackColor = button.Enabled
-                        ? enabledBackColor
-                        : disabledBackColor;
+                button.BackColor = button.Enabled
+                    ? enabledBackColor
+                    : disabledBackColor;
 
-                    button.ForeColor = button.Enabled
-                        ? enabledForeColor
-                        : disabledForeColor;
-                }
-
-                button.EnabledChanged += (s, e) => Apply();
-
-                Apply();
+                button.ForeColor = button.Enabled
+                    ? enabledForeColor
+                    : disabledForeColor;
             }
 
             private static void AddToolTip(Button button, string tooltip)
             {
-                // Tooltip hinzufügen
-                if (!string.IsNullOrEmpty(tooltip))
+                if (button == null || string.IsNullOrWhiteSpace(tooltip))
+                    return;
+
+                ToolTip toolTip = ToolTips.CreateToolTip();
+                toolTip.SetToolTip(button, tooltip);
+
+                button.Disposed += delegate
                 {
-                    var toolTip = ToolTips.CreateToolTip();
-                    toolTip.SetToolTip(button, tooltip);
-                }
+                    toolTip.Dispose();
+                };
             }
 
+            private static void OnRoundIconButtonResize(object sender, EventArgs e)
+            {
+                Button button = sender as Button;
+
+                if (button == null)
+                    return;
+
+                ApplyRoundRegion(button);
+            }
+
+            private static void ApplyRoundRegion(Button button)
+            {
+                if (button == null || button.Width <= 0 || button.Height <= 0)
+                    return;
+
+                Region oldRegion = button.Region;
+                GraphicsPath path = new GraphicsPath();
+
+                try
+                {
+                    path.AddEllipse(0, 0, button.Width, button.Height);
+                    button.Region = new Region(path);
+                }
+                finally
+                {
+                    path.Dispose();
+
+                    if (oldRegion != null)
+                        oldRegion.Dispose();
+                }
+            }
         }
 
-        // Label-Styles
         public static class Labels
         {
             public static Label CreateTitle(string text = "")
             {
                 return new Label
                 {
-                    Text = text,
+                    Text = text ?? "",
                     ForeColor = Colors.TextPrimary,
                     Font = Fonts.Title,
                     BackColor = Colors.BackgroundDark,
@@ -370,7 +385,7 @@ namespace SmartRoutine.UI.Helpers
             {
                 return new Label
                 {
-                    Text = text,
+                    Text = text ?? "",
                     ForeColor = Colors.TextSecondary,
                     Font = Fonts.Normal,
                     BackColor = Color.Transparent,
@@ -387,7 +402,7 @@ namespace SmartRoutine.UI.Helpers
             {
                 return new Label
                 {
-                    Text = text,
+                    Text = text ?? "",
                     ForeColor = Colors.TextMuted,
                     Font = Fonts.Small,
                     BackColor = Color.Transparent,
@@ -396,54 +411,55 @@ namespace SmartRoutine.UI.Helpers
             }
         }
 
-        // TextBox-Styles
         public static class TextBoxes
         {
             public static TextBox CreateStandard(string text = "", string placeholder = "")
             {
-                var textBox = new TextBox
+                TextBox textBox = new TextBox
                 {
-                    Text = text,
+                    Text = text ?? "",
                     BackColor = Colors.BackgroundMedium,
                     ForeColor = Colors.TextPrimary,
                     BorderStyle = BorderStyle.FixedSingle,
                     Font = Fonts.Normal
                 };
 
-                if (!string.IsNullOrEmpty(placeholder))
-                {
+                if (!string.IsNullOrWhiteSpace(placeholder))
                     SetPlaceholder(textBox, placeholder);
-                }
 
                 return textBox;
             }
 
             private static void SetPlaceholder(TextBox textBox, string placeholder)
             {
-                textBox.Text = placeholder;
+                if (textBox == null)
+                    return;
+
+                string placeholderText = placeholder ?? "";
+
+                textBox.Text = placeholderText;
                 textBox.ForeColor = Colors.TextMuted;
 
-                textBox.GotFocus += (s, e) =>
+                textBox.GotFocus += delegate
                 {
-                    if (textBox.Text == placeholder)
-                    {
-                        textBox.Text = "";
-                        textBox.ForeColor = Colors.TextPrimary;
-                    }
+                    if (textBox.Text != placeholderText)
+                        return;
+
+                    textBox.Text = "";
+                    textBox.ForeColor = Colors.TextPrimary;
                 };
 
-                textBox.LostFocus += (s, e) =>
+                textBox.LostFocus += delegate
                 {
-                    if (string.IsNullOrWhiteSpace(textBox.Text))
-                    {
-                        textBox.Text = placeholder;
-                        textBox.ForeColor = Colors.TextMuted;
-                    }
+                    if (!string.IsNullOrWhiteSpace(textBox.Text))
+                        return;
+
+                    textBox.Text = placeholderText;
+                    textBox.ForeColor = Colors.TextMuted;
                 };
             }
         }
 
-        // ComboBox-Styles
         public static class ComboBoxes
         {
             public static ComboBox CreateStandard(ComboBoxStyle comboBoxStyle)
@@ -459,45 +475,34 @@ namespace SmartRoutine.UI.Helpers
             }
         }
 
-        // Panel-Styles
         public static class Panels
         {
             public static Panel CreateDark()
             {
-                return new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    BackColor = Colors.BackgroundDark,
-                    BorderStyle = BorderStyle.None
-                };
+                return CreatePanel(Colors.BackgroundDark, DockStyle.Fill);
             }
 
             public static Panel CreateMedium()
             {
-                return new Panel
-                {
-                    Dock = DockStyle.Fill,
-                    BackColor = Colors.BackgroundMedium,
-                    BorderStyle = BorderStyle.None
-                };
+                return CreatePanel(Colors.BackgroundMedium, DockStyle.Fill);
             }
 
             public static Panel CreateElevated()
             {
-                return new Panel
-                {
-                    BackColor = Colors.BackgroundMediumElevated,
-                    Margin = new Padding(0),
-                    Padding = new Padding(0),
-                    Dock = DockStyle.Fill
-                };
+                return CreatePanel(Colors.BackgroundMediumElevated, DockStyle.Fill);
             }
 
             public static Panel CreateTransparent()
             {
+                return CreatePanel(Color.Transparent, DockStyle.None);
+            }
+
+            private static Panel CreatePanel(Color backColor, DockStyle dock)
+            {
                 return new Panel
                 {
-                    BackColor = Color.Transparent,
+                    Dock = dock,
+                    BackColor = backColor,
                     BorderStyle = BorderStyle.None,
                     Padding = new Padding(0),
                     Margin = new Padding(0)
@@ -505,100 +510,130 @@ namespace SmartRoutine.UI.Helpers
             }
         }
 
-        // CheckBox-Styles
         public static class CheckBoxes
         {
-            public static CheckBox CreateStandard(string text = "", bool checkedState = true)
+            public static CheckBox CreateStandard(
+                string text = "",
+                bool checkedState = true)
             {
                 return new CheckBox
                 {
-                    Text = text,
+                    Text = text ?? "",
+                    Checked = checkedState,
                     ForeColor = Colors.TextSecondary,
                     BackColor = Color.Transparent,
                     Font = Fonts.Normal,
                     FlatStyle = FlatStyle.Flat
                 };
             }
-            // Compact CheckBox (ohne Text, nur Kontrollkästchen)
+
             public static CheckBox CreateCompact(bool checkedState = true)
             {
-                var checkBox = CreateStandard("", checkedState);
+                CheckBox checkBox = CreateStandard("", checkedState);
                 checkBox.Size = new Size(25, 25);
+
                 return checkBox;
             }
         }
-        // ToggleSwitches-Styles
+
         public static class ToggleSwitches
         {
-            public static ToggleSwitch CreateStandard(bool checkedState = true, string tooltipChecked = null, string tooltipUnchecked = null)
+            public static ToggleSwitch CreateStandard(
+                bool checkedState = true,
+                string tooltipChecked = null,
+                string tooltipUnchecked = null)
             {
-                return new ToggleSwitch
-                {
-                    Checked = checkedState,
-                    Size = new Size(45, 25),
-                    ToolTipTextChecked = tooltipChecked,
-                    ToolTipTextUnchecked = tooltipUnchecked,
-                    BackColor = Colors.Transparent
-                };
+                return CreateToggleSwitch(
+                    checkedState,
+                    new Size(45, 25),
+                    tooltipChecked,
+                    tooltipUnchecked);
             }
 
-            public static ToggleSwitch CreateSmall(bool checkedState = true, string tooltipChecked = null, string tooltipUnchecked = null)
+            public static ToggleSwitch CreateSmall(
+                bool checkedState = true,
+                string tooltipChecked = null,
+                string tooltipUnchecked = null)
             {
-                return new ToggleSwitch
-                {
-                    Checked = checkedState,
-                    Size = new Size(35, 20),
-                    ToolTipTextChecked = tooltipChecked,
-                    ToolTipTextUnchecked = tooltipUnchecked,
-                    BackColor = Colors.Transparent
-                };
+                return CreateToggleSwitch(
+                    checkedState,
+                    new Size(35, 20),
+                    tooltipChecked,
+                    tooltipUnchecked);
             }
 
-            public static ToggleSwitch CreateLarge(bool checkedState = true, string tooltipChecked = null, string tooltipUnchecked = null)
+            public static ToggleSwitch CreateLarge(
+                bool checkedState = true,
+                string tooltipChecked = null,
+                string tooltipUnchecked = null)
+            {
+                return CreateToggleSwitch(
+                    checkedState,
+                    new Size(55, 30),
+                    tooltipChecked,
+                    tooltipUnchecked);
+            }
+
+            private static ToggleSwitch CreateToggleSwitch(
+                bool checkedState,
+                Size size,
+                string tooltipChecked,
+                string tooltipUnchecked)
             {
                 return new ToggleSwitch
                 {
                     Checked = checkedState,
-                    Size = new Size(55, 30),
+                    Size = size,
                     ToolTipTextChecked = tooltipChecked,
                     ToolTipTextUnchecked = tooltipUnchecked,
                     BackColor = Colors.Transparent
                 };
             }
         }
+
         public static class TableLayoutPanels
         {
             public static TableLayoutPanel CreateStandard(int columnCount, int rowCount)
             {
-                return new TableLayoutPanel
-                {
-                    ColumnCount = columnCount,
-                    RowCount = rowCount,
-                    BackColor = Colors.BackgroundMediumElevated
-                };
+                return CreateTableLayoutPanel(
+                    columnCount,
+                    rowCount,
+                    Colors.BackgroundMediumElevated);
             }
+
             public static TableLayoutPanel CreateDark(int columnCount, int rowCount)
+            {
+                return CreateTableLayoutPanel(
+                    columnCount,
+                    rowCount,
+                    Colors.BackgroundDark);
+            }
+
+            private static TableLayoutPanel CreateTableLayoutPanel(
+                int columnCount,
+                int rowCount,
+                Color backColor)
             {
                 return new TableLayoutPanel
                 {
-                    ColumnCount = columnCount,
-                    RowCount = rowCount,
-                    BackColor = Colors.BackgroundDark
+                    ColumnCount = Math.Max(0, columnCount),
+                    RowCount = Math.Max(0, rowCount),
+                    BackColor = backColor,
+                    Margin = new Padding(0),
+                    Padding = new Padding(0)
                 };
             }
         }
 
-        // ToolTip-Styles
         public static class ToolTips
         {
             public static ToolTip CreateToolTip(string text = "")
             {
                 return new ToolTip
                 {
-                    ToolTipTitle = text,
+                    ToolTipTitle = text ?? "",
                     BackColor = Colors.BackgroundMedium,
                     ForeColor = Colors.TextPrimary,
-
                     AutoPopDelay = 10000,
                     InitialDelay = 1000,
                     ReshowDelay = 300,
