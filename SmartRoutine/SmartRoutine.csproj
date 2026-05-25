@@ -201,9 +201,6 @@
     <Compile Include="UI\Forms\BorderlessResizableForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="UI\Forms\BorderlessResizableForm.Designer.cs">
-      <DependentUpon>BorderlessResizableForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="UI\Helpers\FormDragHandle.cs" />
     <Compile Include="UI\Helpers\ToggleSwitch.cs">
       <SubType>Component</SubType>
