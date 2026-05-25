@@ -48,7 +48,11 @@ namespace SmartRoutine.UI.Controls
         public ContentAlignment TitleTextAlign
         {
             get { return _titleLabel.TextAlign; }
-            set { _titleLabel.TextAlign = value; }
+            set
+            {
+                _titleLabel.TextAlign = value;
+                UpdateLayout();
+            }
         }
 
         public bool ShowMinimizeButton
@@ -190,7 +194,7 @@ namespace SmartRoutine.UI.Controls
             return new Label
             {
                 Text = title ?? "",
-                Dock = DockStyle.Fill,
+                AutoSize = false,
                 BackColor = backColor,
                 ForeColor = UIStyles.Colors.TextPrimary,
                 Font = UIStyles.Fonts.Title,
@@ -276,7 +280,7 @@ namespace SmartRoutine.UI.Controls
 
         private void UpdateLayout()
         {
-            if (_closeButton == null || _maximizeButton == null || _minimizeButton == null || _iconPictureBox == null)
+            if (_closeButton == null || _maximizeButton == null || _minimizeButton == null || _iconPictureBox == null || _titleLabel == null)
                 return;
 
             int right = Width;
@@ -285,11 +289,61 @@ namespace SmartRoutine.UI.Controls
             right = PositionButtonFromRight(_maximizeButton, right);
             right = PositionButtonFromRight(_minimizeButton, right);
 
+            int left = 0;
+
             if (_iconPictureBox.Visible)
             {
                 _iconPictureBox.Location = new Point(IconLeftMargin, 0);
                 _iconPictureBox.BringToFront();
+
+                left = IconLeftMargin + IconSize;
             }
+
+            UpdateTitleLabelBounds(left, right);
+
+            _titleLabel.SendToBack();
+        }
+
+        private void UpdateTitleLabelBounds(int leftLimit, int rightLimit)
+        {
+            int labelLeft;
+            int labelWidth;
+
+            if (IsTitleAlignedLeft(_titleLabel.TextAlign))
+            {
+                labelLeft = leftLimit;
+                labelWidth = Math.Max(0, rightLimit - leftLimit);
+            }
+            else if (IsTitleAlignedRight(_titleLabel.TextAlign))
+            {
+                labelLeft = 0;
+                labelWidth = Math.Max(0, rightLimit);
+            }
+            else
+            {
+                labelLeft = 0;
+                labelWidth = Width;
+            }
+
+            _titleLabel.Bounds = new Rectangle(
+                labelLeft,
+                0,
+                labelWidth,
+                Height);
+        }
+
+        private bool IsTitleAlignedLeft(ContentAlignment alignment)
+        {
+            return alignment == ContentAlignment.TopLeft ||
+                   alignment == ContentAlignment.MiddleLeft ||
+                   alignment == ContentAlignment.BottomLeft;
+        }
+
+        private bool IsTitleAlignedRight(ContentAlignment alignment)
+        {
+            return alignment == ContentAlignment.TopRight ||
+                   alignment == ContentAlignment.MiddleRight ||
+                   alignment == ContentAlignment.BottomRight;
         }
 
         private int PositionButtonFromRight(Button button, int right)

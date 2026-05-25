@@ -62,7 +62,7 @@ namespace SmartRoutine.UI.Forms
             TitleBar = new TitleBarControl(
                 icon: icon,
                 title: title,
-                titleTextAlign: ContentAlignment.MiddleCenter,
+                titleTextAlign: ContentAlignment.MiddleLeft,
                 showMinimizeButton: showMinimize,
                 showMaximizeButton: showMaximize,
                 showCloseButton: showClose,
