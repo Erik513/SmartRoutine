@@ -7,8 +7,10 @@ namespace SmartRoutine.UI.Forms
 {
     public partial class SmartRoutineForm : BorderlessResizableForm
     {
-        protected TitleBarControl TitleBar;
-        protected Panel ContentPanel;
+        private const int TitleBarHeight = 30;
+
+        protected TitleBarControl TitleBar { get; private set; }
+        protected Panel ContentPanel { get; private set; }
 
         public SmartRoutineForm(
             Image icon = null,
@@ -19,7 +21,8 @@ namespace SmartRoutine.UI.Forms
             bool allowWindowSnapAndMaximize = true,
             Color? titleBarBackColor = null)
         {
-            InitializeSmartRoutineForm(
+            ConfigureForm();
+            CreateLayout(
                 icon,
                 title,
                 showMinimize,
@@ -29,7 +32,16 @@ namespace SmartRoutine.UI.Forms
                 titleBarBackColor);
         }
 
-        private void InitializeSmartRoutineForm(
+        private void ConfigureForm()
+        {
+            FormBorderStyle = FormBorderStyle.None;
+            BackColor = UIStyles.Colors.BackgroundDark;
+
+            if (Properties.Resources.AppIcon != null)
+                Icon = Properties.Resources.AppIcon;
+        }
+
+        private void CreateLayout(
             Image icon,
             string title,
             bool showMinimize,
@@ -38,15 +50,28 @@ namespace SmartRoutine.UI.Forms
             bool allowWindowSnapAndMaximize,
             Color? titleBarBackColor)
         {
-            FormBorderStyle = FormBorderStyle.None;
-            BackColor = UIStyles.Colors.BackgroundDark;
+            TableLayoutPanel rootLayout = CreateRootLayout();
 
-            if (Properties.Resources.AppIcon != null)
-            {
-                Icon = Properties.Resources.AppIcon;
-            }
+            TitleBar = CreateTitleBar(
+                icon,
+                title,
+                showMinimize,
+                showMaximize,
+                showClose,
+                allowWindowSnapAndMaximize,
+                titleBarBackColor);
 
-            var rootLayout = new TableLayoutPanel
+            ContentPanel = CreateContentPanel();
+
+            rootLayout.Controls.Add(TitleBar, 0, 0);
+            rootLayout.Controls.Add(ContentPanel, 0, 1);
+
+            Controls.Add(rootLayout);
+        }
+
+        private TableLayoutPanel CreateRootLayout()
+        {
+            TableLayoutPanel layout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
@@ -56,10 +81,22 @@ namespace SmartRoutine.UI.Forms
                 Padding = new Padding(0)
             };
 
-            rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, TitleBarHeight));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            TitleBar = new TitleBarControl(
+            return layout;
+        }
+
+        private TitleBarControl CreateTitleBar(
+            Image icon,
+            string title,
+            bool showMinimize,
+            bool showMaximize,
+            bool showClose,
+            bool allowWindowSnapAndMaximize,
+            Color? titleBarBackColor)
+        {
+            return new TitleBarControl(
                 icon: icon,
                 title: title,
                 titleTextAlign: ContentAlignment.MiddleLeft,
@@ -72,19 +109,17 @@ namespace SmartRoutine.UI.Forms
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0)
             };
+        }
 
-            ContentPanel = new Panel
+        private Panel CreateContentPanel()
+        {
+            return new Panel
             {
                 Dock = DockStyle.Fill,
                 BackColor = UIStyles.Colors.BackgroundDark,
                 Margin = new Padding(0),
                 Padding = new Padding(0)
             };
-
-            rootLayout.Controls.Add(TitleBar, 0, 0);
-            rootLayout.Controls.Add(ContentPanel, 0, 1);
-
-            Controls.Add(rootLayout);
         }
     }
 }
