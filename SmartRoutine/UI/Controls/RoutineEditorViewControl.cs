@@ -9,6 +9,10 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using CustomWFUI;
+using CustomWFUI.Controls;
+using SmartRoutine.UI.Helpers;
+using CustomWFUI.Forms;
+using CustomWFUI.Helpers;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -37,24 +41,23 @@ namespace SmartRoutine.UI.Controls
 
         // Linke Seite
         private TableLayoutPanel leftTlp;
-        private CustomWFUI.Controls.StyledPropertyTable routineInfoTable;
+        private StyledPropertyTable routineInfoTable;
         private TextBox txtRoutineName;
-        private CustomWFUI.Controls.StyledListBoxControl lstSteps;
+        private StyledListBoxControl lstSteps;
 
         // Rechte Seite
         private TableLayoutPanel rightTlp;
         private TableLayoutPanel rightTitleTlp;
         private Button btnExecuteStep;
         private Label lblStepNameTitle;
-        private CustomWFUI.Controls.ToggleSwitch tglStepEnabled;
+        private ToggleSwitch tglStepEnabled;
 
-        private CustomWFUI.Controls.StyledPropertyTable editorBaseTable;
+        private StyledPropertyTable editorBaseTable;
         private TextBox txtStepName;
         private TextBox txtStepDescription;
         private ComboBox cmbStepType;
-        private CustomWFUI.Controls.ToggleSwitch tglAutoStart;
-
-        private CustomWFUI.Controls.StyledPropertyTable editorOptionsTable;
+        private ToggleSwitch tglAutoStart;
+        private StyledPropertyTable editorOptionsTable;
         
         private Panel rightFillPanel;
         
@@ -65,17 +68,15 @@ namespace SmartRoutine.UI.Controls
         
         // OpenURL Controls
         private TextBox txtUrl;
-        private CustomWFUI.Controls.ToggleSwitch tglOpenInExternBrowser;
+        private ToggleSwitch tglOpenInExternBrowser;
 
         // OpenFolder Controls
         private TextBox txtFolderPath;
-        private CustomWFUI.Controls.ToggleSwitch tglOpenInNewWindow;
-
+        private ToggleSwitch tglOpenInNewWindow;
         // OpenApplication Controls
         private TextBox txtAppPath;
         private TextBox txtAppArguments;
-        private CustomWFUI.Controls.ToggleSwitch tglRunAsAdmin;
-
+        private ToggleSwitch tglRunAsAdmin;
         // OpenDocument Controls
         private TextBox txtDocumentPath;
         private Button btnBrowseDocument;
@@ -146,7 +147,7 @@ namespace SmartRoutine.UI.Controls
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            routineInfoTable = new CustomWFUI.Controls.StyledPropertyTable();
+            routineInfoTable = new StyledPropertyTable();
 
             txtRoutineName = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtRoutineName.Dock = DockStyle.Fill;
@@ -156,7 +157,7 @@ namespace SmartRoutine.UI.Controls
                 "Routinenname",
                 txtRoutineName);
 
-            lstSteps = new CustomWFUI.Controls.StyledListBoxControl(
+            lstSteps = new StyledListBoxControl(
                 displayTextMember: "Name",
                 allowReorder: true,
                 showEnumeration: true,
@@ -237,7 +238,7 @@ namespace SmartRoutine.UI.Controls
 
             cmbStepType.DisplayMember = "DisplayName";
             cmbStepType.ValueMember = "Type";
-            cmbStepType.DataSource = SmartRoutine.UI.Helpers.StepTypeHelper.GetStepTypeOptions();
+            cmbStepType.DataSource = StepTypeHelper.GetStepTypeOptions();
 
             cmbStepType.SelectedIndex = -1;
             cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
@@ -252,7 +253,7 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeEditorTables()
         {
-            editorBaseTable = new CustomWFUI.Controls.StyledPropertyTable
+            editorBaseTable = new StyledPropertyTable
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true
@@ -260,7 +261,7 @@ namespace SmartRoutine.UI.Controls
 
             BuildBaseEditorTable();
 
-            editorOptionsTable = new CustomWFUI.Controls.StyledPropertyTable
+            editorOptionsTable = new StyledPropertyTable
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true
@@ -454,7 +455,7 @@ namespace SmartRoutine.UI.Controls
                 return true;
             }
 
-            if (cmbStepType.SelectedItem is SmartRoutine.UI.Helpers.StepTypeOption option)
+            if (cmbStepType.SelectedItem is StepTypeOption option)
             {
                 selectedType = option.Type;
                 return true;
@@ -489,7 +490,7 @@ namespace SmartRoutine.UI.Controls
             txtRoutineName.Text = _currentRoutine.Name;
             lblLastExecution.Text =
                 _currentRoutine.LastExecutionAt.HasValue
-                    ? $"Zuletzt gestartet: {SmartRoutine.UI.Helpers.DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
+                    ? $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
                     : "";
 
             lstSteps.SelectedIndex = -1;
@@ -687,7 +688,7 @@ namespace SmartRoutine.UI.Controls
         {
             for (int i = 0; i < cmbStepType.Items.Count; i++)
             {
-                SmartRoutine.UI.Helpers.StepTypeOption option = cmbStepType.Items[i] as SmartRoutine.UI.Helpers.StepTypeOption;
+                StepTypeOption option = cmbStepType.Items[i] as StepTypeOption;
 
                 if (option != null && option.Type == stepType)
                 {
@@ -764,11 +765,11 @@ namespace SmartRoutine.UI.Controls
 
             if (!shouldDelete)
             {
-                shouldDelete = CustomWFUI.Forms.CustomMessageBox.Show(
+                shouldDelete = CustomMessageBox.Show(
                     $"Schritt '{stepToDelete.Name}' wirklich löschen?",
                     "Bestätigen",
-                    CustomWFUI.Forms.CustomMessageBoxButtons.YesNo,
-                    CustomWFUI.Forms.CustomMessageBoxIcon.Question,
+                    CustomMessageBoxButtons.YesNo,
+                    CustomMessageBoxIcon.Question,
                     FindForm()) == DialogResult.Yes;
             }
 
@@ -782,7 +783,7 @@ namespace SmartRoutine.UI.Controls
             SaveChanges?.Invoke(this, _currentRoutine);
 
             var parentForm = this.FindForm();
-            CustomWFUI.Forms.ToastForm.ShowToast($"✓ Schritt '{stepToDelete.Name}' gelöscht", parentForm);
+            ToastForm.ShowToast($"✓ Schritt '{stepToDelete.Name}' gelöscht", parentForm);
         }
 
 
@@ -898,11 +899,11 @@ namespace SmartRoutine.UI.Controls
                 return true;
             }
 
-            CustomWFUI.Forms.CustomMessageBox.Show(
+            CustomMessageBox.Show(
                 validationError,
                 "Ausführung nicht möglich",
-                CustomWFUI.Forms.CustomMessageBoxButtons.OK,
-                CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
+                CustomMessageBoxButtons.OK,
+                CustomMessageBoxIcon.Warning,
                 FindForm());
 
             return false;
@@ -959,11 +960,11 @@ namespace SmartRoutine.UI.Controls
         }
         private DialogResult AskToSaveChanges()
         {
-            return CustomWFUI.Forms.CustomMessageBox.Show(
+            return CustomMessageBox.Show(
                 "Möchten Sie die Änderungen vor der Ausführung speichern?",
                 "Änderungen speichern",
-                CustomWFUI.Forms.CustomMessageBoxButtons.YesNoCancel,
-                CustomWFUI.Forms.CustomMessageBoxIcon.Question,
+                CustomMessageBoxButtons.YesNoCancel,
+                CustomMessageBoxIcon.Question,
                 FindForm());
         }
 
@@ -983,7 +984,7 @@ namespace SmartRoutine.UI.Controls
             txtUrl.TextChanged += TxtUrl_TextChanged;
             txtUrl.LostFocus += TxtUrl_LostFocus;
 
-            SmartRoutine.UI.Helpers.DragDropHelper.EnableTextDragDrop(txtUrl, droppedText =>
+            TextDragDropHelper.EnableTextDragDrop(txtUrl, droppedText =>
             {
                 string cleanedText = droppedText.Trim();
 
@@ -1021,8 +1022,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Ordnerpfad",
-                CustomWFUI.Controls.UIColumn.Auto(txtFolderPath),
-                CustomWFUI.Controls.UIColumn.Percent(btnBrowse, 30));
+                UIColumn.Auto(txtFolderPath),
+                UIColumn.Percent(btnBrowse, 30));
 
             tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
             tglOpenInNewWindow.Name = "tglOpenInNewWindow";
@@ -1050,8 +1051,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Programmpfad",
-                CustomWFUI.Controls.UIColumn.Auto(txtAppPath),
-                CustomWFUI.Controls.UIColumn.Percent(btnBrowse, 30));
+                UIColumn.Auto(txtAppPath),
+                UIColumn.Percent(btnBrowse, 30));
 
             txtAppArguments = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtAppArguments.Name = "txtAppArguments";
@@ -1084,8 +1085,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Dateipfad",
-                CustomWFUI.Controls.UIColumn.Auto(txtDocumentPath),
-                CustomWFUI.Controls.UIColumn.Percent(btnBrowseDocument, 30));
+                UIColumn.Auto(txtDocumentPath),
+                UIColumn.Percent(btnBrowseDocument, 30));
         }
 
         // ========== BACK BUTTON ==========
@@ -1112,11 +1113,11 @@ namespace SmartRoutine.UI.Controls
             {
                 if (!AutoConfirmDialogs)
                 {
-                    CustomWFUI.Forms.CustomMessageBox.Show(
+                    CustomMessageBox.Show(
                         "Bitte geben Sie einen Namen für die Routine ein.",
                         "Validierung",
-                        CustomWFUI.Forms.CustomMessageBoxButtons.OK,
-                        CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Warning,
                         FindForm());
                 }
 
@@ -1134,11 +1135,11 @@ namespace SmartRoutine.UI.Controls
             {
                 if (!AutoConfirmDialogs)
                 {
-                    CustomWFUI.Forms.CustomMessageBox.Show(
+                    CustomMessageBox.Show(
                         $"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
                         "Validierung",
-                        CustomWFUI.Forms.CustomMessageBoxButtons.OK,
-                        CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Warning,
                         FindForm());
                 }
 
@@ -1304,11 +1305,11 @@ namespace SmartRoutine.UI.Controls
             if (!showMessageBox || AutoConfirmDialogs)
                 return;
 
-            CustomWFUI.Forms.CustomMessageBox.Show(
+            CustomMessageBox.Show(
                 message,
                 title,
-                CustomWFUI.Forms.CustomMessageBoxButtons.OK,
-                CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
+                CustomMessageBoxButtons.OK,
+                CustomMessageBoxIcon.Warning,
                 FindForm());
         }
 
@@ -1328,7 +1329,7 @@ namespace SmartRoutine.UI.Controls
             {
                 RefreshStepsList(false);
 
-                CustomWFUI.Forms.ToastForm.ShowToast(
+                ToastForm.ShowToast(
                     $"✓ Schritt '{step.Name}' gespeichert",
                     FindForm());
             }

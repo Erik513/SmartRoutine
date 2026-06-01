@@ -6,6 +6,8 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using CustomWFUI;
+using CustomWFUI.Controls;
+using SmartRoutine.UI.Helpers;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -23,7 +25,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel mainLayout;
         private TableLayoutPanel buttonPanel;
 
-        private CustomWFUI.Controls.StyledListBoxControl lstRoutines;
+        private StyledListBoxControl lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
 
         private readonly ToolTip _routineToolTip = UIStyles.ToolTips.CreateToolTip();
@@ -75,7 +77,7 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeRoutineList()
         {
-            lstRoutines = new CustomWFUI.Controls.StyledListBoxControl(
+            lstRoutines = new StyledListBoxControl(
                 displayTextMember: "Name",
                 allowReorder: true,
                 showEnumeration: false,
@@ -320,7 +322,7 @@ namespace SmartRoutine.UI.Controls
 
             if (lstRoutines.Items[index] is Routine routine)
             {
-                string text = $"Zuletzt gestartet: {SmartRoutine.UI.Helpers.DateTimeHelper.GetRelativeTime(routine.LastExecutionAt)}";
+                string text = $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(routine.LastExecutionAt)}";
                 _routineToolTip.SetToolTip(lstRoutines.InnerListBox, text);
             }
         }

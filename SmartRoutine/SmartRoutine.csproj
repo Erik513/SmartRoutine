@@ -154,7 +154,6 @@
     </Compile>
     <Compile Include="UI\Helpers\AppSettings.cs" />
     <Compile Include="UI\Helpers\DateTimeHelper.cs" />
-    <Compile Include="UI\Helpers\DragDropHelper.cs" />
     <Compile Include="Logic\Interfaces\IUrlValidationService.cs" />
     <Compile Include="Logic\Services\UrlValidationService.cs" />
     <Compile Include="UI\Helpers\StepTypeHelper.cs" />
@@ -172,8 +171,6 @@
     <Compile Include="UI\Controls\RoutinesViewControl.Designer.cs">
       <DependentUpon>RoutinesViewControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="SleepPreventer.cs" />
-    <Compile Include="UI\Helpers\FormDragHandle.cs" />
     <Compile Include="UI\Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

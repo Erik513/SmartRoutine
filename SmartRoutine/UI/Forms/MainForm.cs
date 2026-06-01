@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using CustomWFUI;
 using CustomWFUI.Forms;
 using CustomWFUI.Styles;
+using CustomWFUI.Helpers;
 
 namespace SmartRoutine.UI.Forms
 {
@@ -218,7 +219,7 @@ namespace SmartRoutine.UI.Forms
         {
             try
             {
-                CustomWFUI.Helpers.SleepPreventer.AllowSleep();
+                SleepPreventer.AllowSleep();
             }
             catch (Exception ex)
             {
