@@ -4,7 +4,6 @@ using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
 using SmartRoutine.UI.Helpers;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -27,6 +26,7 @@ namespace SmartRoutine.UI.Controls
         private RoutineStep _editingStep;
         private ToolTip _errorToolTip = UIStyles.ToolTips.CreateToolTip();
         private bool _isRefreshing = false;
+        private bool _isLoadingStep = false;
 
         // UI Controls
         private TableLayoutPanel mainTlp;
@@ -234,11 +234,10 @@ namespace SmartRoutine.UI.Controls
             cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
             cmbStepType.Dock = DockStyle.Fill;
 
-            var stepTypes = StepTypeHelper.GetStepTypeListWithEmpty();
+            cmbStepType.DisplayMember = "DisplayName";
+            cmbStepType.ValueMember = "Type";
+            cmbStepType.DataSource = StepTypeHelper.GetStepTypeOptions();
 
-            cmbStepType.DataSource = stepTypes;
-            cmbStepType.DisplayMember = "Value";
-            cmbStepType.ValueMember = "Key";
             cmbStepType.SelectedIndex = -1;
             cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
 
@@ -448,20 +447,21 @@ namespace SmartRoutine.UI.Controls
         {
             selectedType = default(StepType);
 
-            if (cmbStepType.SelectedItem is KeyValuePair<StepType, string> item)
-            {
-                selectedType = item.Key;
-                return true;
-            }
-
             if (cmbStepType.SelectedValue is StepType value)
             {
                 selectedType = value;
                 return true;
             }
 
+            if (cmbStepType.SelectedItem is StepTypeOption option)
+            {
+                selectedType = option.Type;
+                return true;
+            }
+
             return false;
         }
+
         private Image GetStepIcon(object item)
         {
             if (item is OpenUrlStep)
@@ -632,61 +632,70 @@ namespace SmartRoutine.UI.Controls
 
         private void LoadStepToEditor(RoutineStep step)
         {
-            lblStepNameTitle.Text = "Schritt bearbeiten";
+            _isLoadingStep = true;
 
-            BuildBaseEditorTable();
+            try
+            {
+                lblStepNameTitle.Text = "Schritt bearbeiten";
 
-            txtStepName.Text = step.Name;
-            txtStepDescription.Text = step.Description;
-            tglStepEnabled.Checked = step.Show;
-            tglAutoStart.Checked = step.AutoStart;
+                txtStepName.Text = step.Name;
+                txtStepDescription.Text = step.Description;
+                tglStepEnabled.Checked = step.Show;
+                tglAutoStart.Checked = step.AutoStart;
 
-            cmbStepType.SelectedIndexChanged -= CmbStepType_SelectedIndexChanged;
+                SetSelectedStepType(step.Type);
 
+                BuildBaseEditorTable();
+                BuildOptionsEditorTable();
+
+                switch (step)
+                {
+                    case OpenUrlStep urlStep:
+                        if (txtUrl != null) txtUrl.Text = urlStep.Url;
+                        if (tglOpenInExternBrowser != null) tglOpenInExternBrowser.Checked = urlStep.OpenInExternalBrowser;
+                        break;
+
+                    case OpenFolderStep folderStep:
+                        if (txtFolderPath != null) txtFolderPath.Text = folderStep.FolderPath;
+                        if (tglOpenInNewWindow != null) tglOpenInNewWindow.Checked = folderStep.OpenInNewWindow;
+                        break;
+
+                    case OpenApplicationStep appStep:
+                        if (txtAppPath != null) txtAppPath.Text = appStep.ApplicationPath;
+                        if (txtAppArguments != null) txtAppArguments.Text = appStep.Arguments;
+                        if (tglRunAsAdmin != null) tglRunAsAdmin.Checked = appStep.RunAsAdmin;
+                        break;
+
+                    case OpenDocumentStep docStep:
+                        if (txtDocumentPath != null) txtDocumentPath.Text = docStep.FilePath;
+                        break;
+                }
+
+                editorOptionsTable.Visible = true;
+                editorOptionsTable.BringToFront();
+
+                _editingStep = step;
+                SetEditorEnabled(true);
+            }
+            finally
+            {
+                _isLoadingStep = false;
+            }
+        }
+        private void SetSelectedStepType(StepType stepType)
+        {
             for (int i = 0; i < cmbStepType.Items.Count; i++)
             {
-                KeyValuePair<StepType, string> item =
-                    (KeyValuePair<StepType, string>)cmbStepType.Items[i];
+                StepTypeOption option = cmbStepType.Items[i] as StepTypeOption;
 
-                if (item.Key == step.Type)
+                if (option != null && option.Type == stepType)
                 {
                     cmbStepType.SelectedIndex = i;
-                    break;
+                    return;
                 }
             }
 
-            cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
-
-            BuildOptionsEditorTable();
-
-            switch (step)
-            {
-                case OpenUrlStep urlStep:
-                    if (txtUrl != null) txtUrl.Text = urlStep.Url;
-                    if (tglOpenInExternBrowser != null) tglOpenInExternBrowser.Checked = urlStep.OpenInExternalBrowser;
-                    break;
-
-                case OpenFolderStep folderStep:
-                    if (txtFolderPath != null) txtFolderPath.Text = folderStep.FolderPath;
-                    if (tglOpenInNewWindow != null) tglOpenInNewWindow.Checked = folderStep.OpenInNewWindow;
-                    break;
-
-                case OpenApplicationStep appStep:
-                    if (txtAppPath != null) txtAppPath.Text = appStep.ApplicationPath;
-                    if (txtAppArguments != null) txtAppArguments.Text = appStep.Arguments;
-                    if (tglRunAsAdmin != null) tglRunAsAdmin.Checked = appStep.RunAsAdmin;
-                    break;
-
-                case OpenDocumentStep docStep:
-                    if (txtDocumentPath != null) txtDocumentPath.Text = docStep.FilePath;
-                    break;
-            }
-
-            editorOptionsTable.Visible = true;
-            editorOptionsTable.BringToFront();
-
-            _editingStep = step;
-            SetEditorEnabled(true);
+            cmbStepType.SelectedIndex = -1;
         }
 
         private void SetEditorEnabled(bool enabled)
@@ -959,6 +968,9 @@ namespace SmartRoutine.UI.Controls
 
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
         {
+
+            if (_isLoadingStep)
+                return;
             BuildOptionsEditorTable();
         }
 
@@ -1144,7 +1156,10 @@ namespace SmartRoutine.UI.Controls
             if (!ValidateStepType(showMessageBox))
                 return false;
 
-            var selectedType = (StepType)cmbStepType.SelectedValue;
+            StepType selectedType;
+
+            if (!TryGetSelectedStepType(out selectedType))
+                return false;
 
             switch (selectedType)
             {
@@ -1320,10 +1335,10 @@ namespace SmartRoutine.UI.Controls
 
         private RoutineStep CreateStepFromEditor()
         {
-            if (cmbStepType.SelectedIndex == -1)
-                return null;
+            StepType selectedType;
 
-            var selectedType = (StepType)cmbStepType.SelectedValue;
+            if (!TryGetSelectedStepType(out selectedType))
+                return null;
 
             RoutineStep step;
 

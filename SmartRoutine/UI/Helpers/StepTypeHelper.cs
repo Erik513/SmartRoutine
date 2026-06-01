@@ -20,19 +20,17 @@ namespace SmartRoutine.UI.Helpers
             return new Dictionary<StepType, string>(StepTypeDisplayNames);
         }
 
-        public static List<KeyValuePair<StepType, string>> GetStepTypeListWithEmpty()
+        public static List<StepTypeOption> GetStepTypeOptions()
         {
-            List<KeyValuePair<StepType, string>> list =
-                new List<KeyValuePair<StepType, string>>();
+            List<StepTypeOption> list =
+                new List<StepTypeOption>();
 
             foreach (StepType type in Enum.GetValues(typeof(StepType)))
             {
-                string displayName;
-
-                if (!StepTypeDisplayNames.TryGetValue(type, out displayName))
-                    displayName = type.ToString();
-
-                list.Add(new KeyValuePair<StepType, string>(type, displayName));
+                list.Add(
+                    new StepTypeOption(
+                        type,
+                        GetDisplayName(type)));
             }
 
             return list;
@@ -46,6 +44,21 @@ namespace SmartRoutine.UI.Helpers
                 return displayName;
 
             return type.ToString();
+        }
+    }
+
+    public class StepTypeOption
+    {
+        public StepType Type { get; private set; }
+
+        public string DisplayName { get; private set; }
+
+        public StepTypeOption(
+            StepType type,
+            string displayName)
+        {
+            Type = type;
+            DisplayName = displayName ?? "";
         }
     }
 }
