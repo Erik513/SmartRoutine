@@ -2,7 +2,6 @@
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.TestData;
-using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

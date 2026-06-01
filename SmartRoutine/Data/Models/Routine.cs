@@ -1,5 +1,4 @@
-﻿using SmartRoutine.Logic.Services;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace SmartRoutine.Data.Models
