@@ -764,11 +764,11 @@ namespace SmartRoutine.UI.Controls
 
             if (!shouldDelete)
             {
-                shouldDelete = CustomMessageBox.Show(
+                shouldDelete = CustomWFUI.Forms.CustomMessageBox.Show(
                     $"Schritt '{stepToDelete.Name}' wirklich löschen?",
                     "Bestätigen",
-                    CustomMessageBoxButtons.YesNo,
-                    CustomMessageBoxIcon.Question,
+                    CustomWFUI.Forms.CustomMessageBoxButtons.YesNo,
+                    CustomWFUI.Forms.CustomMessageBoxIcon.Question,
                     FindForm()) == DialogResult.Yes;
             }
 
@@ -782,7 +782,7 @@ namespace SmartRoutine.UI.Controls
             SaveChanges?.Invoke(this, _currentRoutine);
 
             var parentForm = this.FindForm();
-            ToastForm.ShowToast($"✓ Schritt '{stepToDelete.Name}' gelöscht", parentForm);
+            CustomWFUI.Forms.ToastForm.ShowToast($"✓ Schritt '{stepToDelete.Name}' gelöscht", parentForm);
         }
 
 
@@ -898,11 +898,11 @@ namespace SmartRoutine.UI.Controls
                 return true;
             }
 
-            CustomMessageBox.Show(
+            CustomWFUI.Forms.CustomMessageBox.Show(
                 validationError,
                 "Ausführung nicht möglich",
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Warning,
+                CustomWFUI.Forms.CustomMessageBoxButtons.OK,
+                CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
                 FindForm());
 
             return false;
@@ -959,11 +959,11 @@ namespace SmartRoutine.UI.Controls
         }
         private DialogResult AskToSaveChanges()
         {
-            return CustomMessageBox.Show(
+            return CustomWFUI.Forms.CustomMessageBox.Show(
                 "Möchten Sie die Änderungen vor der Ausführung speichern?",
                 "Änderungen speichern",
-                CustomMessageBoxButtons.YesNoCancel,
-                CustomMessageBoxIcon.Question,
+                CustomWFUI.Forms.CustomMessageBoxButtons.YesNoCancel,
+                CustomWFUI.Forms.CustomMessageBoxIcon.Question,
                 FindForm());
         }
 
@@ -1112,11 +1112,11 @@ namespace SmartRoutine.UI.Controls
             {
                 if (!AutoConfirmDialogs)
                 {
-                    CustomMessageBox.Show(
+                    CustomWFUI.Forms.CustomMessageBox.Show(
                         "Bitte geben Sie einen Namen für die Routine ein.",
                         "Validierung",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Warning,
+                        CustomWFUI.Forms.CustomMessageBoxButtons.OK,
+                        CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
                         FindForm());
                 }
 
@@ -1134,11 +1134,11 @@ namespace SmartRoutine.UI.Controls
             {
                 if (!AutoConfirmDialogs)
                 {
-                    CustomMessageBox.Show(
+                    CustomWFUI.Forms.CustomMessageBox.Show(
                         $"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
                         "Validierung",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Warning,
+                        CustomWFUI.Forms.CustomMessageBoxButtons.OK,
+                        CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
                         FindForm());
                 }
 
@@ -1304,11 +1304,11 @@ namespace SmartRoutine.UI.Controls
             if (!showMessageBox || AutoConfirmDialogs)
                 return;
 
-            CustomMessageBox.Show(
+            CustomWFUI.Forms.CustomMessageBox.Show(
                 message,
                 title,
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Warning,
+                CustomWFUI.Forms.CustomMessageBoxButtons.OK,
+                CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
                 FindForm());
         }
 
@@ -1328,7 +1328,7 @@ namespace SmartRoutine.UI.Controls
             {
                 RefreshStepsList(false);
 
-                ToastForm.ShowToast(
+                CustomWFUI.Forms.ToastForm.ShowToast(
                     $"✓ Schritt '{step.Name}' gespeichert",
                     FindForm());
             }

@@ -146,24 +146,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="UI\Forms\CustomMessageBoxForm.cs" />
-    <Compile Include="UI\Forms\CustomMessageBoxForm.Designer.cs">
-      <DependentUpon>CustomMessageBoxForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="UI\Forms\InfoPopupForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="UI\Forms\ExecutionForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Forms\ExecutionForm.Designer.cs">
       <DependentUpon>ExecutionForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="UI\Forms\SmartRoutineForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UI\Forms\SmartRoutineForm.Designer.cs">
-      <DependentUpon>SmartRoutineForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Helpers\AppSettings.cs" />
     <Compile Include="UI\Helpers\DateTimeHelper.cs" />
@@ -186,14 +173,7 @@
       <DependentUpon>RoutinesViewControl.cs</DependentUpon>
     </Compile>
     <Compile Include="SleepPreventer.cs" />
-    <Compile Include="UI\Forms\BorderlessResizableForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="UI\Helpers\FormDragHandle.cs" />
-    <Compile Include="UI\Helpers\ToggleSwitch.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="UI\Helpers\UIStyles.cs" />
     <Compile Include="UI\Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -202,12 +182,6 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UI\Forms\ToastForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <EmbeddedResource Include="UI\Forms\BorderlessResizableForm.resx">
-      <DependentUpon>BorderlessResizableForm.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>

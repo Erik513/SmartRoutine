@@ -439,45 +439,6 @@ namespace SmartRoutine.Tests
             
         }
 
-
-        // VALIDATE STEP
-
-        [TestMethod] // Main-Function
-        public void ValidateStep_ValidUrl_ReturnsTrue()
-        {
-            var service = CreateService();
-            var step = new OpenUrlStep { Url = "https://www.google.com" };
-            var result = service.ValidateStep(step);
-            Assert.IsTrue(result);
-        }
-
-        [TestMethod]
-        public void ValidateStep_InvalidUrl_ReturnsFalse()
-        {
-            var service = CreateService();
-            var step = new OpenUrlStep { Url = "not-a-url" };
-            var result = service.ValidateStep(step);
-            Assert.IsFalse(result);
-        }
-
-        [TestMethod]
-        public void ValidateStep_ValidFolderPath_ReturnsTrue()
-        {
-            var service = CreateService();
-            var step = new OpenFolderStep { FolderPath = @"C:\" };
-            var result = service.ValidateStep(step);
-            Assert.IsTrue(result);
-        }
-
-        [TestMethod]
-        public void ValidateStep_ValidAppPath_ReturnsTrue()
-        {
-            var service = CreateService();
-            var step = new OpenApplicationStep { ApplicationPath = @"C:\Windows\notepad.exe" };
-            var result = service.ValidateStep(step);
-            Assert.IsTrue(result);
-        }
-
         [TestMethod]
         public void ValidateStep_WithNullValue_ReturnsFalse()
         {

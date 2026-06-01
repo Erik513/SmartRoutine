@@ -2,14 +2,16 @@
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
-using SmartRoutine.UI.Helpers;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using CustomWFUI;
+using CustomWFUI.Forms;
+using CustomWFUI.Styles;
 
 namespace SmartRoutine.UI.Forms
 {
-    public partial class MainForm : SmartRoutineForm
+    public partial class MainForm : StyledForm
     {
         private static readonly Size DefaultWindowSize = new Size(1024, 768);
         private static readonly Size MinimumWindowSize = new Size(800, 600);
@@ -21,15 +23,12 @@ namespace SmartRoutine.UI.Forms
         private Routine _currentRoutine;
 
         public MainForm(IRoutineService routineService)
-            : base(
-                icon: Properties.Resources.IconLogo,
-                title: "SmartRoutine",
-                showMinimize: true,
-                showMaximize: true,
-                showClose: true,
-                allowWindowSnapAndMaximize: true,
-                titleBarBackColor: UIStyles.Colors.BackgroundBlack)
-        {
+            : base(StyledFormOptions.CreateStandard(
+                "SmartRoutine",
+                ContentAlignment.MiddleLeft,
+                UIColors.BackgroundBlack,
+                Properties.Resources.IconLogo))
+            {
             if (routineService == null)
                 throw new ArgumentNullException(nameof(routineService));
 
@@ -134,11 +133,11 @@ namespace SmartRoutine.UI.Forms
             if (routine == null)
                 return;
 
-            DialogResult result = CustomMessageBox.Show(
+            DialogResult result = CustomWFUI.Forms.CustomMessageBox.Show(
                 $"Routine '{routine.Name}' wirklich löschen?",
                 "Bestätigen",
-                CustomMessageBoxButtons.YesNo,
-                CustomMessageBoxIcon.Warning,
+                CustomWFUI.Forms.CustomMessageBoxButtons.YesNo,
+                CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
                 this);
 
             if (result != DialogResult.Yes)
@@ -207,11 +206,11 @@ namespace SmartRoutine.UI.Forms
 
         private void ShowInfoMessage(string message, string title)
         {
-            CustomMessageBox.Show(
+            CustomWFUI.Forms.CustomMessageBox.Show(
                 message,
                 title,
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Info,
+                CustomWFUI.Forms.CustomMessageBoxButtons.OK,
+                CustomWFUI.Forms.CustomMessageBoxIcon.Info,
                 this);
         }
 

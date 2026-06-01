@@ -1,15 +1,16 @@
 ﻿using Microsoft.Web.WebView2.WinForms;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Services;
-using SmartRoutine.UI.Helpers;
 using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using CustomWFUI;
+using CustomWFUI.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
-    public partial class ExecutionForm : SmartRoutineForm
+    public partial class ExecutionForm : StyledForm
     {
         private const int FooterHeight = 60;
         private const int FooterInfoColumnWidth = 35;
@@ -48,9 +49,11 @@ namespace SmartRoutine.UI.Forms
             Routine routine,
             RoutineStep step,
             Func<RoutineStep, StepExecutionResult> onExecute)
-            : base(
-                title: routine != null ? $"Routine: {routine.Name}" : "Routine",
-                titleBarBackColor: UIStyles.Colors.BackgroundBlack)
+            : base(new StyledFormOptions
+            {
+                Title = routine != null ? $"Routine: {routine.Name}" : "Routine",
+                TitleBarBackColor = UIStyles.Colors.BackgroundBlack
+            })
         {
             _routine = routine;
             _specificStep = step;
@@ -79,7 +82,7 @@ namespace SmartRoutine.UI.Forms
             ConfigureForm();
 
             _toolTip = new ToolTip();
-            _infoPopup = new InfoPopupForm("Beschreibung:");
+            _infoPopup = new CustomWFUI.Forms.InfoPopupForm("Beschreibung:");
         }
 
         private void ConfigureForm()
