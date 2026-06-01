@@ -153,12 +153,6 @@
     <Compile Include="UI\Forms\InfoPopupForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="UI\Controls\StyledPropertyTable.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="UI\Controls\StyledPropertyTable.Designer.cs">
-      <DependentUpon>StyledPropertyTable.cs</DependentUpon>
-    </Compile>
     <Compile Include="UI\Forms\ExecutionForm.cs">
       <SubType>Form</SubType>
     </Compile>

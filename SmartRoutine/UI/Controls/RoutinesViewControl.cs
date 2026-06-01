@@ -1,11 +1,11 @@
 ﻿using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
-using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using CustomWFUI;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -320,7 +320,7 @@ namespace SmartRoutine.UI.Controls
 
             if (lstRoutines.Items[index] is Routine routine)
             {
-                string text = $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(routine.LastExecutionAt)}";
+                string text = $"Zuletzt gestartet: {SmartRoutine.UI.Helpers.DateTimeHelper.GetRelativeTime(routine.LastExecutionAt)}";
                 _routineToolTip.SetToolTip(lstRoutines.InnerListBox, text);
             }
         }

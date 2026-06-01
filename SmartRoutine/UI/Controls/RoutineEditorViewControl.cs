@@ -2,12 +2,13 @@
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
-using SmartRoutine.UI.Helpers;
+//using SmartRoutine.UI.Helpers;
 using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using CustomWFUI;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -36,7 +37,7 @@ namespace SmartRoutine.UI.Controls
 
         // Linke Seite
         private TableLayoutPanel leftTlp;
-        private StyledPropertyTable routineInfoTable;
+        private CustomWFUI.Controls.StyledPropertyTable routineInfoTable;
         private TextBox txtRoutineName;
         private StyledListBoxControl lstSteps;
 
@@ -45,15 +46,15 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel rightTitleTlp;
         private Button btnExecuteStep;
         private Label lblStepNameTitle;
-        private ToggleSwitch tglStepEnabled;
+        private CustomWFUI.Controls.ToggleSwitch tglStepEnabled;
 
-        private StyledPropertyTable editorBaseTable;
+        private CustomWFUI.Controls.StyledPropertyTable editorBaseTable;
         private TextBox txtStepName;
         private TextBox txtStepDescription;
         private ComboBox cmbStepType;
-        private ToggleSwitch tglAutoStart;
+        private CustomWFUI.Controls.ToggleSwitch tglAutoStart;
 
-        private StyledPropertyTable editorOptionsTable;
+        private CustomWFUI.Controls.StyledPropertyTable editorOptionsTable;
         
         private Panel rightFillPanel;
         
@@ -64,16 +65,16 @@ namespace SmartRoutine.UI.Controls
         
         // OpenURL Controls
         private TextBox txtUrl;
-        private ToggleSwitch tglOpenInExternBrowser;
+        private CustomWFUI.Controls.ToggleSwitch tglOpenInExternBrowser;
 
         // OpenFolder Controls
         private TextBox txtFolderPath;
-        private ToggleSwitch tglOpenInNewWindow;
+        private CustomWFUI.Controls.ToggleSwitch tglOpenInNewWindow;
 
         // OpenApplication Controls
         private TextBox txtAppPath;
         private TextBox txtAppArguments;
-        private ToggleSwitch tglRunAsAdmin;
+        private CustomWFUI.Controls.ToggleSwitch tglRunAsAdmin;
 
         // OpenDocument Controls
         private TextBox txtDocumentPath;
@@ -145,7 +146,7 @@ namespace SmartRoutine.UI.Controls
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            routineInfoTable = new StyledPropertyTable{};
+            routineInfoTable = new CustomWFUI.Controls.StyledPropertyTable();
 
             txtRoutineName = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtRoutineName.Dock = DockStyle.Fill;
@@ -236,7 +237,7 @@ namespace SmartRoutine.UI.Controls
 
             cmbStepType.DisplayMember = "DisplayName";
             cmbStepType.ValueMember = "Type";
-            cmbStepType.DataSource = StepTypeHelper.GetStepTypeOptions();
+            cmbStepType.DataSource = SmartRoutine.UI.Helpers.StepTypeHelper.GetStepTypeOptions();
 
             cmbStepType.SelectedIndex = -1;
             cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
@@ -251,7 +252,7 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeEditorTables()
         {
-            editorBaseTable = new StyledPropertyTable
+            editorBaseTable = new CustomWFUI.Controls.StyledPropertyTable
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true
@@ -259,7 +260,7 @@ namespace SmartRoutine.UI.Controls
 
             BuildBaseEditorTable();
 
-            editorOptionsTable = new StyledPropertyTable
+            editorOptionsTable = new CustomWFUI.Controls.StyledPropertyTable
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true
@@ -453,7 +454,7 @@ namespace SmartRoutine.UI.Controls
                 return true;
             }
 
-            if (cmbStepType.SelectedItem is StepTypeOption option)
+            if (cmbStepType.SelectedItem is SmartRoutine.UI.Helpers.StepTypeOption option)
             {
                 selectedType = option.Type;
                 return true;
@@ -488,7 +489,7 @@ namespace SmartRoutine.UI.Controls
             txtRoutineName.Text = _currentRoutine.Name;
             lblLastExecution.Text =
                 _currentRoutine.LastExecutionAt.HasValue
-                    ? $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
+                    ? $"Zuletzt gestartet: {SmartRoutine.UI.Helpers.DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
                     : "";
 
             lstSteps.SelectedIndex = -1;
@@ -686,7 +687,7 @@ namespace SmartRoutine.UI.Controls
         {
             for (int i = 0; i < cmbStepType.Items.Count; i++)
             {
-                StepTypeOption option = cmbStepType.Items[i] as StepTypeOption;
+                SmartRoutine.UI.Helpers.StepTypeOption option = cmbStepType.Items[i] as SmartRoutine.UI.Helpers.StepTypeOption;
 
                 if (option != null && option.Type == stepType)
                 {
@@ -982,7 +983,7 @@ namespace SmartRoutine.UI.Controls
             txtUrl.TextChanged += TxtUrl_TextChanged;
             txtUrl.LostFocus += TxtUrl_LostFocus;
 
-            DragDropHelper.EnableTextDragDrop(txtUrl, droppedText =>
+            SmartRoutine.UI.Helpers.DragDropHelper.EnableTextDragDrop(txtUrl, droppedText =>
             {
                 string cleanedText = droppedText.Trim();
 
@@ -1020,8 +1021,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Ordnerpfad",
-                UIColumn.Auto(txtFolderPath),
-                UIColumn.Percent(btnBrowse, 30));
+                CustomWFUI.Controls.UIColumn.Auto(txtFolderPath),
+                CustomWFUI.Controls.UIColumn.Percent(btnBrowse, 30));
 
             tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
             tglOpenInNewWindow.Name = "tglOpenInNewWindow";
@@ -1049,8 +1050,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Programmpfad",
-                UIColumn.Auto(txtAppPath),
-                UIColumn.Percent(btnBrowse, 30));
+                CustomWFUI.Controls.UIColumn.Auto(txtAppPath),
+                CustomWFUI.Controls.UIColumn.Percent(btnBrowse, 30));
 
             txtAppArguments = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtAppArguments.Name = "txtAppArguments";
@@ -1083,8 +1084,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Dateipfad",
-                UIColumn.Auto(txtDocumentPath),
-                UIColumn.Percent(btnBrowseDocument, 30));
+                CustomWFUI.Controls.UIColumn.Auto(txtDocumentPath),
+                CustomWFUI.Controls.UIColumn.Percent(btnBrowseDocument, 30));
         }
 
         // ========== BACK BUTTON ==========
