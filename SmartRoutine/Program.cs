@@ -3,6 +3,7 @@ using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
+using SmartRoutine.UI.Helpers;
 using System;
 using System.Windows.Forms;
 
@@ -19,7 +20,7 @@ namespace SmartRoutine
             Application.SetCompatibleTextRenderingDefault(false);
 
             IRoutineRepository routineRepository = new RoutineRepository();
-            IRoutineService routineService = new RoutineService(routineRepository, false);
+            IRoutineService routineService = new RoutineService(routineRepository, AppSettings.UseTestData);
 
             Application.Run(new MainForm(routineService));
         }

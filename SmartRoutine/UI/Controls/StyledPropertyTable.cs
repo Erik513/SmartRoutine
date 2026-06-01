@@ -1,23 +1,29 @@
-﻿using SmartRoutine.UI.Helpers;
+using SmartRoutine.UI.Helpers;
 using System.Drawing;
 using System.Windows.Forms;
+using static SmartRoutine.UI.Helpers.UIStyles;
 
 namespace SmartRoutine.UI.Controls
 {
     public partial class StyledPropertyTable : UserControl
     {
-        private const int LabelColumnWidth = 130;
-        private const int RowHeight = 42;
-        private const int SectionHeight = 32;
+        private const int DefaultLabelColumnWidth = 130;
+        private const int DefaultRowHeight = 42;
+        private const int DefaultSectionHeight = 32;
         private const int LabelLeftPadding = 10;
 
         private readonly TableLayoutPanel _layout;
 
         public StyledPropertyTable()
         {
-            ConfigureControl();
+            Dock = DockStyle.Top;
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            BackColor = Colors.BackgroundMedium;
+            Margin = new Padding(0);
+            Padding = new Padding(0);
 
-            _layout = CreateLayoutPanel();
+            _layout = CreateMainLayout();
 
             Controls.Add(_layout);
         }
@@ -29,27 +35,9 @@ namespace SmartRoutine.UI.Controls
             _layout.RowCount = 0;
         }
 
-        public void AddRow(
-             string labelText,
-             Control editorControl,
-             bool emphasizeLabel = false)
-        {
-            if (editorControl == null)
-                return;
-
-            int row = AddRowStyle(RowHeight);
-
-            Label label = CreateRowLabel(labelText, emphasizeLabel);
-
-            ConfigureEditorControl(editorControl);
-
-            _layout.Controls.Add(label, 0, row);
-            _layout.Controls.Add(editorControl, 1, row);
-        }
-
         public void AddSection(string title)
         {
-            int row = AddRowStyle(SectionHeight);
+            int row = AddRowStyle(DefaultSectionHeight);
 
             Label label = CreateSectionLabel(title);
 
@@ -57,19 +45,76 @@ namespace SmartRoutine.UI.Controls
             _layout.SetColumnSpan(label, 2);
         }
 
-        private void ConfigureControl()
+        public void AddRow(
+            string labelText,
+            params Control[] controls)
         {
-            Dock = DockStyle.Fill;
-            BackColor = UIStyles.Colors.BackgroundMedium;
-            Margin = new Padding(0);
-            Padding = new Padding(0);
+            UIColumn[] columns = CreateAutoColumns(controls);
+
+            AddRow(
+                labelText,
+                DefaultRowHeight,
+                columns);
         }
 
-        private TableLayoutPanel CreateLayoutPanel()
+        public void AddRow(
+            string labelText,
+            int rowHeight,
+            params Control[] controls)
+        {
+            UIColumn[] columns = CreateAutoColumns(controls);
+
+            AddRow(
+                labelText,
+                rowHeight,
+                columns);
+        }
+
+        public void AddRow(
+            string labelText,
+            params UIColumn[] columns)
+        {
+            AddRow(
+                labelText,
+                DefaultRowHeight,
+                columns);
+        }
+
+        public void AddRow(
+            string labelText,
+            int rowHeight,
+            params UIColumn[] columns)
+        {
+            int row = AddRowStyle(rowHeight);
+
+            Label label = CreateRowLabel(labelText);
+            Panel editorArea = CreateEditorAreaPanel();
+            TableLayoutPanel editorLayout = CreateEditorLayout(columns);
+
+            editorArea.Controls.Add(editorLayout);
+
+            _layout.Controls.Add(label, 0, row);
+            _layout.Controls.Add(editorArea, 1, row);
+        }
+
+        private UIColumn[] CreateAutoColumns(Control[] controls)
+        {
+            if (controls == null || controls.Length == 0)
+                return new[] { UIColumn.Auto(null) };
+
+            UIColumn[] columns = new UIColumn[controls.Length];
+
+            for (int i = 0; i < controls.Length; i++)
+                columns[i] = UIColumn.Auto(controls[i]);
+
+            return columns;
+        }
+
+        private TableLayoutPanel CreateMainLayout()
         {
             TableLayoutPanel layout = new TableLayoutPanel
             {
-                Dock = DockStyle.Top,
+                Dock = DockStyle.Fill,
                 AutoSize = true,
                 ColumnCount = 2,
                 RowCount = 0,
@@ -78,10 +123,95 @@ namespace SmartRoutine.UI.Controls
                 Margin = new Padding(0)
             };
 
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, LabelColumnWidth));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.ColumnStyles.Add(
+                new ColumnStyle(
+                    SizeType.Absolute,
+                    DefaultLabelColumnWidth));
+
+            layout.ColumnStyles.Add(
+                new ColumnStyle(
+                    SizeType.Percent,
+                    100));
 
             return layout;
+        }
+
+        private TableLayoutPanel CreateEditorLayout(UIColumn[] columns)
+        {
+            int columnCount = columns == null || columns.Length == 0
+                ? 1
+                : columns.Length;
+
+            TableLayoutPanel layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = columnCount,
+                RowCount = 1,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0),
+                Margin = new Padding(0)
+            };
+
+            layout.RowStyles.Add(
+                new RowStyle(
+                    SizeType.Percent,
+                    100));
+
+            for (int i = 0; i < columnCount; i++)
+            {
+                UIColumn column = columns != null && i < columns.Length
+                    ? columns[i]
+                    : UIColumn.Auto(null);
+
+                layout.ColumnStyles.Add(
+                    column.Style);
+
+                Panel cellPanel = CreateEditorCellPanel();
+
+                if (column.Control != null)
+                {
+                    ConfigureEditorControl(column.Control);
+                    AddControlToCell(cellPanel, column.Control);
+                }
+
+                layout.Controls.Add(cellPanel, i, 0);
+            }
+
+            return layout;
+        }
+
+        private void AddControlToCell(
+            Panel cellPanel,
+            Control control)
+        {
+            if (cellPanel == null || control == null)
+                return;
+
+            TableLayoutPanel wrapper = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                BackColor = Color.Transparent,
+                Padding = new Padding(6, 0, 8, 0),
+                Margin = new Padding(0)
+            };
+
+            wrapper.ColumnStyles.Add(
+                new ColumnStyle(SizeType.Percent, 100));
+
+            wrapper.RowStyles.Add(
+                new RowStyle(SizeType.Percent, 50));
+
+            wrapper.RowStyles.Add(
+                new RowStyle(SizeType.AutoSize));
+
+            wrapper.RowStyles.Add(
+                new RowStyle(SizeType.Percent, 50));
+
+            wrapper.Controls.Add(control, 0, 1);
+
+            cellPanel.Controls.Add(wrapper);
         }
 
         private int AddRowStyle(int height)
@@ -89,16 +219,18 @@ namespace SmartRoutine.UI.Controls
             int row = _layout.RowCount;
 
             _layout.RowCount++;
-            _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, height));
+
+            _layout.RowStyles.Add(
+                new RowStyle(
+                    SizeType.Absolute,
+                    height));
 
             return row;
         }
 
-        private Label CreateRowLabel(string labelText, bool emphasizeLabel)
+        private Label CreateRowLabel(string text)
         {
-            Label label = emphasizeLabel
-                ? UIStyles.Labels.CreateTitle(labelText ?? "")
-                : UIStyles.Labels.CreateNormal(labelText ?? "");
+            Label label = Labels.CreateNormal(text ?? "");
 
             label.Dock = DockStyle.Fill;
             label.TextAlign = ContentAlignment.MiddleLeft;
@@ -111,29 +243,120 @@ namespace SmartRoutine.UI.Controls
 
         private Label CreateSectionLabel(string title)
         {
-            Label label = UIStyles.Labels.CreateTitle(title ?? "");
+            Label label = Labels.CreateTitle(title ?? "");
 
             label.Dock = DockStyle.Fill;
             label.TextAlign = ContentAlignment.MiddleLeft;
             label.Padding = new Padding(LabelLeftPadding, 0, 0, 0);
             label.Margin = new Padding(0);
-            label.BackColor = UIStyles.Colors.BackgroundDark;
+            label.BackColor = Colors.BackgroundDark;
 
             return label;
         }
 
-        private void ConfigureEditorControl(Control editorControl)
+        private Panel CreateEditorAreaPanel()
         {
-            if (editorControl is ToggleSwitch)
+            return new Panel
             {
-                editorControl.Dock = DockStyle.None;
-                editorControl.Anchor = AnchorStyles.Left;
-                editorControl.Margin = new Padding(6, 8, 10, 6);
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0),
+                Margin = new Padding(0)
+            };
+        }
+
+        private Panel CreateEditorCellPanel()
+        {
+            return new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Colors.BackgroundLight,
+                Padding = new Padding(0),
+                Margin = new Padding(0, 2, 0, 2)
+            };
+        }
+
+        private void ConfigureEditorControl(Control control)
+        {
+            if (control == null)
+                return;
+
+            if (control is ToggleSwitch)
+            {
+                control.Dock = DockStyle.None;
+                control.Anchor = AnchorStyles.Left;
+                control.Margin = new Padding(0);
                 return;
             }
 
-            editorControl.Dock = DockStyle.Fill;
-            editorControl.Margin = new Padding(6, 6, 10, 6);
+            if (control is TextBox)
+            {
+                TextBox textBox = (TextBox)control;
+
+                textBox.Multiline = false;
+                textBox.BorderStyle = BorderStyle.None;
+                textBox.Dock = DockStyle.Fill;
+                textBox.Margin = new Padding(0);
+
+                return;
+            }
+
+            if (control is ComboBox)
+            {
+                control.Dock = DockStyle.Fill;
+                control.Margin = new Padding(0);
+                return;
+            }
+
+            if (control is Button)
+            {
+                control.Dock = DockStyle.Fill;
+                control.Margin = new Padding(0);
+                return;
+            }
+
+            control.Dock = DockStyle.Fill;
+            control.Margin = new Padding(0);
+        }
+    }
+
+    public class UIColumn
+    {
+        public Control Control { get; private set; }
+
+        public ColumnStyle Style { get; private set; }
+
+        private UIColumn(
+            Control control,
+            ColumnStyle style)
+        {
+            Control = control;
+            Style = style;
+        }
+
+        public static UIColumn Auto(Control control)
+        {
+            return new UIColumn(
+                control,
+                new ColumnStyle(SizeType.Percent, 100));
+        }
+
+        public static UIColumn Absolute(
+            Control control,
+            int width)
+        {
+            return new UIColumn(
+                control,
+                new ColumnStyle(SizeType.Absolute, width));
+        }
+
+        public static UIColumn Percent(
+            Control control,
+            float percent)
+        {
+            return new UIColumn(
+                control,
+                new ColumnStyle(SizeType.Percent, percent));
         }
     }
 }

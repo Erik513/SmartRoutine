@@ -429,6 +429,22 @@ namespace SmartRoutine.UI.Helpers
 
                 return textBox;
             }
+            public static TextBox CreateBorderstyleNone(string text = "", string placeholder = "")
+            {
+                TextBox textBox = new TextBox
+                {
+                    Text = text ?? "",
+                    BackColor = Colors.BackgroundLight,
+                    ForeColor = Colors.TextPrimary,
+                    BorderStyle = BorderStyle.None,
+                    Font = Fonts.Normal
+                };
+
+                if (!string.IsNullOrWhiteSpace(placeholder))
+                    SetPlaceholder(textBox, placeholder);
+
+                return textBox;
+            }
 
             private static void SetPlaceholder(TextBox textBox, string placeholder)
             {
