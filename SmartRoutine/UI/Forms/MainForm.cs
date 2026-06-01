@@ -133,11 +133,11 @@ namespace SmartRoutine.UI.Forms
             if (routine == null)
                 return;
 
-            DialogResult result = CustomWFUI.Forms.CustomMessageBox.Show(
+            DialogResult result = CustomMessageBox.Show(
                 $"Routine '{routine.Name}' wirklich löschen?",
                 "Bestätigen",
-                CustomWFUI.Forms.CustomMessageBoxButtons.YesNo,
-                CustomWFUI.Forms.CustomMessageBoxIcon.Warning,
+                CustomMessageBoxButtons.YesNo,
+                CustomMessageBoxIcon.Warning,
                 this);
 
             if (result != DialogResult.Yes)
@@ -206,11 +206,11 @@ namespace SmartRoutine.UI.Forms
 
         private void ShowInfoMessage(string message, string title)
         {
-            CustomWFUI.Forms.CustomMessageBox.Show(
+            CustomMessageBox.Show(
                 message,
                 title,
-                CustomWFUI.Forms.CustomMessageBoxButtons.OK,
-                CustomWFUI.Forms.CustomMessageBoxIcon.Info,
+                CustomMessageBoxButtons.OK,
+                CustomMessageBoxIcon.Info,
                 this);
         }
 
@@ -218,7 +218,7 @@ namespace SmartRoutine.UI.Forms
         {
             try
             {
-                SleepPreventer.AllowSleep();
+                CustomWFUI.Helpers.SleepPreventer.AllowSleep();
             }
             catch (Exception ex)
             {

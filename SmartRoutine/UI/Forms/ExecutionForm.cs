@@ -82,7 +82,7 @@ namespace SmartRoutine.UI.Forms
             ConfigureForm();
 
             _toolTip = new ToolTip();
-            _infoPopup = new CustomWFUI.Forms.InfoPopupForm("Beschreibung:");
+            _infoPopup = new InfoPopupForm("Beschreibung:");
         }
 
         private void ConfigureForm()
@@ -112,15 +112,9 @@ namespace SmartRoutine.UI.Forms
 
         private TableLayoutPanel CreateMainLayout()
         {
-            TableLayoutPanel layout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(0),
-                Margin = new Padding(0),
-                ColumnCount = 1,
-                RowCount = 2,
-                BackColor = Color.Transparent
-            };
+            TableLayoutPanel layout = UIStyles.TableLayoutPanels.CreateStandard(1,2);
+            layout.Dock = DockStyle.Fill;
+            layout.BackColor = Color.Transparent;
 
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, FooterHeight));
@@ -130,25 +124,15 @@ namespace SmartRoutine.UI.Forms
 
         private Panel CreateStepContentPanel()
         {
-            return new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMedium,
-                Margin = new Padding(0),
-                Padding = new Padding(0)
-            };
+            return UIStyles.Panels.CreateMedium();
         }
 
         private Panel CreateFooterPanel()
         {
-            Panel footer = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Height = FooterHeight,
-                BackColor = UIStyles.Colors.BackgroundDark,
-                Padding = new Padding(10, 8, 10, 8),
-                Margin = new Padding(0)
-            };
+            Panel footer = UIStyles.Panels.CreateDark();
+            footer.Height = FooterHeight;
+            footer.Padding = new Padding(10, 8, 10, 8);
+            footer.Margin = new Padding(0);
 
             TableLayoutPanel layout = CreateFooterLayout();
 
@@ -168,15 +152,9 @@ namespace SmartRoutine.UI.Forms
 
         private TableLayoutPanel CreateFooterLayout()
         {
-            TableLayoutPanel layout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 4,
-                RowCount = 1,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0),
-                Padding = new Padding(0)
-            };
+            TableLayoutPanel layout = UIStyles.TableLayoutPanels.CreateStandard(4, 1);
+            layout.Dock = DockStyle.Fill;
+            layout.BackColor = Color.Transparent;
 
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -190,17 +168,15 @@ namespace SmartRoutine.UI.Forms
 
         private Label CreateInfoLabel()
         {
-            Label label = new Label
-            {
-                Text = "ⓘ",
-                ForeColor = UIStyles.Colors.TextSecondary,
-                Font = UIStyles.Fonts.Icon,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
-                Cursor = Cursors.Help,
-                Margin = new Padding(0)
-            };
+            Label label = UIStyles.Labels.CreateNormal("ⓘ");
+
+            label.Dock = DockStyle.Fill;
+            label.ForeColor = UIStyles.Colors.TextSecondary;
+            label.Font = UIStyles.Fonts.Icon;
+            label.TextAlign = ContentAlignment.MiddleCenter;
+            label.BackColor = Color.Transparent;
+            label.Cursor = Cursors.Help;
+            label.Margin = new Padding(0);
 
             label.MouseEnter += OnInfoLabelMouseEnter;
             label.MouseLeave += OnInfoLabelMouseLeave;
@@ -239,16 +215,10 @@ namespace SmartRoutine.UI.Forms
 
         private TableLayoutPanel CreateNavigationPanel()
         {
-            TableLayoutPanel navigationPanel = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 3,
-                RowCount = 1,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0),
-                Padding = new Padding(0),
-                AutoSize = true
-            };
+            TableLayoutPanel navigationPanel = UIStyles.TableLayoutPanels.CreateStandard(3, 1);
+            navigationPanel.Dock = DockStyle.Fill;
+            navigationPanel.BackColor = Color.Transparent;
+            navigationPanel.AutoSize = true;
 
             navigationPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
@@ -344,11 +314,8 @@ namespace SmartRoutine.UI.Forms
 
         private void ShowEmptyPanel()
         {
-            Panel panel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = UIStyles.Colors.BackgroundMedium
-            };
+            Panel panel = UIStyles.Panels.CreateMedium();
+            panel.Dock = DockStyle.Fill;
 
             _stepContentPanel.Controls.Add(panel);
         }
