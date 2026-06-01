@@ -1,7 +1,6 @@
-﻿using SmartRoutine.UI.Controls;
-using SmartRoutine.UI.Helpers;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
+using CustomWFUI;
 
 namespace SmartRoutine.UI.Forms
 {
@@ -9,7 +8,7 @@ namespace SmartRoutine.UI.Forms
     {
         private const int TitleBarHeight = 30;
 
-        protected TitleBarControl TitleBar { get; private set; }
+        protected CustomWFUI.Controls.TitleBarControl TitleBar { get; private set; }
         protected Panel ContentPanel { get; private set; }
 
         public SmartRoutineForm(
@@ -87,7 +86,7 @@ namespace SmartRoutine.UI.Forms
             return layout;
         }
 
-        private TitleBarControl CreateTitleBar(
+        private CustomWFUI.Controls.TitleBarControl CreateTitleBar(
             Image icon,
             string title,
             bool showMinimize,
@@ -96,7 +95,7 @@ namespace SmartRoutine.UI.Forms
             bool allowWindowSnapAndMaximize,
             Color? titleBarBackColor)
         {
-            return new TitleBarControl(
+            return new CustomWFUI.Controls.TitleBarControl(
                 icon: icon,
                 title: title,
                 titleTextAlign: ContentAlignment.MiddleLeft,

@@ -23,7 +23,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel mainLayout;
         private TableLayoutPanel buttonPanel;
 
-        private StyledListBoxControl lstRoutines;
+        private CustomWFUI.Controls.StyledListBoxControl lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
 
         private readonly ToolTip _routineToolTip = UIStyles.ToolTips.CreateToolTip();
@@ -75,7 +75,7 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeRoutineList()
         {
-            lstRoutines = new StyledListBoxControl(
+            lstRoutines = new CustomWFUI.Controls.StyledListBoxControl(
                 displayTextMember: "Name",
                 allowReorder: true,
                 showEnumeration: false,

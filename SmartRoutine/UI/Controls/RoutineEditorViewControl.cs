@@ -39,7 +39,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel leftTlp;
         private CustomWFUI.Controls.StyledPropertyTable routineInfoTable;
         private TextBox txtRoutineName;
-        private StyledListBoxControl lstSteps;
+        private CustomWFUI.Controls.StyledListBoxControl lstSteps;
 
         // Rechte Seite
         private TableLayoutPanel rightTlp;
@@ -156,7 +156,7 @@ namespace SmartRoutine.UI.Controls
                 "Routinenname",
                 txtRoutineName);
 
-            lstSteps = new StyledListBoxControl(
+            lstSteps = new CustomWFUI.Controls.StyledListBoxControl(
                 displayTextMember: "Name",
                 allowReorder: true,
                 showEnumeration: true,
