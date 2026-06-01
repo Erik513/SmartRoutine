@@ -317,14 +317,15 @@ namespace SmartRoutine.UI.Controls
             footerPanel.Dock = DockStyle.Fill;
 
             var footerTlp = UIStyles.TableLayoutPanels.CreateDark(4, 1);
+            footerTlp.BackColor = UIStyles.Colors.BackgroundDarkElevated;
             footerTlp.Dock = DockStyle.Fill;
             footerTlp.Padding = new Padding(0);
 
             footerTlp.ColumnStyles.Clear();
             footerTlp.RowStyles.Clear();
 
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
 

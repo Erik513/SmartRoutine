@@ -109,17 +109,19 @@ namespace SmartRoutine.UI.Controls
         }
         private void InitializeButtonPanel()
         {
-            buttonPanel = UIStyles.TableLayoutPanels.CreateDark(4, 1);
+            buttonPanel = UIStyles.TableLayoutPanels.CreateDark(5, 1);
+            buttonPanel.BackColor = UIStyles.Colors.BackgroundDarkElevated;
             buttonPanel.Dock = DockStyle.Fill;
             buttonPanel.Padding = new Padding(0);
 
             buttonPanel.ColumnStyles.Clear();
             buttonPanel.RowStyles.Clear();
 
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
 
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -143,10 +145,10 @@ namespace SmartRoutine.UI.Controls
             btnStartRoutine.Margin = new Padding(5);
             btnStartRoutine.Click += BtnStartRoutine_Click;
 
-            buttonPanel.Controls.Add(btnNewRoutine, 0, 0);
-            buttonPanel.Controls.Add(btnEditRoutine, 1, 0);
-            buttonPanel.Controls.Add(btnDeleteRoutine, 2, 0);
-            buttonPanel.Controls.Add(btnStartRoutine, 3, 0);
+            buttonPanel.Controls.Add(btnNewRoutine, 1, 0);
+            buttonPanel.Controls.Add(btnEditRoutine, 2, 0);
+            buttonPanel.Controls.Add(btnDeleteRoutine, 3, 0);
+            buttonPanel.Controls.Add(btnStartRoutine, 4, 0);
         }
 
         private void BtnNewRoutine_Click(object sender, EventArgs e)

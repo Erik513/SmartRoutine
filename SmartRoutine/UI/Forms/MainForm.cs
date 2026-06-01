@@ -256,5 +256,28 @@ namespace SmartRoutine.UI.Forms
         {
             SaveRoutine(routine);
         }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+
+            RefreshComboBoxes(this);
+        }
+
+        private void RefreshComboBoxes(Control parent)
+        {
+            foreach (Control control in parent.Controls)
+            {
+                ComboBox comboBox = control as ComboBox;
+
+                if (comboBox != null)
+                {
+                    comboBox.Invalidate();
+                    comboBox.Refresh();
+                }
+
+                RefreshComboBoxes(control);
+            }
+        }
     }
 }
