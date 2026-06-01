@@ -589,6 +589,8 @@ namespace SmartRoutine.UI.Controls
         private void OpenEditorForStep(RoutineStep step = null)
         {
             CloseEditor();
+            rightTlp.Visible = true;
+
             if (step != null)
             {
                 LoadStepToEditor(step);
@@ -598,18 +600,19 @@ namespace SmartRoutine.UI.Controls
                 ClearEditor();
             }
 
-            rightTlp.Visible = true;
             SetEditorEnabled(true);
         }
 
 
         private void CloseEditor()
         {
+            Debug.WriteLine("ClearEditor");
             rightTlp.Visible = false;
             _editingStep = null;
         }
         private void CloseStepEditor()
         {
+            Debug.WriteLine("CloseStepEditor");
             lstSteps.SelectedIndex = -1;
             ClearEditor();
             rightTlp.Visible = false;
@@ -645,10 +648,17 @@ namespace SmartRoutine.UI.Controls
                 tglStepEnabled.Checked = step.Show;
                 tglAutoStart.Checked = step.AutoStart;
 
+                BuildBaseEditorTable();
+
                 SetSelectedStepType(step.Type);
 
-                BuildBaseEditorTable();
                 BuildOptionsEditorTable();
+
+                editorBaseTable.PerformLayout();
+                editorBaseTable.Refresh();
+
+                cmbStepType.PerformLayout();
+                cmbStepType.Refresh();
 
                 switch (step)
                 {
@@ -718,6 +728,7 @@ namespace SmartRoutine.UI.Controls
         // ========== STEP EVENT HANDLER ==========
         private void LstSteps_SelectedIndexChanged(object sender, EventArgs e)
         {
+            Debug.WriteLine("LstSteps_SelectedIndexChanged");
             if (_isRefreshing) return;
 
             if (!(lstSteps.SelectedItem is RoutineStep step))
@@ -793,6 +804,8 @@ namespace SmartRoutine.UI.Controls
             if (_currentRoutine == null) return;
 
             _isRefreshing = true;
+            RoutineStep selectedStep =
+                lstSteps.SelectedItem as RoutineStep;
             lstSteps.BeginUpdate();
             lstSteps.Items.Clear();
 
@@ -808,8 +821,21 @@ namespace SmartRoutine.UI.Controls
             lstSteps.EndUpdate();
             _isRefreshing = false;
 
-            if (lstSteps.Items.Count > 0)
-                lstSteps.SelectedIndex = -1;
+            if (selectedStep != null)
+            {
+                for (int i = 0; i < lstSteps.Items.Count; i++)
+                {
+                    RoutineStep step =
+                        lstSteps.Items[i] as RoutineStep;
+
+                    if (step != null &&
+                        step.Id == selectedStep.Id)
+                    {
+                        lstSteps.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
 
             if (!silent)
                 Debug.WriteLine($"RefreshStepsList: {orderedSteps.Count} Schritte geladen");
@@ -819,7 +845,6 @@ namespace SmartRoutine.UI.Controls
             if (!ValidateCurrentStep()) return;
 
             SaveCurrentStep();
-            CloseStepEditor();
         }
         private void BtnCancelStep_Click(object sender, EventArgs e)
         {
@@ -1327,7 +1352,29 @@ namespace SmartRoutine.UI.Controls
 
             if (refreshList)
             {
+                RoutineStep selectedStep = _editingStep;
+
+                _isRefreshing = true;
+
                 RefreshStepsList(false);
+
+                if (selectedStep != null)
+                {
+                    for (int i = 0; i < lstSteps.Items.Count; i++)
+                    {
+                        RoutineStep item =
+                            lstSteps.Items[i] as RoutineStep;
+
+                        if (item != null &&
+                            item.Id == selectedStep.Id)
+                        {
+                            lstSteps.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                _isRefreshing = false;
 
                 ToastForm.ShowToast(
                     $"✓ Schritt '{step.Name}' gespeichert",

@@ -1,13 +1,14 @@
-﻿using SmartRoutine.Data.Models;
+﻿using CustomWFUI;
+using CustomWFUI.Controls;
+using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
+using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
-using CustomWFUI;
-using CustomWFUI.Controls;
-using SmartRoutine.UI.Helpers;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -33,7 +34,19 @@ namespace SmartRoutine.UI.Controls
 
         private const string DefaultRoutineNamePrefix = "Meine Routine ";
 
-        public RoutinesViewControl(IRoutineService routineService)
+        private static readonly Color GradientStart =
+            Color.FromArgb(8, 12, 24);
+
+        private static readonly Color GradientEnd =
+            Color.FromArgb(28, 55, 95);
+
+        public RoutinesViewControl()
+        {
+            InitializeComponent();
+
+            DoubleBuffered = true;
+        }
+        public RoutinesViewControl(IRoutineService routineService) : this()
         {
             _routineService = routineService;
 
@@ -352,6 +365,21 @@ namespace SmartRoutine.UI.Controls
             btnEditRoutine.Enabled = hasSelection;
             btnDeleteRoutine.Enabled = hasSelection;
             btnStartRoutine.Enabled = hasSelection;
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            using (LinearGradientBrush brush =
+                new LinearGradientBrush(
+                    ClientRectangle,
+                    GradientStart,
+                    GradientEnd,
+                    315f))
+            {
+                e.Graphics.FillRectangle(
+                    brush,
+                    ClientRectangle);
+            }
         }
     }
 }

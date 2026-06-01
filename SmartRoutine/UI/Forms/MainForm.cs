@@ -86,7 +86,7 @@ namespace SmartRoutine.UI.Forms
         private void AddViewsToContentPanel()
         {
             ContentPanel.Controls.Clear();
-            ContentPanel.Padding = new Padding(5);
+            ContentPanel.Padding = new Padding(1);
 
             ContentPanel.Controls.Add(_routinesView);
             ContentPanel.Controls.Add(_editorView);
