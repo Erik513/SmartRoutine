@@ -42,6 +42,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel leftTlp;
         private StyledPropertyTable routineInfoTable;
         private TextBox txtRoutineName;
+        private Button btnToggleRoutineNameReadonly;
         private StyledListBoxControl lstSteps;
 
         // Rechte Seite
@@ -151,10 +152,21 @@ namespace SmartRoutine.UI.Controls
             txtRoutineName = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtRoutineName.Dock = DockStyle.Fill;
             txtRoutineName.MaxLength = 30;
+            txtRoutineName.ReadOnly = true;
+            txtRoutineName.Leave += TxtRoutineName_Leave;
 
-            routineInfoTable.AddRow(
-                "Routinenname",
-                txtRoutineName);
+            btnToggleRoutineNameReadonly = UIStyles.Buttons.CreateStandard(
+                "✎",
+                "Routinenamen bearbeiten",
+                new Size(30, 30),
+                true);
+
+            btnToggleRoutineNameReadonly.Text = "✎";
+            btnToggleRoutineNameReadonly.FlatAppearance.BorderSize = 1;
+            btnToggleRoutineNameReadonly.FlatAppearance.BorderColor = UIStyles.Colors.BorderLight;
+            btnToggleRoutineNameReadonly.Click += BtnToggleRoutineNameReadonly_Click;
+
+            routineInfoTable.AddRow("Routinenname", UIColumn.Percent(txtRoutineName, 100), UIColumn.Absolute(btnToggleRoutineNameReadonly, 50));
 
             lstSteps = new StyledListBoxControl(
                 displayTextMember: "Name",
@@ -481,6 +493,47 @@ namespace SmartRoutine.UI.Controls
             return null;
         }
 
+        private void BtnToggleRoutineNameReadonly_Click(object sender, EventArgs e)
+        {
+            if (txtRoutineName.ReadOnly)
+            {
+                txtRoutineName.ReadOnly = false;
+                btnToggleRoutineNameReadonly.Text = "💾";
+
+                txtRoutineName.Focus();
+                txtRoutineName.SelectAll();
+                return;
+            }
+
+            if (!ValidateRoutineName())
+                return;
+
+            txtRoutineName.ReadOnly = true;
+            btnToggleRoutineNameReadonly.Text = "✎";
+
+            SaveCurrentRoutine();
+
+            SaveChanges?.Invoke(this, _currentRoutine);
+        }
+        private void TxtRoutineName_Leave(object sender, EventArgs e)
+        {
+            SaveRoutineNameIfEditable();
+        }
+        private void SaveRoutineNameIfEditable()
+        {
+            if (txtRoutineName.ReadOnly)
+                return;
+
+            if (!ValidateRoutineName())
+                return;
+
+            txtRoutineName.ReadOnly = true;
+            btnToggleRoutineNameReadonly.Text = "✎";
+
+            SaveCurrentRoutine();
+
+            SaveChanges?.Invoke(this, _currentRoutine);
+        }
         // ========== PUBLIC METHODS ==========
         public void LoadRoutine(Routine routine, bool isNewRoutine = false)
         {
@@ -488,6 +541,8 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine = RoutineCloneService.DeepCopy(routine ?? new Routine());
 
             txtRoutineName.Text = _currentRoutine.Name;
+            txtRoutineName.ReadOnly = true;
+            btnToggleRoutineNameReadonly.Text = "✎";
             lblLastExecution.Text =
                 _currentRoutine.LastExecutionAt.HasValue
                     ? $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
@@ -502,15 +557,6 @@ namespace SmartRoutine.UI.Controls
 
             if (_currentRoutine.Steps.Count == 0)
                 rightTlp.Visible = false;
-            
-            if (isNewRoutine)
-            {
-                BeginInvoke(new Action(() =>
-                {
-                    txtRoutineName.Focus();
-                    txtRoutineName.SelectAll();
-                }));
-            }
         }
         private void TxtUrl_TextChanged(object sender, EventArgs e)
         {
@@ -728,7 +774,6 @@ namespace SmartRoutine.UI.Controls
         // ========== STEP EVENT HANDLER ==========
         private void LstSteps_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Debug.WriteLine("LstSteps_SelectedIndexChanged");
             if (_isRefreshing) return;
 
             if (!(lstSteps.SelectedItem is RoutineStep step))
