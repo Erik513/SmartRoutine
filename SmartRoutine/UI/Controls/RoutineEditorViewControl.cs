@@ -381,7 +381,7 @@ namespace SmartRoutine.UI.Controls
             btnDeleteStep.Enabled = false;
             btnDeleteStep.Click += BtnDeleteStep_Click;
 
-            btnBack = UIStyles.Buttons.CreateStandard(
+            btnBack = UIStyles.Buttons.CreatePrimary(
                 "←",
                 "Zurück zur Hauptansicht",
                 new Size(100, 35),
@@ -826,7 +826,8 @@ namespace SmartRoutine.UI.Controls
                     "Bestätigen",
                     CustomMessageBoxButtons.YesNo,
                     CustomMessageBoxIcon.Question,
-                    FindForm()) == DialogResult.Yes;
+                    FindForm(), 
+                    CustomMessageBoxSize.Small) == DialogResult.Yes;
             }
 
             if (!shouldDelete) return;
@@ -974,7 +975,8 @@ namespace SmartRoutine.UI.Controls
                 "Ausführung nicht möglich",
                 CustomMessageBoxButtons.OK,
                 CustomMessageBoxIcon.Warning,
-                FindForm());
+                FindForm(),
+                CustomMessageBoxSize.Small);
 
             return false;
         }
@@ -1035,7 +1037,8 @@ namespace SmartRoutine.UI.Controls
                 "Änderungen speichern",
                 CustomMessageBoxButtons.YesNoCancel,
                 CustomMessageBoxIcon.Question,
-                FindForm());
+                FindForm(),
+                CustomMessageBoxSize.Small);
         }
 
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
@@ -1188,7 +1191,8 @@ namespace SmartRoutine.UI.Controls
                         "Validierung",
                         CustomMessageBoxButtons.OK,
                         CustomMessageBoxIcon.Warning,
-                        FindForm());
+                        FindForm(),
+                        CustomMessageBoxSize.Small);
                 }
 
                 txtRoutineName.Focus();
@@ -1210,7 +1214,8 @@ namespace SmartRoutine.UI.Controls
                         "Validierung",
                         CustomMessageBoxButtons.OK,
                         CustomMessageBoxIcon.Warning,
-                        FindForm());
+                        FindForm(),
+                        CustomMessageBoxSize.Medium);
                 }
 
                 txtRoutineName.Focus();
@@ -1380,7 +1385,8 @@ namespace SmartRoutine.UI.Controls
                 title,
                 CustomMessageBoxButtons.OK,
                 CustomMessageBoxIcon.Warning,
-                FindForm());
+                FindForm(),
+                CustomMessageBoxSize.Medium);
         }
 
         private void SaveCurrentStep(bool refreshList = true)

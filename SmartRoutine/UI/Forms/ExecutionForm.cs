@@ -52,7 +52,7 @@ namespace SmartRoutine.UI.Forms
             : base(new StyledFormOptions
             {
                 Title = routine != null ? $"Routine: {routine.Name}" : "Routine",
-                TitleBarBackColor = UIStyles.Colors.BackgroundBlack
+                TitleBarBackColor = UIStyles.Colors.BackgroundDarkElevated
             })
         {
             _routine = routine;
@@ -89,7 +89,7 @@ namespace SmartRoutine.UI.Forms
         {
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(600, 450);
-            Size = new Size(900, 700);
+            Size = MinimumSize;
             BackColor = UIStyles.Colors.BackgroundDark;
         }
 

@@ -185,13 +185,36 @@ namespace SmartRoutine.Logic.TestData
             };
             routines.Add(logicTestRoutine);
 
+            var TestRoutineWithDisabledStep = new Routine
+            {
+                Id = "test_routine_with_disabled_step",
+                Name = "Routine mit ausgeschaltetem Schritt",
+                Order = 1,
+                CreatedAt = now,
+                Steps = new List<RoutineStep>
+                {
+                    new OpenUrlStep
+                    {
+                        Id = "step_1",
+                        Order = 0,
+                        Name = "URL intern - manuell sichtbar",
+                        Description = "Soll sichtbar sein, nicht automatisch starten, WebView erst nach Klick anzeigen.",
+                        Show = false,
+                        AutoStart = false,
+                        Url = "https://www.example.com",
+                        OpenInExternalBrowser = false
+                    },
+                }
+            };
+            routines.Add(TestRoutineWithDisabledStep);
+
             for (int i = 0; i < 10; i++)
             {
                 routines.Add(new Routine
                 {
                     Id = $"test_empty_{i}",
                     Name = $"Test {i + 1}",
-                    Order = 1 + i,
+                    Order = 2 + i,
                     CreatedAt = now,
                     Steps = new List<RoutineStep>()
                 });

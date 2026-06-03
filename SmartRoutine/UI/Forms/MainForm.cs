@@ -27,7 +27,7 @@ namespace SmartRoutine.UI.Forms
             : base(StyledFormOptions.CreateStandard(
                 "SmartRoutine",
                 ContentAlignment.MiddleLeft,
-                UIColors.BackgroundBlack,
+                UIColors.BackgroundDarkElevated,
                 Properties.Resources.IconLogo))
             {
             if (routineService == null)
@@ -139,7 +139,8 @@ namespace SmartRoutine.UI.Forms
                 "Bestätigen",
                 CustomMessageBoxButtons.YesNo,
                 CustomMessageBoxIcon.Warning,
-                this);
+                this,
+                CustomMessageBoxSize.Small);
 
             if (result != DialogResult.Yes)
                 return;
@@ -212,7 +213,8 @@ namespace SmartRoutine.UI.Forms
                 title,
                 CustomMessageBoxButtons.OK,
                 CustomMessageBoxIcon.Info,
-                this);
+                this,
+                CustomMessageBoxSize.Small);
         }
 
         private void CleanupBeforeClose()
