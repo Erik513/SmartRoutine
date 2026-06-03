@@ -26,8 +26,6 @@ namespace SmartRoutine.Data
                     nameof(dbPath));
 
             _dbPath = dbPath;
-
-            ConfigureBsonMapper();
         }
 
         public List<Routine> LoadRoutines()
@@ -117,15 +115,6 @@ namespace SmartRoutine.Data
         {
             return new LiteDatabase(
                 $"Filename={_dbPath}; connection=shared");
-        }
-
-        private void ConfigureBsonMapper()
-        {
-            BsonMapper.Global.RegisterType<RoutineStep>
-            (
-                serialize: step => step.GetType().Name,
-                deserialize: bson => null
-            );
         }
 
         private static string GetDefaultDatabasePath()

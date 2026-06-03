@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.NET.Test.Sdk.18.6.0\build\net462\Microsoft.NET.Test.Sdk.props" Condition="Exists('..\packages\Microsoft.NET.Test.Sdk.18.6.0\build\net462\Microsoft.NET.Test.Sdk.props')" />
+  <Import Project="..\packages\Microsoft.CodeCoverage.18.6.0\build\netstandard2.0\Microsoft.CodeCoverage.props" Condition="Exists('..\packages\Microsoft.CodeCoverage.18.6.0\build\netstandard2.0\Microsoft.CodeCoverage.props')" />
+  <Import Project="..\packages\xunit.core.2.9.3\build\xunit.core.props" Condition="Exists('..\packages\xunit.core.2.9.3\build\xunit.core.props')" />
   <Import Project="..\packages\xunit.runner.visualstudio.3.1.5\build\net472\xunit.runner.visualstudio.props" Condition="Exists('..\packages\xunit.runner.visualstudio.3.1.5\build\net472\xunit.runner.visualstudio.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -58,6 +61,9 @@
     <Reference Include="Microsoft.TestPlatform.PlatformAbstractions, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.TestPlatform.ObjectModel.17.13.0\lib\net462\Microsoft.TestPlatform.PlatformAbstractions.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.CodeCoverage.Shim, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeCoverage.18.6.0\lib\net462\Microsoft.VisualStudio.CodeCoverage.Shim.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.ObjectModel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.TestPlatform.ObjectModel.17.13.0\lib\net462\Microsoft.VisualStudio.TestPlatform.ObjectModel.dll</HintPath>
     </Reference>
@@ -72,6 +78,12 @@
     </Reference>
     <Reference Include="Microsoft.Win32.Registry, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Win32.Registry.4.7.0\lib\net461\Microsoft.Win32.Registry.dll</HintPath>
+    </Reference>
+    <Reference Include="MSTest.TestFramework, Version=4.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\MSTest.TestFramework.4.2.3\lib\net462\MSTest.TestFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="MSTest.TestFramework.Extensions, Version=4.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\MSTest.TestFramework.4.2.3\lib\net462\MSTest.TestFramework.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -131,11 +143,25 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.abstractions.2.0.3\lib\net35\xunit.abstractions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="xunit.assert, Version=2.9.3.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.assert.2.9.3\lib\netstandard1.1\xunit.assert.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.core, Version=2.9.3.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.extensibility.core.2.9.3\lib\net452\xunit.core.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.execution.desktop, Version=2.9.3.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.extensibility.execution.2.9.3\lib\net452\xunit.execution.desktop.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\RoutineRepository.cs" />
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
+    <Compile Include="Data\RoutineRepositoryTests.cs" />
     <Compile Include="Logic\Services\ChangeDetector.cs" />
     <Compile Include="Logic\Services\RoutineCloneService.cs" />
     <Compile Include="Logic\Services\RoutineExecutionSession.cs" />
@@ -216,6 +242,12 @@
   <ItemGroup>
     <None Include="Properties\Resources\IconWeb.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\MSTest.Analyzers.4.2.3\analyzers\dotnet\cs\MSTest.Analyzers.CodeFixes.dll" />
+    <Analyzer Include="..\packages\MSTest.Analyzers.4.2.3\analyzers\dotnet\cs\MSTest.Analyzers.dll" />
+    <Analyzer Include="..\packages\xunit.analyzers.1.18.0\analyzers\dotnet\cs\xunit.analyzers.dll" />
+    <Analyzer Include="..\packages\xunit.analyzers.1.18.0\analyzers\dotnet\cs\xunit.analyzers.fixes.dll" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets" Condition="Exists('..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -225,6 +257,17 @@
     <Error Condition="!Exists('..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets'))" />
     <Error Condition="!Exists('..\packages\xunit.runner.visualstudio.3.1.5\build\net472\xunit.runner.visualstudio.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.runner.visualstudio.3.1.5\build\net472\xunit.runner.visualstudio.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Web.WebView2.1.0.3967.48\build\Microsoft.Web.WebView2.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Web.WebView2.1.0.3967.48\build\Microsoft.Web.WebView2.targets'))" />
+    <Error Condition="!Exists('..\packages\MSTest.TestFramework.4.2.3\build\net462\MSTest.TestFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestFramework.4.2.3\build\net462\MSTest.TestFramework.targets'))" />
+    <Error Condition="!Exists('..\packages\xunit.core.2.9.3\build\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.core.2.9.3\build\xunit.core.props'))" />
+    <Error Condition="!Exists('..\packages\xunit.core.2.9.3\build\xunit.core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.core.2.9.3\build\xunit.core.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeCoverage.18.6.0\build\netstandard2.0\Microsoft.CodeCoverage.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeCoverage.18.6.0\build\netstandard2.0\Microsoft.CodeCoverage.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeCoverage.18.6.0\build\netstandard2.0\Microsoft.CodeCoverage.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeCoverage.18.6.0\build\netstandard2.0\Microsoft.CodeCoverage.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.NET.Test.Sdk.18.6.0\build\net462\Microsoft.NET.Test.Sdk.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.NET.Test.Sdk.18.6.0\build\net462\Microsoft.NET.Test.Sdk.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.NET.Test.Sdk.18.6.0\build\net462\Microsoft.NET.Test.Sdk.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.NET.Test.Sdk.18.6.0\build\net462\Microsoft.NET.Test.Sdk.targets'))" />
   </Target>
   <Import Project="..\packages\Microsoft.Web.WebView2.1.0.3967.48\build\Microsoft.Web.WebView2.targets" Condition="Exists('..\packages\Microsoft.Web.WebView2.1.0.3967.48\build\Microsoft.Web.WebView2.targets')" />
+  <Import Project="..\packages\MSTest.TestFramework.4.2.3\build\net462\MSTest.TestFramework.targets" Condition="Exists('..\packages\MSTest.TestFramework.4.2.3\build\net462\MSTest.TestFramework.targets')" />
+  <Import Project="..\packages\xunit.core.2.9.3\build\xunit.core.targets" Condition="Exists('..\packages\xunit.core.2.9.3\build\xunit.core.targets')" />
+  <Import Project="..\packages\Microsoft.CodeCoverage.18.6.0\build\netstandard2.0\Microsoft.CodeCoverage.targets" Condition="Exists('..\packages\Microsoft.CodeCoverage.18.6.0\build\netstandard2.0\Microsoft.CodeCoverage.targets')" />
+  <Import Project="..\packages\Microsoft.NET.Test.Sdk.18.6.0\build\net462\Microsoft.NET.Test.Sdk.targets" Condition="Exists('..\packages\Microsoft.NET.Test.Sdk.18.6.0\build\net462\Microsoft.NET.Test.Sdk.targets')" />
 </Project>
