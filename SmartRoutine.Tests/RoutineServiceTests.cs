@@ -10,23 +10,43 @@ using System.IO;
 using System.Linq;
 
 namespace SmartRoutine.Tests
-{ 
+{
     // In-Memory Repository für Tests
     public class InMemoryRepository : IRoutineRepository
     {
-        private List<Routine> _routines = new List<Routine>();
+        private readonly List<Routine> _routines = new List<Routine>();
 
-        public Routine GetRoutine(string id) => _routines.FirstOrDefault(r => r.Id == id);
-        public List<Routine> LoadRoutines() => _routines.OrderBy(r => r.Order).ToList();
-        
-        public void AddRoutine(Routine routine) => _routines.Add(routine);
+        public Routine GetRoutine(string id)
+        {
+            return _routines.FirstOrDefault(r => r.Id == id);
+        }
+
+        public List<Routine> LoadRoutines()
+        {
+            return _routines
+                .OrderBy(r => r.Order)
+                .ToList();
+        }
+
+        public void AddRoutine(Routine routine)
+        {
+            _routines.Add(routine);
+        }
+
         public void UpdateRoutine(Routine routine)
         {
-            var index = _routines.FindIndex(r => r.Id == routine.Id);
-            if (index >= 0) _routines[index] = routine;
+            int index = _routines.FindIndex(r => r.Id == routine.Id);
+
+            if (index < 0)
+                return;
+
+            _routines[index] = routine;
         }
-        public void DeleteRoutine(string id) => _routines.RemoveAll(r => r.Id == id);
-        public void SaveRoutines(List<Routine> routines) => _routines = routines ?? new List<Routine>();
+
+        public void DeleteRoutine(string id)
+        {
+            _routines.RemoveAll(r => r.Id == id);
+        }
     }
 
     [TestClass]

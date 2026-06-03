@@ -72,18 +72,21 @@ namespace SmartRoutine.Logic.Services
         public Routine GetRoutine(string id)
         {
             Routine routine;
+
             if (_useTestData)
             {
                 routine = _testRoutines?.FirstOrDefault(r => r.Id == id);
             }
             else
             {
-                routine = _repository.LoadRoutines().FirstOrDefault(r => r.Id == id);
+                routine = _repository.GetRoutine(id);
             }
 
             if (routine != null && routine.Steps != null && routine.Steps.Any())
             {
-                routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
+                routine.Steps = routine.Steps
+                    .OrderBy(s => s.Order)
+                    .ToList();
             }
 
             return routine;
@@ -287,24 +290,23 @@ namespace SmartRoutine.Logic.Services
                     throw new NotSupportedException($"Step type {original.GetType()} not supported");
             }
         }
-        
+
         // Steps =================================================================================
 
         public void AddStep(string routineId, RoutineStep step)
         {
             var routine = GetRoutine(routineId);
-            if (routine == null) return;
+            if (routine == null || step == null) return;
 
             int maxOrder = routine.Steps.Any() ? routine.Steps.Max(s => s.Order) : -1;
             step.Order = maxOrder + 1;
-            step.Id = Guid.NewGuid().ToString();
+
+            if (string.IsNullOrWhiteSpace(step.Id))
+                step.Id = Guid.NewGuid().ToString();
 
             routine.Steps.Add(step);
 
-            if (!_useTestData)
-            {
-                _repository.UpdateRoutine(routine);  // LiteDB speichert alles korrekt!
-            }
+            _repository.UpdateRoutine(routine);
         }
 
         public void UpdateStep(string routineId, RoutineStep step)
@@ -335,27 +337,19 @@ namespace SmartRoutine.Logic.Services
             var step = routine.Steps.FirstOrDefault(s => s.Id == stepId);
             if (step == null) return;
 
-            // Schritt entfernen
             routine.Steps.Remove(step);
 
-            // WICHTIG: Erst SORTIEREN, dann Orders neu vergeben
             var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
+
             for (int i = 0; i < orderedSteps.Count; i++)
             {
                 orderedSteps[i].Order = i;
             }
 
-            // Die sortierte Liste wieder zuweisen
             routine.Steps = orderedSteps;
-
-            // UpdatedAt aktualisieren
             routine.UpdatedAt = DateTime.Now;
 
-            // Speichern
-            if (!_useTestData)
-            {
-                _repository.UpdateRoutine(routine);
-            }
+            _repository.UpdateRoutine(routine);
         }
 
 
@@ -468,6 +462,12 @@ namespace SmartRoutine.Logic.Services
             out string errorMessage)
         {
             errorMessage = null;
+
+            if (step == null)
+            {
+                errorMessage = "Der Schritt darf nicht null sein.";
+                return false;
+            }
 
             switch (step)
             {
