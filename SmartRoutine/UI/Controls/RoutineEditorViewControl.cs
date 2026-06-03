@@ -2,7 +2,6 @@
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
-//using SmartRoutine.UI.Helpers;
 using System;
 using System.Diagnostics;
 using System.Drawing;

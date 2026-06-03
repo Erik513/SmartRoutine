@@ -161,7 +161,6 @@
     <Compile Include="Data\RoutineRepository.cs" />
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
-    <Compile Include="Data\RoutineRepositoryTests.cs" />
     <Compile Include="Logic\Services\ChangeDetector.cs" />
     <Compile Include="Logic\Services\RoutineCloneService.cs" />
     <Compile Include="Logic\Services\RoutineExecutionSession.cs" />

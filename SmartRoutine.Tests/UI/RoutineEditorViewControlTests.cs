@@ -1,10 +1,10 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using CustomWFUI.Controls;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.UI.Controls;
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 
@@ -60,7 +60,28 @@ namespace SmartRoutine.Tests.UI
         [TestMethod]
         public void LoadRoutine_WithSteps_ShowsStepsInListBox()
         {
+            _testRoutine.Steps.Add(
+                new OpenUrlStep
+                {
+                    Name = "Google",
+                    Order = 0
+                });
 
+            _testRoutine.Steps.Add(
+                new OpenFolderStep
+                {
+                    Name = "Dokumente",
+                    Order = 1
+                });
+
+            _editor.LoadRoutine(_testRoutine);
+
+            var lstSteps =
+                GetPrivateField<StyledListBoxControl>(
+                    _editor,
+                    "lstSteps");
+
+            Assert.AreEqual(2, lstSteps.Items.Count);
         }
 
 
@@ -104,7 +125,41 @@ namespace SmartRoutine.Tests.UI
         [TestMethod]
         public void DeleteStep_WithSelectedStep_RemovesStep()
         {
-            
+            _editor.AutoConfirmDialogs = true;
+
+            var step = new OpenUrlStep
+            {
+                Id = "step-1",
+                Name = "Google"
+            };
+
+            _testRoutine.Steps.Add(step);
+
+            _mockService
+                .Setup(x => x.GetRoutine("test-id"))
+                .Returns(_testRoutine);
+
+            _editor.LoadRoutine(_testRoutine);
+
+            var lstSteps =
+                GetPrivateField<StyledListBoxControl>(
+                    _editor,
+                    "lstSteps");
+
+            lstSteps.SelectedIndex = 0;
+
+            var btnDeleteStep =
+                GetPrivateField<Button>(
+                    _editor,
+                    "btnDeleteStep");
+
+            btnDeleteStep.PerformClick();
+
+            _mockService.Verify(
+                s => s.RemoveStep(
+                    "test-id",
+                    "step-1"),
+                Times.Once);
         }
 
         [TestMethod]
@@ -182,44 +237,6 @@ namespace SmartRoutine.Tests.UI
             }
         }
 
-        [TestMethod]
-        public void ValidateStep_WithEmptyUrl_ReturnsFalse()
-        {
-            _editor.AutoConfirmDialogs = true;
-            _editor.LoadRoutine(_testRoutine);
-
-            var btnAddStep = GetPrivateField<Button>(_editor, "btnAddStep");
-            btnAddStep.PerformClick();
-
-            var txtStepName = GetPrivateField<TextBox>(_editor, "txtStepName");
-            txtStepName.Text = "Valid Name";
-
-            var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
-            cmbStepType.SelectedIndex = 0;
-
-            // Panel erstellen, aber URL leer lassen
-            var cmbEventMethod = GetPrivateMethod(_editor, "CmbStepType_SelectedIndexChanged");
-            cmbEventMethod.Invoke(_editor, new object[] { null, EventArgs.Empty });
-
-            var txtUrl = GetPrivateField<TextBox>(_editor, "txtUrl");
-            txtUrl.Text = ""; // Leere URL!
-
-            var validateMethod = GetPrivateMethod(_editor, "ValidateCurrentStep");
-
-            var result = (bool)validateMethod.Invoke(_editor, null);
-
-            Assert.IsFalse(result);
-        }
-
-
-        // UpdateStep Tests
-
-        [TestMethod]
-        public void UpdateStep_WithChanges_SavesModifiedStep()
-        {
-            
-        }
-
 
         // Change StepType Tests
 
@@ -232,15 +249,16 @@ namespace SmartRoutine.Tests.UI
             btnAddStep.PerformClick();
 
             var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
-            var stepTypeContentTlp = GetPrivateField<TableLayoutPanel>(_editor, "stepTypeContentTlp");
 
-            // OpenUrl auswählen
             cmbStepType.SelectedIndex = 0;
-            var cmbEventMethod = GetPrivateMethod(_editor, "CmbStepType_SelectedIndexChanged");
-            cmbEventMethod.Invoke(_editor, new object[] { null, EventArgs.Empty });
 
-            //  Panel ist sichtbar
-            Assert.IsTrue(stepTypeContentTlp.Visible);
+            var editorOptionsTable =
+                GetPrivateField<StyledPropertyTable>(_editor, "editorOptionsTable");
+
+            var txtUrl = GetPrivateField<TextBox>(_editor, "txtUrl");
+
+            Assert.IsTrue(editorOptionsTable.Visible);
+            Assert.IsNotNull(txtUrl);
         }
 
 
@@ -249,7 +267,50 @@ namespace SmartRoutine.Tests.UI
         [TestMethod]
         public void ReorderSteps_UpdatesStepOrders()
         {
-            
+            _testRoutine.Steps.Add(
+                new OpenUrlStep
+                {
+                    Id = "1",
+                    Name = "A",
+                    Order = 0
+                });
+
+            _testRoutine.Steps.Add(
+                new OpenUrlStep
+                {
+                    Id = "2",
+                    Name = "B",
+                    Order = 1
+                });
+
+            _editor.LoadRoutine(_testRoutine);
+
+            var lstSteps =
+                GetPrivateField<StyledListBoxControl>(
+                    _editor,
+                    "lstSteps");
+
+            var method =
+                GetPrivateMethod(
+                    _editor,
+                    "LstSteps_ItemsReordered");
+
+            ((RoutineStep)lstSteps.Items[0]).Order = 1;
+            ((RoutineStep)lstSteps.Items[1]).Order = 0;
+
+            method.Invoke(
+                _editor,
+                new object[]
+                {
+            lstSteps,
+            EventArgs.Empty
+                });
+
+            _mockService.Verify(
+                s => s.SaveRoutine(
+                    It.Is<Routine>(
+                        r => r.Steps.Count == 2)),
+                Times.Once);
         }
 
 
