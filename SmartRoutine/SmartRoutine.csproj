@@ -162,6 +162,7 @@
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
     <Compile Include="Logic\Services\ChangeDetector.cs" />
+    <Compile Include="Logic\Services\AutoRunBuilder.cs" />
     <Compile Include="Logic\Services\RoutineCloneService.cs" />
     <Compile Include="Logic\Services\RoutineExecutionSession.cs" />
     <Compile Include="Logic\Services\StepExecutionResult.cs" />
@@ -176,6 +177,12 @@
     </Compile>
     <Compile Include="UI\Forms\ExecutionForm.Designer.cs">
       <DependentUpon>ExecutionForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Forms\AutoRunForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Forms\AutoRunForm.Designer.cs">
+      <DependentUpon>AutoRunForm.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Helpers\AppSettings.cs" />
     <Compile Include="UI\Helpers\DateTimeHelper.cs" />

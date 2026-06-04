@@ -1,17 +1,18 @@
-﻿using SmartRoutine.Data.Models;
+﻿using CustomWFUI;
+using CustomWFUI.Controls;
+using CustomWFUI.Forms;
+using CustomWFUI.Helpers;
+using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
+using SmartRoutine.UI.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using CustomWFUI;
-using CustomWFUI.Controls;
-using SmartRoutine.UI.Helpers;
-using CustomWFUI.Forms;
-using CustomWFUI.Helpers;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -158,7 +159,7 @@ namespace SmartRoutine.UI.Controls
             btnToggleRoutineNameReadonly = UIStyles.Buttons.CreateStandard(
                 "✎",
                 "Routinenamen bearbeiten",
-                new Size(30, 30),
+                new Size(50, 30),
                 true);
 
             btnToggleRoutineNameReadonly.Text = "✎";
@@ -303,7 +304,7 @@ namespace SmartRoutine.UI.Controls
 
             rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Ausführen", new Size(100, 35), true);
+            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Step ausführen", new Size(100, 35), true);
             btnExecuteStep.Dock = DockStyle.Fill;
             btnExecuteStep.Margin = new Padding(5);
             btnExecuteStep.Click += BtnExecuteStep_Click;
@@ -338,7 +339,7 @@ namespace SmartRoutine.UI.Controls
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
 
             footerTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -384,7 +385,7 @@ namespace SmartRoutine.UI.Controls
             btnBack = UIStyles.Buttons.CreatePrimary(
                 "←",
                 "Zurück zur Hauptansicht",
-                new Size(100, 35),
+                new Size(155, 35),
                 true);
 
             btnBack.Dock = DockStyle.Fill;
@@ -982,31 +983,74 @@ namespace SmartRoutine.UI.Controls
         }
         private void ExecuteEditingStep()
         {
-            bool shouldOpenExecutionForm =
-                _editingStep is OpenUrlStep urlStep &&
-                !urlStep.OpenInExternalBrowser;
+            RoutineStep executionStep =
+                AutoRunBuilder.CreateNormalStepCopy(_editingStep);
 
-            if (shouldOpenExecutionForm)
+            if (executionStep == null)
+                return;
+
+            bool requiresExecutionForm =
+                executionStep is OpenUrlStep &&
+                !((OpenUrlStep)executionStep).OpenInExternalBrowser;
+
+            if (requiresExecutionForm)
             {
-                OpenExecutionForm();
+                OpenExecutionForm(executionStep);
                 return;
             }
 
-            _routineService.ExecuteStep(_editingStep);
+            OpenAutoRunForm(executionStep);
         }
-        private void OpenExecutionForm()
+
+        private void OpenExecutionForm(RoutineStep executionStep)
         {
-            var executionForm = new ExecutionForm(
+            ExecutionForm form = new ExecutionForm(
                 _currentRoutine,
-                _editingStep,
+                executionStep,
                 step =>
                 {
                     return _routineService.ExecuteStep(step);
                 });
 
-            executionForm.ShowDialog(this);
+            try
+            {
+                form.ShowDialog(this);
+            }
+            finally
+            {
+                form.Dispose();
+            }
         }
-        
+
+        private void OpenAutoRunForm(RoutineStep executionStep)
+        {
+            Routine routine = new Routine
+            {
+                Name = executionStep.Name,
+                Steps = new List<RoutineStep>
+        {
+            executionStep
+        }
+            };
+
+            AutoRunForm form = new AutoRunForm(
+                routine,
+                step =>
+                {
+                    return _routineService.ExecuteStep(step);
+                },
+                null);
+
+            try
+            {
+                form.ShowDialog(this);
+            }
+            finally
+            {
+                form.Dispose();
+            }
+        }
+
         private bool HasUnsavedChanges()
         {
             if (_editingStep == null)
@@ -1038,7 +1082,7 @@ namespace SmartRoutine.UI.Controls
                 CustomMessageBoxButtons.YesNoCancel,
                 CustomMessageBoxIcon.Question,
                 FindForm(),
-                CustomMessageBoxSize.Small);
+                CustomMessageBoxSize.Medium);
         }
 
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
@@ -1082,7 +1126,7 @@ namespace SmartRoutine.UI.Controls
             txtFolderPath = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtFolderPath.Name = "txtFolderPath";
 
-            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Ordner auswählen");
+            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Ordner auswählen", new Size(50, 30));
 
             btnBrowse.Click += (s, e) =>
             {
@@ -1095,8 +1139,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Ordnerpfad",
-                UIColumn.Auto(txtFolderPath),
-                UIColumn.Percent(btnBrowse, 30));
+                UIColumn.Percent(txtFolderPath, 100),
+                UIColumn.Absolute(btnBrowse, 50));
 
             tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
             tglOpenInNewWindow.Name = "tglOpenInNewWindow";
@@ -1109,7 +1153,7 @@ namespace SmartRoutine.UI.Controls
             txtAppPath = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtAppPath.Name = "txtAppPath";
 
-            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Programm auswählen");
+            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Programm auswählen", new Size(50, 30));
 
             btnBrowse.Click += (s, e) =>
             {
@@ -1124,8 +1168,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Programmpfad",
-                UIColumn.Auto(txtAppPath),
-                UIColumn.Percent(btnBrowse, 30));
+                UIColumn.Percent(txtAppPath, 100),
+                UIColumn.Absolute(btnBrowse, 50));
 
             txtAppArguments = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtAppArguments.Name = "txtAppArguments";
@@ -1142,7 +1186,7 @@ namespace SmartRoutine.UI.Controls
             txtDocumentPath = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtDocumentPath.Name = "txtDocumentPath";
 
-            btnBrowseDocument = UIStyles.Buttons.CreateBrowseInFolder("Dokument auswählen");
+            btnBrowseDocument = UIStyles.Buttons.CreateBrowseInFolder("Dokument auswählen", new Size(50, 30));
 
             btnBrowseDocument.Click += (s, e) =>
             {
@@ -1158,8 +1202,8 @@ namespace SmartRoutine.UI.Controls
 
             editorOptionsTable.AddRow(
                 "Dateipfad",
-                UIColumn.Auto(txtDocumentPath),
-                UIColumn.Percent(btnBrowseDocument, 30));
+                UIColumn.Percent(txtDocumentPath, 100),
+                UIColumn.Absolute(btnBrowseDocument, 50));
         }
 
         // ========== BACK BUTTON ==========

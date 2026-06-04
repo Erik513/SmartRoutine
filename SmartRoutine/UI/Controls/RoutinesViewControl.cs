@@ -19,6 +19,7 @@ namespace SmartRoutine.UI.Controls
         public event EventHandler<Routine> EditRoutineClicked;
         public event EventHandler<Routine> DeleteRoutineClicked;
         public event EventHandler<Routine> StartRoutineClicked;
+        public event EventHandler<Routine> StartRoutineAutoClicked;
 
         private readonly IRoutineService _routineService;
         private Routine _selectedRoutine;
@@ -27,7 +28,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel buttonPanel;
 
         private StyledListBoxControl lstRoutines;
-        private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine;
+        private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine, btnStartRoutineAuto;
 
         private readonly ToolTip _routineToolTip = UIStyles.ToolTips.CreateToolTip();
         private int _lastHoveredRoutineIndex = -1;
@@ -109,7 +110,7 @@ namespace SmartRoutine.UI.Controls
         }
         private void InitializeButtonPanel()
         {
-            buttonPanel = UIStyles.TableLayoutPanels.CreateDark(5, 1);
+            buttonPanel = UIStyles.TableLayoutPanels.CreateDark(6, 1);
             buttonPanel.BackColor = UIStyles.Colors.BackgroundDarkElevated;
             buttonPanel.Dock = DockStyle.Fill;
             buttonPanel.Padding = new Padding(0);
@@ -118,10 +119,11 @@ namespace SmartRoutine.UI.Controls
             buttonPanel.RowStyles.Clear();
 
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
 
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -142,13 +144,19 @@ namespace SmartRoutine.UI.Controls
 
             btnStartRoutine = UIStyles.Buttons.CreateGreen("▶", "Routine starten", new Size(30, 30), true);
             btnStartRoutine.Dock = DockStyle.Fill;
-            btnStartRoutine.Margin = new Padding(5);
+            btnStartRoutine.Margin = new Padding(5, 5, 0, 5);
             btnStartRoutine.Click += BtnStartRoutine_Click;
+
+            btnStartRoutineAuto = UIStyles.Buttons.CreateGreen("⚡", "Routine automatisch starten", new Size(30, 30), true);
+            btnStartRoutineAuto.Dock = DockStyle.Fill;
+            btnStartRoutineAuto.Margin = new Padding(0, 5, 5, 5);
+            btnStartRoutineAuto.Click += BtnStartRoutineAuto_Click;
 
             buttonPanel.Controls.Add(btnNewRoutine, 1, 0);
             buttonPanel.Controls.Add(btnEditRoutine, 2, 0);
             buttonPanel.Controls.Add(btnDeleteRoutine, 3, 0);
             buttonPanel.Controls.Add(btnStartRoutine, 4, 0);
+            buttonPanel.Controls.Add(btnStartRoutineAuto, 5, 0);
         }
 
         private void BtnNewRoutine_Click(object sender, EventArgs e)
@@ -186,6 +194,12 @@ namespace SmartRoutine.UI.Controls
                 return;
 
             StartRoutineClicked?.Invoke(this, _selectedRoutine);
+        }
+        private void BtnStartRoutineAuto_Click(object sender, EventArgs e)
+        {
+            if (_selectedRoutine == null)
+                return;
+            StartRoutineAutoClicked?.Invoke(this, _selectedRoutine);
         }
 
 
@@ -367,6 +381,7 @@ namespace SmartRoutine.UI.Controls
             btnEditRoutine.Enabled = hasSelection;
             btnDeleteRoutine.Enabled = hasSelection;
             btnStartRoutine.Enabled = hasSelection;
+            btnStartRoutineAuto.Enabled = hasSelection;
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)

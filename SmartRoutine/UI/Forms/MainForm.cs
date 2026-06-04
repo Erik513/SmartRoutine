@@ -78,6 +78,7 @@ namespace SmartRoutine.UI.Forms
             _routinesView.EditRoutineClicked += OnEditRoutineClicked;
             _routinesView.DeleteRoutineClicked += OnDeleteRoutineClicked;
             _routinesView.StartRoutineClicked += OnStartRoutineClicked;
+            _routinesView.StartRoutineAutoClicked += OnStartRoutineAutoClicked;
 
             _editorView.BackToRoutinesClicked += OnBackToRoutinesClicked;
             _editorView.SaveChanges += OnSaveChanges;
@@ -169,6 +170,48 @@ namespace SmartRoutine.UI.Forms
                 executionForm.Dispose();
             }
         }
+        private void ExecuteFullRoutineAuto(Routine routine)
+        {
+            if (!CanExecuteRoutine(routine))
+                return;
+
+            DialogResult result = CustomMessageBox.Show(
+                $"Möchten Sie die Routine '{routine.Name}' automatisch ausführen?\n\nAlle aktivierten Schritte werden nacheinander gestartet.",
+                "Automatische Ausführung starten",
+                CustomMessageBoxButtons.YesNo,
+                CustomMessageBoxIcon.Question,
+                this,
+                CustomMessageBoxSize.Medium);
+
+            if (result != DialogResult.Yes)
+                return;
+
+            AutoRunForm form = new AutoRunForm(
+                routine,
+                ExecuteRoutineStep,
+                OnRoutineAutoRunCompleted);
+
+            try
+            {
+                form.ShowDialog(this);
+            }
+            finally
+            {
+                form.Dispose();
+            }
+        }
+
+        private void OnRoutineAutoRunCompleted(Routine routine)
+        {
+            if (routine == null)
+                return;
+
+            routine.LastExecutionAt = DateTime.Now;
+
+            _routineService.SaveRoutine(routine);
+
+            _routinesView.LoadRoutines();
+        }
 
         private bool CanExecuteRoutine(Routine routine)
         {
@@ -247,6 +290,10 @@ namespace SmartRoutine.UI.Forms
         private void OnStartRoutineClicked(object sender, Routine routine)
         {
             ExecuteFullRoutine(routine);
+        }
+        private void OnStartRoutineAutoClicked(object sender, Routine routine)
+        {
+            ExecuteFullRoutineAuto(routine);
         }
 
         private void OnBackToRoutinesClicked(object sender, EventArgs e)

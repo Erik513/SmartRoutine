@@ -89,7 +89,7 @@ namespace SmartRoutine.UI.Forms
         {
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(600, 450);
-            Size = MinimumSize;
+            Size = new Size(1200, 800);
             BackColor = UIStyles.Colors.BackgroundDark;
         }
 
