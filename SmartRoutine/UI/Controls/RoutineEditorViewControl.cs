@@ -1097,7 +1097,10 @@ namespace SmartRoutine.UI.Controls
             if (executionStep == null)
                 return;
 
+            executionStep.Show = true;
+
             bool requiresExecutionForm =
+                !executionStep.AutoStart ||
                 executionStep is OpenUrlStep &&
                 !((OpenUrlStep)executionStep).OpenInExternalBrowser;
 
@@ -1132,13 +1135,15 @@ namespace SmartRoutine.UI.Controls
 
         private void OpenAutoRunForm(RoutineStep executionStep)
         {
+            executionStep.Show = true;
+
             Routine routine = new Routine
             {
                 Name = executionStep.Name,
                 Steps = new List<RoutineStep>
-        {
-            executionStep
-        }
+                {
+                    executionStep
+                }
             };
 
             AutoRunForm form = new AutoRunForm(
