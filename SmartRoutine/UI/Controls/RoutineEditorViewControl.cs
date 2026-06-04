@@ -129,15 +129,15 @@ namespace SmartRoutine.UI.Controls
             mainTlp.Dock = DockStyle.Fill;
 
             mainTlp.RowStyles.Clear();
-            mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
             mainTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
 
             contentTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
             contentTlp.Dock = DockStyle.Fill;
 
             contentTlp.ColumnStyles.Clear();
-            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
-            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
+            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
+            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55));
         }
         private void InitializeLeftPanel()
         {
@@ -304,11 +304,6 @@ namespace SmartRoutine.UI.Controls
 
             rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Step ausführen", new Size(100, 35), true);
-            btnExecuteStep.Dock = DockStyle.Fill;
-            btnExecuteStep.Margin = new Padding(5);
-            btnExecuteStep.Click += BtnExecuteStep_Click;
-
             btnSaveStep = UIStyles.Buttons.CreatePrimary("💾", "Speichern", new Size(100, 35), true);
             btnSaveStep.Dock = DockStyle.Fill;
             btnSaveStep.Margin = new Padding(5);
@@ -319,9 +314,14 @@ namespace SmartRoutine.UI.Controls
             btnCancelStep.Margin = new Padding(5);
             btnCancelStep.Click += BtnCancelStep_Click;
 
-            rightBtnsTlp.Controls.Add(btnExecuteStep, 1, 0);
-            rightBtnsTlp.Controls.Add(btnSaveStep, 2, 0);
-            rightBtnsTlp.Controls.Add(btnCancelStep, 3, 0);
+            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Step ausführen", new Size(100, 35), true);
+            btnExecuteStep.Dock = DockStyle.Fill;
+            btnExecuteStep.Margin = new Padding(5);
+            btnExecuteStep.Click += BtnExecuteStep_Click;
+
+            rightBtnsTlp.Controls.Add(btnSaveStep, 1, 0);
+            rightBtnsTlp.Controls.Add(btnCancelStep, 2, 0);
+            rightBtnsTlp.Controls.Add(btnExecuteStep, 3, 0);
         }
         private void InitializeFooter()
         {

@@ -35,12 +35,6 @@ namespace SmartRoutine.UI.Controls
 
         private const string DefaultRoutineNamePrefix = "Meine Routine ";
 
-        private static readonly Color GradientStart =
-            Color.FromArgb(8, 12, 24);
-
-        private static readonly Color GradientEnd =
-            Color.FromArgb(28, 55, 95);
-
         public RoutinesViewControl()
         {
             InitializeComponent();
@@ -118,10 +112,10 @@ namespace SmartRoutine.UI.Controls
             buttonPanel.ColumnStyles.Clear();
             buttonPanel.RowStyles.Clear();
 
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
+            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
             buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
 
@@ -152,9 +146,9 @@ namespace SmartRoutine.UI.Controls
             btnStartRoutineAuto.Margin = new Padding(0, 5, 5, 5);
             btnStartRoutineAuto.Click += BtnStartRoutineAuto_Click;
 
-            buttonPanel.Controls.Add(btnNewRoutine, 1, 0);
-            buttonPanel.Controls.Add(btnEditRoutine, 2, 0);
-            buttonPanel.Controls.Add(btnDeleteRoutine, 3, 0);
+            buttonPanel.Controls.Add(btnNewRoutine, 0, 0);
+            buttonPanel.Controls.Add(btnEditRoutine, 1, 0);
+            buttonPanel.Controls.Add(btnDeleteRoutine, 2, 0);
             buttonPanel.Controls.Add(btnStartRoutine, 4, 0);
             buttonPanel.Controls.Add(btnStartRoutineAuto, 5, 0);
         }
@@ -382,21 +376,6 @@ namespace SmartRoutine.UI.Controls
             btnDeleteRoutine.Enabled = hasSelection;
             btnStartRoutine.Enabled = hasSelection;
             btnStartRoutineAuto.Enabled = hasSelection;
-        }
-
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            using (LinearGradientBrush brush =
-                new LinearGradientBrush(
-                    ClientRectangle,
-                    GradientStart,
-                    GradientEnd,
-                    315f))
-            {
-                e.Graphics.FillRectangle(
-                    brush,
-                    ClientRectangle);
-            }
         }
     }
 }

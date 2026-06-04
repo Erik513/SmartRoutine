@@ -63,20 +63,6 @@ namespace SmartRoutine.UI.Forms
             InitializeExecution();
         }
 
-        protected override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-            ShowPendingToastIfNeeded();
-        }
-
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            StopAndDisposeWebView();
-            DisposePopup();
-
-            base.OnFormClosing(e);
-        }
-
         private void InitializeForm()
         {
             ConfigureForm();
@@ -87,10 +73,10 @@ namespace SmartRoutine.UI.Forms
 
         private void ConfigureForm()
         {
-            StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(600, 450);
             Size = new Size(1200, 800);
             BackColor = UIStyles.Colors.BackgroundDark;
+            CenterToScreen();
         }
 
         private void InitializeExecution()
@@ -487,15 +473,6 @@ namespace SmartRoutine.UI.Forms
             return $"✓ {step.Name} ausgeführt";
         }
 
-        private void DisposePopup()
-        {
-            if (_infoPopup == null)
-                return;
-
-            _infoPopup.Dispose();
-            _infoPopup = null;
-        }
-
         private void OnInfoLabelMouseEnter(object sender, EventArgs e)
         {
             ShowStepInfo();
@@ -520,6 +497,33 @@ namespace SmartRoutine.UI.Forms
         private void OnExecuteButtonClick(object sender, EventArgs e)
         {
             ExecuteCurrentStep();
+        }
+        private void DisposePopup()
+        {
+            if (_infoPopup == null)
+                return;
+
+            _infoPopup.Dispose();
+            _infoPopup = null;
+        }
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+
+            TopMost = true;
+            BringToFront();
+            Activate();
+            TopMost = false;
+
+            ShowPendingToastIfNeeded();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            StopAndDisposeWebView();
+            DisposePopup();
+
+            base.OnFormClosing(e);
         }
     }
 }
