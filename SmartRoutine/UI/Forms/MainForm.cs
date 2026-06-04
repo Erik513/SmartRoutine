@@ -188,7 +188,9 @@ namespace SmartRoutine.UI.Forms
                 return;
 
             DialogResult result = CustomMessageBox.Show(
-                $"Möchten Sie die Routine '{routine.Name}' automatisch ausführen?\n\nAlle aktivierten Schritte werden nacheinander gestartet.",
+                $"Möchten Sie die Routine '{routine.Name}' automatisch ausführen?\n\n" +
+                "Alle aktivierten Schritte werden nacheinander gestartet.\n" +
+                "Interne URL-Schritte werden dabei einmalig im externen Browser geöffnet.",
                 "Automatische Ausführung starten",
                 CustomMessageBoxButtons.YesNo,
                 CustomMessageBoxIcon.Question,
