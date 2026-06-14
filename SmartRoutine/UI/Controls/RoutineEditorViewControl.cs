@@ -673,9 +673,32 @@ namespace SmartRoutine.UI.Controls
             if (!ValidateCurrentStep(true))
                 return false;
 
-            SaveCurrentStep(false);
+            SaveCurrentStepWithoutReselect();
 
             return true;
+        }
+
+        private void SaveCurrentStepWithoutReselect()
+        {
+            if (!ValidateCurrentStep(false))
+                return;
+
+            RoutineStep step = CreateStepFromEditor();
+
+            if (step == null)
+                return;
+
+            SaveStep(step);
+
+            _editorSnapshotStep = RoutineStepFactory.CreateCopy(step);
+
+            if (_editingStep != null && _editorSnapshotStep != null)
+            {
+                _editorSnapshotStep.Id = _editingStep.Id;
+                _editorSnapshotStep.Order = _editingStep.Order;
+            }
+
+            RefreshStepsList(silent: true);
         }
 
         private void RestoreCurrentEditingStepSelection()
@@ -737,6 +760,7 @@ namespace SmartRoutine.UI.Controls
             txtStepDescription.Text = "";
             tglStepEnabled.Checked = true;
             tglAutoStart.Checked = true;
+            tglAutoContinue.Checked = false;
 
             cmbStepType.SelectedIndex = -1;
 
