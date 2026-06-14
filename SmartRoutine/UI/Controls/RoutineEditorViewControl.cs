@@ -31,6 +31,7 @@ namespace SmartRoutine.UI.Controls
         private RoutineStep _editingStep;
         private RoutineStep _editorSnapshotStep;
         private StepType? _currentEditorStepType;
+        private ToolTip _descriptionTooltip = UIStyles.ToolTips.CreateToolTip();
         private ToolTip _errorToolTip = UIStyles.ToolTips.CreateToolTip();
         private bool _isRefreshing = false;
         private bool _isLoadingStep = false;
@@ -460,6 +461,26 @@ namespace SmartRoutine.UI.Controls
                 "Automatisierung",
                 UIColumn.Percent(autostartPanel, 50),
                 UIColumn.Percent(autocontinuePanel, 50));
+
+            txtStepDescription.MouseEnter += (s, e) =>
+            {
+                _descriptionTooltip.SetToolTip(
+                    txtStepDescription,
+                    IsTextTruncated(txtStepDescription)
+                        ? txtStepDescription.Text
+                        : string.Empty);
+            };
+        }
+        private bool IsTextTruncated(TextBox textBox)
+        {
+            if (string.IsNullOrEmpty(textBox.Text))
+                return false;
+
+            Size textSize = TextRenderer.MeasureText(
+                textBox.Text,
+                textBox.Font);
+
+            return textSize.Width > textBox.ClientSize.Width;
         }
 
         private void BuildOptionsEditorTable()
