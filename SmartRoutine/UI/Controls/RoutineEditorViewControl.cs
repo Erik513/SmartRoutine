@@ -267,15 +267,15 @@ namespace SmartRoutine.UI.Controls
 
             tglAutoStart = UIStyles.ToggleSwitches.CreateStandard(
                 true,
-                "Autostart An",
-                "Autostart Aus");
+                "Automatisch starten",
+                "Nicht automatisch starten");
 
             tglAutoStart.Anchor = AnchorStyles.Left;
 
             tglAutoContinue = UIStyles.ToggleSwitches.CreateStandard(
                 false,
-                "Auto-Weiter An",
-                "Auto-Weiter Aus");
+                "Automatisch zum nächsten Schritt wechseln",
+                "Nach Ausführung anhalten");
 
             tglAutoContinue.Anchor = AnchorStyles.Left;
         }
@@ -431,8 +431,35 @@ namespace SmartRoutine.UI.Controls
             editorBaseTable.AddRow("Name", txtStepName);
             editorBaseTable.AddRow("Beschreibung", txtStepDescription);
             editorBaseTable.AddRow("Aktion", cmbStepType);
-            editorBaseTable.AddRow("Autostart", tglAutoStart);
-            editorBaseTable.AddRow("Auto-Weiter", tglAutoContinue);
+            
+            FlowLayoutPanel autostartPanel = new FlowLayoutPanel();
+            autostartPanel.AutoSize = true;
+            autostartPanel.WrapContents = false;
+            autostartPanel.Dock = DockStyle.Left;
+            autostartPanel.Margin = Padding.Empty;
+            Label lblAutoStart = UIStyles.Labels.CreateNormal("Start");
+            lblAutoStart.Margin = new Padding(0, 4, 5, 0);
+            lblAutoStart.AutoSize = true;
+
+            autostartPanel.Controls.Add(lblAutoStart);
+            autostartPanel.Controls.Add(tglAutoStart);
+
+            FlowLayoutPanel autocontinuePanel = new FlowLayoutPanel();
+            autocontinuePanel.AutoSize = true;
+            autocontinuePanel.WrapContents = false;
+            autocontinuePanel.Dock = DockStyle.Left;
+            autocontinuePanel.Margin = Padding.Empty;
+            Label lblAutoContinue = UIStyles.Labels.CreateNormal("Weiter");
+            lblAutoContinue.Margin = new Padding(0, 4, 5, 0);
+            lblAutoContinue.AutoSize = true;
+
+            autocontinuePanel.Controls.Add(lblAutoContinue);
+            autocontinuePanel.Controls.Add(tglAutoContinue);
+
+            editorBaseTable.AddRow(
+                "Automatisierung",
+                UIColumn.Percent(autostartPanel, 50),
+                UIColumn.Percent(autocontinuePanel, 50));
         }
 
         private void BuildOptionsEditorTable()
