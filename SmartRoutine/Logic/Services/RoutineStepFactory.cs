@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SmartRoutine.Logic.Services
 {
-    public static class AutoRunBuilder
+    public static class RoutineStepFactory
     {
         public static List<RoutineStep> CreateAutoRunSteps(Routine routine)
         {
@@ -14,17 +14,17 @@ namespace SmartRoutine.Logic.Services
             return routine.Steps
                 .Where(s => s.Show)
                 .OrderBy(s => s.Order)
-                .Select(CreateAutoRunStepCopy)
+                .Select(CreateAutoRunCopy)
                 .Where(s => s != null)
                 .ToList();
         }
 
-        public static RoutineStep CreateAutoRunStepCopy(RoutineStep step)
+        public static RoutineStep CreateAutoRunCopy(RoutineStep step)
         {
             return CreateStepCopy(step, true);
         }
 
-        public static RoutineStep CreateNormalStepCopy(RoutineStep step)
+        public static RoutineStep CreateCopy(RoutineStep step)
         {
             return CreateStepCopy(step, false);
         }
@@ -51,7 +51,8 @@ namespace SmartRoutine.Logic.Services
                     Url = urlStep.Url,
                     OpenInExternalBrowser = forceAutoRun
                         ? true
-                        : urlStep.OpenInExternalBrowser
+                        : urlStep.OpenInExternalBrowser,
+                    AutoContinue = forceAutoRun ? true : urlStep.AutoContinue
                 };
             }
 
@@ -68,7 +69,8 @@ namespace SmartRoutine.Logic.Services
                     Show = folderStep.Show,
                     AutoStart = forceAutoRun ? true : folderStep.AutoStart,
                     FolderPath = folderStep.FolderPath,
-                    OpenInNewWindow = folderStep.OpenInNewWindow
+                    OpenInNewWindow = folderStep.OpenInNewWindow,
+                    AutoContinue = forceAutoRun ? true : folderStep.AutoContinue
                 };
             }
 
@@ -87,7 +89,8 @@ namespace SmartRoutine.Logic.Services
                     ApplicationPath = appStep.ApplicationPath,
                     Arguments = appStep.Arguments,
                     RunAsAdmin = appStep.RunAsAdmin,
-                    WorkingDirectory = appStep.WorkingDirectory
+                    WorkingDirectory = appStep.WorkingDirectory,
+                    AutoContinue = forceAutoRun ? true : appStep.AutoContinue
                 };
             }
 
@@ -104,7 +107,8 @@ namespace SmartRoutine.Logic.Services
                     Show = docStep.Show,
                     AutoStart = forceAutoRun ? true : docStep.AutoStart,
                     FilePath = docStep.FilePath,
-                    OpenWithAssociatedApp = docStep.OpenWithAssociatedApp
+                    OpenWithAssociatedApp = docStep.OpenWithAssociatedApp,
+                    AutoContinue = forceAutoRun ? true : docStep.AutoContinue
                 };
             }
 

@@ -20,7 +20,9 @@ namespace SmartRoutine.Logic.TestData
                 Id = "test_logic_all_step_types",
                 Name = "Logiktest: Alle Step-Typen",
                 Order = 0,
-                CreatedAt = now,
+                CreatedAt = now.AddDays(-10),
+                UpdatedAt = now.AddDays(-2),
+                LastExecutionAt = now.AddHours(-3),
                 Steps = new List<RoutineStep>
                 {
                     new OpenUrlStep
@@ -31,6 +33,7 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Soll sichtbar sein, nicht automatisch starten, WebView erst nach Klick anzeigen.",
                         Show = true,
                         AutoStart = false,
+                        AutoContinue = false,
                         Url = "https://www.example.com",
                         OpenInExternalBrowser = false
                     },
@@ -42,6 +45,7 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Soll sichtbar sein und beim ersten Betreten automatisch in der WebView starten.",
                         Show = true,
                         AutoStart = true,
+                        AutoContinue = false,
                         Url = "https://www.wikipedia.org",
                         OpenInExternalBrowser = false
                     },
@@ -49,10 +53,11 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_3",
                         Order = 2,
-                        Name = "URL extern - Autostart sichtbar",
-                        Description = "Soll sichtbar sein und beim ersten Betreten im externen Browser starten.",
+                        Name = "URL extern - Autostart + AutoContinue",
+                        Description = "Soll sichtbar sein, automatisch extern starten und danach automatisch weitergehen.",
                         Show = true,
                         AutoStart = true,
+                        AutoContinue = true,
                         Url = "https://www.github.com",
                         OpenInExternalBrowser = true
                     },
@@ -64,8 +69,9 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Darf in ExecutionForm nicht auftauchen.",
                         Show = false,
                         AutoStart = true,
+                        AutoContinue = true,
                         Url = "https://www.google.com",
-                        OpenInExternalBrowser = false
+                        OpenInExternalBrowser = true
                     },
                     new OpenFolderStep
                     {
@@ -75,6 +81,7 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Soll sichtbar sein, aber erst per Button ausgeführt werden.",
                         Show = true,
                         AutoStart = false,
+                        AutoContinue = true,
                         FolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                         OpenInNewWindow = true
                     },
@@ -82,10 +89,11 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_6",
                         Order = 5,
-                        Name = "Ordner - Autostart sichtbar",
-                        Description = "Soll sichtbar sein und beim ersten Betreten automatisch öffnen.",
+                        Name = "Ordner - Autostart + AutoContinue",
+                        Description = "Soll sichtbar sein, automatisch öffnen und danach automatisch weitergehen.",
                         Show = true,
                         AutoStart = true,
+                        AutoContinue = true,
                         FolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                         OpenInNewWindow = true
                     },
@@ -97,8 +105,9 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Darf in ExecutionForm nicht auftauchen.",
                         Show = false,
                         AutoStart = true,
+                        AutoContinue = true,
                         FolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                        OpenInNewWindow = true
+                        OpenInNewWindow = false
                     },
                     new OpenApplicationStep
                     {
@@ -108,19 +117,21 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Soll sichtbar sein und Notepad erst per Button starten.",
                         Show = true,
                         AutoStart = false,
+                        AutoContinue = false,
                         ApplicationPath = "notepad.exe",
                         Arguments = "",
                         RunAsAdmin = false,
-                        WorkingDirectory = ""
+                        WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
                     },
                     new OpenApplicationStep
                     {
                         Id = "logic_step_9",
                         Order = 8,
-                        Name = "App - Autostart sichtbar",
-                        Description = "Soll sichtbar sein und Calculator beim ersten Betreten automatisch starten.",
+                        Name = "App - Autostart + AutoContinue",
+                        Description = "Soll sichtbar sein, Calculator automatisch starten und danach weitergehen.",
                         Show = true,
                         AutoStart = true,
+                        AutoContinue = true,
                         ApplicationPath = "calc.exe",
                         Arguments = "",
                         RunAsAdmin = false,
@@ -134,10 +145,11 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Darf in ExecutionForm nicht auftauchen.",
                         Show = false,
                         AutoStart = true,
+                        AutoContinue = true,
                         ApplicationPath = "notepad.exe",
                         Arguments = "",
                         RunAsAdmin = false,
-                        WorkingDirectory = ""
+                        WorkingDirectory = "",
                     },
                     new OpenDocumentStep
                     {
@@ -147,6 +159,7 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Soll sichtbar sein und erst per Button geöffnet werden.",
                         Show = true,
                         AutoStart = false,
+                        AutoContinue = false,
                         FilePath = System.IO.Path.Combine(
                             Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                             "SmartRoutine-Test.txt"
@@ -157,10 +170,11 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_12",
                         Order = 11,
-                        Name = "Dokument - Autostart sichtbar",
-                        Description = "Soll sichtbar sein und beim ersten Betreten automatisch geöffnet werden.",
+                        Name = "Dokument - Autostart + AutoContinue",
+                        Description = "Soll sichtbar sein, automatisch geöffnet werden und danach weitergehen.",
                         Show = true,
                         AutoStart = true,
+                        AutoContinue = true,
                         FilePath = System.IO.Path.Combine(
                             Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                             "SmartRoutine-Test.txt"
@@ -175,6 +189,7 @@ namespace SmartRoutine.Logic.TestData
                         Description = "Darf in ExecutionForm nicht auftauchen.",
                         Show = false,
                         AutoStart = true,
+                        AutoContinue = true,
                         FilePath = System.IO.Path.Combine(
                             Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                             "SmartRoutine-Test.txt"
@@ -182,7 +197,7 @@ namespace SmartRoutine.Logic.TestData
                         OpenWithAssociatedApp = true
                     }
                 }
-            };
+            }; 
             routines.Add(logicTestRoutine);
 
             var TestRoutineWithDisabledStep = new Routine
@@ -190,20 +205,23 @@ namespace SmartRoutine.Logic.TestData
                 Id = "test_routine_with_disabled_step",
                 Name = "Routine mit ausgeschaltetem Schritt",
                 Order = 1,
-                CreatedAt = now,
+                CreatedAt = now.AddDays(-5),
+                UpdatedAt = now.AddDays(-1),
+                LastExecutionAt = null,
                 Steps = new List<RoutineStep>
                 {
                     new OpenUrlStep
                     {
                         Id = "step_1",
                         Order = 0,
-                        Name = "URL intern - manuell sichtbar",
-                        Description = "Soll sichtbar sein, nicht automatisch starten, WebView erst nach Klick anzeigen.",
+                        Name = "URL intern - ausgeblendet manuell",
+                        Description = "Soll nicht sichtbar sein und nicht automatisch starten.",
                         Show = false,
                         AutoStart = false,
+                        AutoContinue = false,
                         Url = "https://www.example.com",
                         OpenInExternalBrowser = false
-                    },
+                    }
                 }
             };
             routines.Add(TestRoutineWithDisabledStep);
@@ -215,7 +233,9 @@ namespace SmartRoutine.Logic.TestData
                     Id = $"test_empty_{i}",
                     Name = $"Test {i + 1}",
                     Order = 2 + i,
-                    CreatedAt = now,
+                    CreatedAt = now.AddDays(-(i + 1)),
+                    UpdatedAt = i % 2 == 0 ? now.AddHours(-i) : (DateTime?)null,
+                    LastExecutionAt = i % 3 == 0 ? now.AddMinutes(-(i + 1) * 10) : (DateTime?)null,
                     Steps = new List<RoutineStep>()
                 });
             }

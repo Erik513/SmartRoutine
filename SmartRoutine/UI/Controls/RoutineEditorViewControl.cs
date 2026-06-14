@@ -62,7 +62,8 @@ namespace SmartRoutine.UI.Controls
         private ComboBox cmbStepType;
         private ToggleSwitch tglAutoStart;
         private StyledPropertyTable editorOptionsTable;
-        
+        private ToggleSwitch tglAutoContinue;
+
         private Panel rightFillPanel;
         
         private TableLayoutPanel rightBtnsTlp;
@@ -232,7 +233,6 @@ namespace SmartRoutine.UI.Controls
             lblStepNameTitle = UIStyles.Labels.CreateTitle();
             lblStepNameTitle.Dock = DockStyle.Fill;
             lblStepNameTitle.BackColor = Color.Transparent;
-            //lblStepNameTitle.AutoSize = false;
             lblStepNameTitle.Text = "Schritt bearbeiten";
 
             tglStepEnabled = UIStyles.ToggleSwitches.CreateStandard(
@@ -271,6 +271,13 @@ namespace SmartRoutine.UI.Controls
                 "Autostart Aus");
 
             tglAutoStart.Anchor = AnchorStyles.Left;
+
+            tglAutoContinue = UIStyles.ToggleSwitches.CreateStandard(
+                false,
+                "Auto-Weiter An",
+                "Auto-Weiter Aus");
+
+            tglAutoContinue.Anchor = AnchorStyles.Left;
         }
 
         private void InitializeEditorTables()
@@ -425,6 +432,7 @@ namespace SmartRoutine.UI.Controls
             editorBaseTable.AddRow("Beschreibung", txtStepDescription);
             editorBaseTable.AddRow("Aktion", cmbStepType);
             editorBaseTable.AddRow("Autostart", tglAutoStart);
+            editorBaseTable.AddRow("Auto-Weiter", tglAutoContinue);
         }
 
         private void BuildOptionsEditorTable()
@@ -760,6 +768,10 @@ namespace SmartRoutine.UI.Controls
                 txtStepDescription.Text = step.Description;
                 tglStepEnabled.Checked = step.Show;
                 tglAutoStart.Checked = step.AutoStart;
+                tglAutoContinue.Checked = step.AutoContinue;
+
+                Debug.WriteLine("Load step AutoContinue: " + step.AutoContinue);
+                Debug.WriteLine("Toggle AutoContinue: " + tglAutoContinue.Checked);
 
                 SetSelectedStepType(step.Type);
                 EnsureOptionsEditorForStepType(step.Type);
@@ -796,8 +808,10 @@ namespace SmartRoutine.UI.Controls
                 editorOptionsTable.Visible = true;
                 editorOptionsTable.BringToFront();
 
+                UpdateAutoContinueAvailability();
+
                 _editingStep = step;
-                _editorSnapshotStep = AutoRunBuilder.CreateNormalStepCopy(step);
+                _editorSnapshotStep = RoutineStepFactory.CreateCopy(step);
 
                 SetEditorEnabled(true);
             }
@@ -881,7 +895,6 @@ namespace SmartRoutine.UI.Controls
                     return;
                 }
             }
-
             OpenEditorForStep(selectedStep);
             btnDeleteStep.Enabled = true;
         }
@@ -1092,7 +1105,7 @@ namespace SmartRoutine.UI.Controls
         private void ExecuteEditingStep()
         {
             RoutineStep executionStep =
-                AutoRunBuilder.CreateNormalStepCopy(_editingStep);
+                RoutineStepFactory.CreateCopy(_editingStep);
 
             if (executionStep == null)
                 return;
@@ -1213,6 +1226,8 @@ namespace SmartRoutine.UI.Controls
                 return;
             }
             EnsureOptionsEditorForStepType(selectedType);
+
+            UpdateAutoContinueAvailability();
         }
 
         private void CreateOpenUrlControls()
@@ -1237,12 +1252,19 @@ namespace SmartRoutine.UI.Controls
                 "Externer Browser",
                 "In App öffnen");
 
+            tglOpenInExternBrowser.CheckedChanged += TglOpenInExternBrowser_CheckedChanged;
+
             tglOpenInExternBrowser.Name = "tglOpenInternally";
             tglOpenInExternBrowser.Anchor = AnchorStyles.Left;
 
             editorOptionsTable.AddRow("URL", txtUrl);
             editorOptionsTable.AddRow("Öffnen in", tglOpenInExternBrowser);
         }
+        private void TglOpenInExternBrowser_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateAutoContinueAvailability();
+        }
+
         private void CreateOpenFolderControls()
         {
             txtFolderPath = UIStyles.TextBoxes.CreateBorderstyleNone();
@@ -1571,7 +1593,7 @@ namespace SmartRoutine.UI.Controls
 
             SaveStep(step);
 
-            _editorSnapshotStep = AutoRunBuilder.CreateNormalStepCopy(step);
+            _editorSnapshotStep = RoutineStepFactory.CreateCopy(step);
 
             if (_editingStep != null && _editorSnapshotStep != null)
             {
@@ -1693,6 +1715,38 @@ namespace SmartRoutine.UI.Controls
             step.Show = tglStepEnabled.Checked;
 
             step.AutoStart = tglAutoStart.Checked;
+
+            step.AutoContinue = tglAutoContinue.Checked;
+            if (step is OpenUrlStep urlStep && !urlStep.OpenInExternalBrowser)
+            {
+                step.AutoContinue = false;
+            }
+        }
+
+        private void UpdateAutoContinueAvailability()
+        {
+            StepType selectedType;
+
+            if (!TryGetSelectedStepType(out selectedType))
+            {
+                tglAutoContinue.Enabled = true;
+                return;
+            }
+
+            if (selectedType != StepType.OpenUrl)
+            {
+                tglAutoContinue.Enabled = true;
+                return;
+            }
+
+            bool isInternalUrl =
+                tglOpenInExternBrowser != null &&
+                !tglOpenInExternBrowser.Checked;
+
+            tglAutoContinue.Enabled = !isInternalUrl;
+
+            if (isInternalUrl)
+                tglAutoContinue.Checked = false;
         }
 
         private void SaveStep(RoutineStep step)

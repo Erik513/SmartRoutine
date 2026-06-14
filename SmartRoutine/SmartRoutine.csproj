@@ -162,7 +162,7 @@
     <Compile Include="Data\Interfaces\IRoutineRepository.cs" />
     <Compile Include="Data\Models\Routine.cs" />
     <Compile Include="Logic\Services\ChangeDetector.cs" />
-    <Compile Include="Logic\Services\AutoRunBuilder.cs" />
+    <Compile Include="Logic\Services\RoutineStepFactory.cs" />
     <Compile Include="Logic\Services\RoutineCloneService.cs" />
     <Compile Include="Logic\Services\RoutineExecutionSession.cs" />
     <Compile Include="Logic\Services\StepExecutionResult.cs" />

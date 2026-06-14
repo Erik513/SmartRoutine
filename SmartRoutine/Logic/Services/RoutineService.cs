@@ -234,61 +234,7 @@ namespace SmartRoutine.Logic.Services
 
         private RoutineStep CopyStep(RoutineStep original)
         {
-            switch (original)
-            {
-                case OpenUrlStep urlStep:
-                    return new OpenUrlStep
-                    {
-                        Id = urlStep.Id,
-                        Order = urlStep.Order,
-                        Name = urlStep.Name,
-                        Description = urlStep.Description,
-                        Show = urlStep.Show,
-                        AutoStart = urlStep.AutoStart,
-                        Url = urlStep.Url,
-                        OpenInExternalBrowser = urlStep.OpenInExternalBrowser
-                    };
-                case OpenFolderStep folderStep:
-                    return new OpenFolderStep
-                    {
-                        Id = folderStep.Id,
-                        Order = folderStep.Order,
-                        Name = folderStep.Name,
-                        Description = folderStep.Description,
-                        Show = folderStep.Show,
-                        AutoStart = folderStep.AutoStart,
-                        FolderPath = folderStep.FolderPath,
-                        OpenInNewWindow = folderStep.OpenInNewWindow
-                    };
-                case OpenApplicationStep appStep:
-                    return new OpenApplicationStep
-                    {
-                        Id = appStep.Id,
-                        Order = appStep.Order,
-                        Name = appStep.Name,
-                        Description = appStep.Description,
-                        Show = appStep.Show,
-                        AutoStart = appStep.AutoStart,
-                        ApplicationPath = appStep.ApplicationPath,
-                        Arguments = appStep.Arguments,
-                        RunAsAdmin = appStep.RunAsAdmin,
-                        WorkingDirectory = appStep.WorkingDirectory
-                    };
-                case OpenDocumentStep docStep:  // ← Neu
-                    return new OpenDocumentStep
-                    {
-                        Id = docStep.Id,
-                        Order = docStep.Order,
-                        Name = docStep.Name,
-                        Description = docStep.Description,
-                        Show = docStep.Show,
-                        AutoStart = docStep.AutoStart,
-                        FilePath = docStep.FilePath,
-                        OpenWithAssociatedApp = docStep.OpenWithAssociatedApp
-                    };
-                default:
-                    throw new NotSupportedException($"Step type {original.GetType()} not supported");
-            }
+            return RoutineStepFactory.CreateCopy(original);
         }
 
         // Steps =================================================================================

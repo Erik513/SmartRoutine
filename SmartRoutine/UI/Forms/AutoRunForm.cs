@@ -129,7 +129,7 @@ namespace SmartRoutine.UI.Forms
         }
         private void RunSteps()
         {
-            _steps = AutoRunBuilder.CreateAutoRunSteps(_routine);
+            _steps = RoutineStepFactory.CreateAutoRunSteps(_routine);
             _currentIndex = 0;
 
             _progressBar.Maximum = _steps.Count;

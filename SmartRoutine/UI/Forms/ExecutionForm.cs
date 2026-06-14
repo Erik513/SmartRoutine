@@ -38,6 +38,9 @@ namespace SmartRoutine.UI.Forms
         private InfoPopupForm _infoPopup;
         private string _pendingToastMessage;
 
+        private Timer _autoContinueTimer;
+        private int _autoContinueSecondsLeft;
+
         public ExecutionForm(
             Routine routine,
             Func<RoutineStep, StepExecutionResult> onExecute)
@@ -395,6 +398,93 @@ namespace SmartRoutine.UI.Forms
             UpdateExecuteButtonAsExecuted();
 
             ShowToastWhenReady(GetSuccessMessage(step));
+
+            if (ShouldAutoContinue(step, result))
+            {
+                StartAutoContinueCountdown();
+            }
+        }
+
+        private bool ShouldAutoContinue(
+    RoutineStep step,
+    StepExecutionResult result)
+        {
+            if (step == null)
+                return false;
+
+            if (!step.AutoContinue)
+                return false;
+
+            if (!_session.CanGoNext)
+                return false;
+
+            if (result != null && result.ShouldOpenInInternalBrowser)
+                return false;
+
+            return true;
+        }
+
+        private void StartAutoContinueCountdown()
+        {
+            StopAutoContinueCountdown();
+
+            _autoContinueSecondsLeft = 2;
+
+            UpdateAutoContinueText();
+
+            _autoContinueTimer = new Timer();
+            _autoContinueTimer.Interval = 1000;
+            _autoContinueTimer.Tick += OnAutoContinueTimerTick;
+            _autoContinueTimer.Start();
+
+            SetNavigationEnabled(false);
+        }
+
+        private void OnAutoContinueTimerTick(object sender, EventArgs e)
+        {
+            _autoContinueSecondsLeft--;
+
+            if (_autoContinueSecondsLeft > 0)
+            {
+                UpdateAutoContinueText();
+                return;
+            }
+
+            StopAutoContinueCountdown();
+
+            if (_session != null && _session.CanGoNext)
+                NavigateToNextStep();
+        }
+
+        private void UpdateAutoContinueText()
+        {
+            _stepNameLabel.Text =
+                $"Weiter in {_autoContinueSecondsLeft} Sekunden...";
+        }
+
+        private void StopAutoContinueCountdown()
+        {
+            if (_autoContinueTimer == null)
+                return;
+
+            _autoContinueTimer.Stop();
+            _autoContinueTimer.Tick -= OnAutoContinueTimerTick;
+            _autoContinueTimer.Dispose();
+            _autoContinueTimer = null;
+
+            SetNavigationEnabled(true);
+        }
+
+        private void SetNavigationEnabled(bool enabled)
+        {
+            if (_previousButton != null)
+                _previousButton.Enabled = enabled && _session.CanGoPrevious;
+
+            if (_nextButton != null)
+                _nextButton.Enabled = enabled && _session.CanGoNext;
+
+            if (_executeButton != null)
+                _executeButton.Enabled = enabled;
         }
 
         private void UpdateExecuteButtonAsExecuted()
@@ -406,12 +496,14 @@ namespace SmartRoutine.UI.Forms
 
         private void NavigateToPreviousStep()
         {
+            StopAutoContinueCountdown();
             _session.GoPrevious();
             LoadCurrentStep();
         }
 
         private void NavigateToNextStep()
         {
+            StopAutoContinueCountdown();
             _session.GoNext();
             LoadCurrentStep();
         }
@@ -522,6 +614,7 @@ namespace SmartRoutine.UI.Forms
         {
             StopAndDisposeWebView();
             DisposePopup();
+            StopAutoContinueCountdown();
 
             base.OnFormClosing(e);
         }
