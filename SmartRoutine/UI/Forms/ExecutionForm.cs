@@ -276,9 +276,24 @@ namespace SmartRoutine.UI.Forms
             _stepNameLabel.Text = currentStep.Name ?? "";
 
             _previousButton.Enabled = _session.CanGoPrevious;
-            _nextButton.Enabled = _session.CanGoNext;
 
+            UpdateNextButtonState();
             UpdateExecuteButtonState();
+        }
+
+        private void UpdateNextButtonState()
+        {
+            if (_session.CanGoNext)
+            {
+                _nextButton.Text = "⏭";
+                _toolTip.SetToolTip(_nextButton, "Nächster Schritt");
+                _nextButton.Enabled = true;
+                return;
+            }
+
+            _nextButton.Text = "✓";
+            _toolTip.SetToolTip(_nextButton, "Routine beenden");
+            _nextButton.Enabled = true;
         }
 
         private void UpdateExecuteButtonState()
@@ -406,8 +421,8 @@ namespace SmartRoutine.UI.Forms
         }
 
         private bool ShouldAutoContinue(
-    RoutineStep step,
-    StepExecutionResult result)
+            RoutineStep step,
+            StepExecutionResult result)
         {
             if (step == null)
                 return false;
@@ -481,7 +496,7 @@ namespace SmartRoutine.UI.Forms
                 _previousButton.Enabled = enabled && _session.CanGoPrevious;
 
             if (_nextButton != null)
-                _nextButton.Enabled = enabled && _session.CanGoNext;
+                _nextButton.Enabled = enabled;
 
             if (_executeButton != null)
                 _executeButton.Enabled = enabled;
@@ -583,7 +598,16 @@ namespace SmartRoutine.UI.Forms
 
         private void OnNextButtonClick(object sender, EventArgs e)
         {
-            NavigateToNextStep();
+            if (_session == null)
+                return;
+
+            if (_session.CanGoNext)
+            {
+                NavigateToNextStep();
+                return;
+            }
+
+            Close();
         }
 
         private void OnExecuteButtonClick(object sender, EventArgs e)
