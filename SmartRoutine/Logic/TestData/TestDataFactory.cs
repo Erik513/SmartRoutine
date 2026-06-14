@@ -22,7 +22,7 @@ namespace SmartRoutine.Logic.TestData
                 Order = 0,
                 CreatedAt = now.AddDays(-10),
                 UpdatedAt = now.AddDays(-2),
-                LastExecutionAt = now.AddHours(-3),
+                LastExecutionAt = now.AddDays(-3),
                 Steps = new List<RoutineStep>
                 {
                     new OpenUrlStep

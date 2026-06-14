@@ -17,26 +17,34 @@ namespace SmartRoutine.UI.Helpers
             if (difference.TotalMinutes < 60)
                 return FormatTimeText(
                     (int)difference.TotalMinutes,
-                    "Minute");
+                    "Minute",
+                    "Minuten");
 
             if (difference.TotalHours < 24)
                 return FormatTimeText(
                     (int)difference.TotalHours,
-                    "Stunde");
+                    "Stunde",
+                    "Stunden");
 
             if (difference.TotalDays < 7)
                 return FormatTimeText(
                     (int)difference.TotalDays,
-                    "Tag");
+                    "Tag",
+                    "Tagen");
 
             return dateTime.Value.ToString("dd.MM.yyyy HH:mm");
         }
 
-        private static string FormatTimeText(int value, string unit)
+        private static string FormatTimeText(
+            int value,
+            string singular,
+            string plural)
         {
-            string suffix = value == 1 ? "" : "n";
+            string unit = value == 1
+                ? singular
+                : plural;
 
-            return $"Vor {value} {unit}{suffix}";
+            return $"Vor {value} {unit}";
         }
     }
 }
