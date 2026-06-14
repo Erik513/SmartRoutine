@@ -102,13 +102,7 @@ namespace SmartRoutine.UI.Controls
 
             this.Dock = DockStyle.Fill;
             this.BackColor = UIStyles.Colors.BackgroundDark;
-
-            this.Load += (s, e) =>
-            {
-                lstSteps.Visible = true;
-                lstSteps.Invalidate();
-                lstSteps.Update();
-            };
+            this.DoubleBuffered = true;
 
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
               ControlStyles.AllPaintingInWmPaint |
