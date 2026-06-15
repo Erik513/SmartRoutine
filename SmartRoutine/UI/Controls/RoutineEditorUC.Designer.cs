@@ -1,6 +1,6 @@
 ﻿namespace SmartRoutine.UI.Controls
 {
-    partial class RoutineEditorViewControl
+    partial class RoutineEditorUC
     {
         /// <summary> 
         /// Required designer variable.

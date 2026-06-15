@@ -191,17 +191,14 @@
     <Compile Include="UI\Helpers\StepTypeHelper.cs" />
     <Compile Include="Logic\Services\RoutineService.cs" />
     <Compile Include="Logic\Interfaces\IRoutineService.cs" />
-    <Compile Include="UI\Controls\RoutineEditorViewControl.cs">
+    <Compile Include="UI\Controls\RoutineEditorUC.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="UI\Controls\RoutineEditorViewControl.Designer.cs">
-      <DependentUpon>RoutineEditorViewControl.cs</DependentUpon>
+    <Compile Include="UI\Controls\RoutineEditorUC.Designer.cs">
+      <DependentUpon>RoutineEditorUC.cs</DependentUpon>
     </Compile>
-    <Compile Include="UI\Controls\RoutinesViewControl.cs">
+    <Compile Include="UI\Controls\RoutinesViewUC.cs">
       <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="UI\Controls\RoutinesViewControl.Designer.cs">
-      <DependentUpon>RoutinesViewControl.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Forms\MainForm.cs">
       <SubType>Form</SubType>

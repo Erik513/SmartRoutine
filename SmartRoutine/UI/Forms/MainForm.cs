@@ -19,8 +19,8 @@ namespace SmartRoutine.UI.Forms
 
         private readonly IRoutineService _routineService;
 
-        private RoutinesViewControl _routinesView;
-        private RoutineEditorViewControl _editorView;
+        private RoutinesViewUC _routinesView;
+        private RoutineEditorUC _editorView;
         private Routine _currentRoutine;
 
         public MainForm(IRoutineService routineService)
@@ -61,12 +61,12 @@ namespace SmartRoutine.UI.Forms
         {
             UrlValidationService urlValidationService = new UrlValidationService();
 
-            _routinesView = new RoutinesViewControl(_routineService)
+            _routinesView = new RoutinesViewUC(_routineService)
             {
                 Dock = DockStyle.Fill
             };
 
-            _editorView = new RoutineEditorViewControl(_routineService, urlValidationService)
+            _editorView = new RoutineEditorUC(_routineService, urlValidationService)
             {
                 Dock = DockStyle.Fill
             };

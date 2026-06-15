@@ -16,7 +16,7 @@ using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Controls
 {
-    public partial class RoutineEditorViewControl : UserControl
+    public partial class RoutineEditorUC : UserControl
     {
         // Für Tests: Wenn true, werden MessageBoxen automatisch mit "Ja" beantwortet
         public bool AutoConfirmDialogs { get; set; } = false;
@@ -92,7 +92,7 @@ namespace SmartRoutine.UI.Controls
         private Label lblLastExecution;
         private Button btnBack;
 
-        public RoutineEditorViewControl(IRoutineService routineService, IUrlValidationService urlValidationService)
+        public RoutineEditorUC(IRoutineService routineService, IUrlValidationService urlValidationService)
         {
             _routineService = routineService;
             _urlValidationService = urlValidationService;

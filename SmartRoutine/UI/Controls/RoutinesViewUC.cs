@@ -1,5 +1,6 @@
 ﻿using CustomWFUI;
 using CustomWFUI.Controls;
+using CustomWFUI.Forms;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.UI.Helpers;
@@ -11,7 +12,7 @@ using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Controls
 {
-    public partial class RoutinesViewControl : UserControl
+    public partial class RoutinesViewUC : UserControl
     {
         public event EventHandler<Routine> RoutineSelected;
         public event EventHandler<Routine> NewRoutineClicked;
@@ -29,18 +30,16 @@ namespace SmartRoutine.UI.Controls
         private StyledListBoxControl lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine, btnStartRoutineAuto;
 
-        private readonly ToolTip _routineToolTip = UIStyles.ToolTips.CreateToolTip();
+        private InfoPopupForm _routineInfoPopup = new InfoPopupForm("Routine-Details:");
         private int _lastHoveredRoutineIndex = -1;
 
         private const string DefaultRoutineNamePrefix = "Meine Routine ";
 
-        public RoutinesViewControl()
+        public RoutinesViewUC()
         {
-            InitializeComponent();
-
             DoubleBuffered = true;
         }
-        public RoutinesViewControl(IRoutineService routineService) : this()
+        public RoutinesViewUC(IRoutineService routineService) : this()
         {
             _routineService = routineService;
 
@@ -327,32 +326,80 @@ namespace SmartRoutine.UI.Controls
             SelectRoutineById(selectedId);
         }
 
+        private void HideRoutineInfoPopup()
+        {
+            if (_routineInfoPopup == null)
+                return;
+
+            _routineInfoPopup.CancelPendingShow();
+            _routineInfoPopup.Hide();
+        }
+
+        private string BuildStepListText(List<RoutineStep> steps)
+        {
+            if (steps == null || steps.Count == 0)
+                return "Keine";
+
+            return string.Join(
+                Environment.NewLine,
+                steps.Select(s => $"[{s.Order + 1}] {s.Name}"));
+        }
+
         private void LstRoutines_MouseMove(object sender, MouseEventArgs e)
         {
             int index = lstRoutines.IndexFromPoint(e.Location);
+
+            if (index < 0 || index >= lstRoutines.Items.Count)
+            {
+                _lastHoveredRoutineIndex = -1;
+                HideRoutineInfoPopup();
+                return;
+            }
 
             if (index == _lastHoveredRoutineIndex)
                 return;
 
             _lastHoveredRoutineIndex = index;
 
-            if (index < 0 || index >= lstRoutines.Items.Count)
-            {
-                _routineToolTip.SetToolTip(lstRoutines.InnerListBox, "");
-                return;
-            }
+            HideRoutineInfoPopup();
 
-            if (lstRoutines.Items[index] is Routine routine)
-            {
-                string text = $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(routine.LastExecutionAt)}";
-                _routineToolTip.SetToolTip(lstRoutines.InnerListBox, text);
-            }
+            Routine routine = lstRoutines.Items[index] as Routine;
+
+            if (routine == null)
+                return;
+
+            ShowRoutineInfoPopupDelayed(routine);
         }
 
+        private void ShowRoutineInfoPopupDelayed(Routine routine)
+        {
+            List<RoutineStep> visibleSteps = routine.Steps
+                .Where(s => s.Show)
+                .OrderBy(s => s.Order)
+                .ToList();
+
+            List<RoutineStep> hiddenSteps = routine.Steps
+                .Where(s => !s.Show)
+                .OrderBy(s => s.Order)
+                .ToList();
+
+            _routineInfoPopup.ShowSectionsAtMouseDelayed(
+                lstRoutines.InnerListBox,
+                Control.MousePosition,
+                new InfoPopupSection(
+                    "Letzte Ausführung",
+                    DateTimeHelper.GetRelativeTime(routine.LastExecutionAt)),
+                new InfoPopupSection(
+                    $"Schritte ({visibleSteps.Count})",
+                    BuildStepListText(visibleSteps)),
+                new InfoPopupSection(
+                    $"Ausgeblendete Schritte ({hiddenSteps.Count})",
+                    BuildStepListText(hiddenSteps)));
+        }
         private void LstRoutines_MouseLeave(object sender, EventArgs e)
         {
             _lastHoveredRoutineIndex = -1;
-            _routineToolTip.SetToolTip(lstRoutines.InnerListBox, "");
+            HideRoutineInfoPopup();
         }
 
         private void SelectRoutineById(string routineId)
@@ -375,6 +422,20 @@ namespace SmartRoutine.UI.Controls
             btnDeleteRoutine.Enabled = hasSelection;
             btnStartRoutine.Enabled = hasSelection;
             btnStartRoutineAuto.Enabled = hasSelection;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_routineInfoPopup != null)
+                {
+                    _routineInfoPopup.Dispose();
+                    _routineInfoPopup = null;
+                }
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

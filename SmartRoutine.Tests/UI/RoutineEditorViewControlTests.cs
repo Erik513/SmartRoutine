@@ -15,7 +15,7 @@ namespace SmartRoutine.Tests.UI
     {
         private Mock<IRoutineService> _mockService;
         private Mock<IUrlValidationService> _mockUrlValidation;
-        private RoutineEditorViewControl _editor;
+        private RoutineEditorUC _editor;
         private Routine _testRoutine;
 
         [TestInitialize]
@@ -32,7 +32,7 @@ namespace SmartRoutine.Tests.UI
                 Steps = new System.Collections.Generic.List<RoutineStep>()
             };
 
-            _editor = new RoutineEditorViewControl(_mockService.Object, _mockUrlValidation.Object);
+            _editor = new RoutineEditorUC(_mockService.Object, _mockUrlValidation.Object);
         }
 
 
