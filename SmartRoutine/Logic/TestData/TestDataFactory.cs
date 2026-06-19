@@ -118,10 +118,10 @@ namespace SmartRoutine.Logic.TestData
                         Show = true,
                         AutoStart = false,
                         AutoContinue = false,
-                        ApplicationPath = "notepad.exe",
+                        ApplicationPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "notepad.exe"),
                         Arguments = "",
                         RunAsAdmin = false,
-                        WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                        WorkingDirectory = ""
                     },
                     new OpenApplicationStep
                     {
@@ -132,7 +132,7 @@ namespace SmartRoutine.Logic.TestData
                         Show = true,
                         AutoStart = true,
                         AutoContinue = true,
-                        ApplicationPath = "calc.exe",
+                        ApplicationPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "calc.exe"),
                         Arguments = "",
                         RunAsAdmin = false,
                         WorkingDirectory = ""
@@ -146,7 +146,7 @@ namespace SmartRoutine.Logic.TestData
                         Show = false,
                         AutoStart = true,
                         AutoContinue = true,
-                        ApplicationPath = "notepad.exe",
+                        ApplicationPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "notepad.exe"),
                         Arguments = "",
                         RunAsAdmin = false,
                         WorkingDirectory = "",

@@ -47,7 +47,6 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel leftTlp;
         private StyledPropertyTable routineInfoTable;
         private TextBox txtRoutineName;
-        private Button btnToggleRoutineNameReadonly;
         private StyledListBoxControl lstSteps;
 
         // Rechte Seite
@@ -151,23 +150,10 @@ namespace SmartRoutine.UI.Controls
 
             txtRoutineName = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtRoutineName.Dock = DockStyle.Fill;
-            txtRoutineName.MaxLength = 30;
-            txtRoutineName.ReadOnly = true;
+            txtRoutineName.MaxLength = 40;
             txtRoutineName.Leave += TxtRoutineName_Leave;
-
-            btnToggleRoutineNameReadonly = UIStyles.Buttons.CreateStandard(
-                "✎",
-                "Routinenamen bearbeiten",
-                new Size(50, 30),
-                true);
-
-            btnToggleRoutineNameReadonly.Text = "✎";
-            btnToggleRoutineNameReadonly.FlatAppearance.BorderSize = 1;
-            btnToggleRoutineNameReadonly.FlatAppearance.BorderColor = UIStyles.Colors.BorderLight;
-            btnToggleRoutineNameReadonly.BackColor = UIStyles.Colors.BackgroundMedium;
-            btnToggleRoutineNameReadonly.Click += BtnToggleRoutineNameReadonly_Click;
-
-            routineInfoTable.AddRow("Routinenname", UIColumn.Percent(txtRoutineName, 100), UIColumn.Absolute(btnToggleRoutineNameReadonly, 50));
+            
+            routineInfoTable.AddRow("Routinenname", UIColumn.Percent(txtRoutineName, 100));
 
             lstSteps = new StyledListBoxControl(
                 displayTextMember: "Name",
@@ -189,6 +175,7 @@ namespace SmartRoutine.UI.Controls
             leftTlp.Controls.Add(routineInfoTable, 0, 0);
             leftTlp.Controls.Add(lstSteps, 0, 1);
         }
+
         private void InitializeRightPanel()
         {
             rightTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 5);
@@ -236,9 +223,29 @@ namespace SmartRoutine.UI.Controls
                 "Schritt ist deaktiviert");
 
             tglStepEnabled.Anchor = AnchorStyles.None;
+            tglStepEnabled.CheckedChanged += TglStepEnabled_CheckedChanged;
 
             rightTitleTlp.Controls.Add(lblStepNameTitle, 0, 0);
             rightTitleTlp.Controls.Add(tglStepEnabled, 1, 0);
+        }
+
+        private void TglStepEnabled_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_isLoadingStep || _isRefreshing)
+                return;
+
+            if (_editingStep == null)
+                return;
+
+            _editingStep.Show = tglStepEnabled.Checked;
+
+            _routineService.UpdateStep(_currentRoutine.Id, _editingStep);
+
+            _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
+
+            _editorSnapshotStep = RoutineStepFactory.CreateCopy(_editingStep);
+
+            RefreshStepsList(silent: true);
         }
 
         private void InitializeEditorControls()
@@ -326,7 +333,7 @@ namespace SmartRoutine.UI.Controls
             btnCancelStep.Margin = new Padding(5);
             btnCancelStep.Click += BtnCancelStep_Click;
 
-            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Step ausführen", new Size(100, 35), true);
+            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Schritt ausführen", new Size(100, 35), true);
             btnExecuteStep.Dock = DockStyle.Fill;
             btnExecuteStep.Margin = new Padding(5);
             btnExecuteStep.Click += BtnExecuteStep_Click;
@@ -554,47 +561,23 @@ namespace SmartRoutine.UI.Controls
             return null;
         }
 
-        private void BtnToggleRoutineNameReadonly_Click(object sender, EventArgs e)
-        {
-            if (txtRoutineName.ReadOnly)
-            {
-                txtRoutineName.ReadOnly = false;
-                btnToggleRoutineNameReadonly.Text = "💾";
-
-                txtRoutineName.Focus();
-                txtRoutineName.SelectAll();
-                return;
-            }
-
-            if (!ValidateRoutineName())
-                return;
-
-            txtRoutineName.ReadOnly = true;
-            btnToggleRoutineNameReadonly.Text = "✎";
-
-            SaveCurrentRoutine();
-
-            SaveChanges?.Invoke(this, _currentRoutine);
-        }
         private void TxtRoutineName_Leave(object sender, EventArgs e)
         {
-            SaveRoutineNameIfEditable();
-        }
-        private void SaveRoutineNameIfEditable()
-        {
-            if (txtRoutineName.ReadOnly)
+            if (_currentRoutine == null)
+                return;
+
+            string newName = txtRoutineName.Text.Trim();
+
+            if (newName == _currentRoutine.Name)
                 return;
 
             if (!ValidateRoutineName())
                 return;
 
-            txtRoutineName.ReadOnly = true;
-            btnToggleRoutineNameReadonly.Text = "✎";
-
             SaveCurrentRoutine();
-
             SaveChanges?.Invoke(this, _currentRoutine);
         }
+
         // ========== PUBLIC METHODS ==========
         public void LoadRoutine(Routine routine, bool isNewRoutine = false)
         {
@@ -602,8 +585,6 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine = RoutineCloneService.DeepCopy(routine ?? new Routine());
 
             txtRoutineName.Text = _currentRoutine.Name;
-            txtRoutineName.ReadOnly = true;
-            btnToggleRoutineNameReadonly.Text = "✎";
             lblLastExecution.Text =
                 _currentRoutine.LastExecutionAt.HasValue
                     ? $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
@@ -878,6 +859,7 @@ namespace SmartRoutine.UI.Controls
 
                 _editingStep = step;
                 _editorSnapshotStep = RoutineStepFactory.CreateCopy(step);
+                NormalizeStepForComparison(_editorSnapshotStep);
 
                 SetEditorEnabled(true);
             }
@@ -885,6 +867,57 @@ namespace SmartRoutine.UI.Controls
             {
                 _isLoadingStep = false;
             }
+        }
+
+        private void NormalizeStepForComparison(RoutineStep step)
+        {
+            if (step == null)
+                return;
+
+            step.Name = step.Name ?? "";
+            step.Description = step.Description ?? "";
+
+            OpenUrlStep urlStep = step as OpenUrlStep;
+            if (urlStep != null)
+            {
+                urlStep.Url = NormalizeUrl(urlStep.Url);
+                return;
+            }
+
+            OpenFolderStep folderStep = step as OpenFolderStep;
+            if (folderStep != null)
+            {
+                folderStep.FolderPath = folderStep.FolderPath ?? "";
+                return;
+            }
+
+            OpenApplicationStep appStep = step as OpenApplicationStep;
+            if (appStep != null)
+            {
+                appStep.ApplicationPath = appStep.ApplicationPath ?? "";
+                appStep.Arguments = appStep.Arguments ?? "";
+                appStep.WorkingDirectory = appStep.WorkingDirectory ?? "";
+                return;
+            }
+
+            OpenDocumentStep docStep = step as OpenDocumentStep;
+            if (docStep != null)
+            {
+                docStep.FilePath = docStep.FilePath ?? "";
+            }
+        }
+
+        private string NormalizeUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return "";
+
+            var result = _urlValidationService.ValidateAndRepairUrl(url, false);
+
+            if (!result.IsValid)
+                return url.Trim();
+
+            return result.RepairedUrl ?? "";
         }
         private void SetSelectedStepType(StepType stepType)
         {
@@ -1255,10 +1288,15 @@ namespace SmartRoutine.UI.Controls
 
             currentStep.Id = _editorSnapshotStep.Id;
             currentStep.Order = _editorSnapshotStep.Order;
+            currentStep.Show = _editorSnapshotStep.Show;
+
+            NormalizeStepForComparison(_editorSnapshotStep);
+            NormalizeStepForComparison(currentStep);
 
             return ChangeDetector.HasChanges(
                 _editorSnapshotStep,
-                currentStep);
+                currentStep,
+                "Show");
         }
 
         private bool HasNewStepInput()
@@ -1419,7 +1457,6 @@ namespace SmartRoutine.UI.Controls
         // ========== BACK BUTTON ==========
         private void BtnBack_Click(object sender, EventArgs e)
         {
-            SaveRoutineNameIfEditable();
             if (!ConfirmSaveStepChangesIfNeeded())
                 return;
 
@@ -1660,6 +1697,7 @@ namespace SmartRoutine.UI.Controls
             SaveStep(step);
 
             _editorSnapshotStep = RoutineStepFactory.CreateCopy(step);
+            NormalizeStepForComparison(_editorSnapshotStep);
 
             if (_editingStep != null && _editorSnapshotStep != null)
             {
@@ -1746,8 +1784,8 @@ namespace SmartRoutine.UI.Controls
                     {
                         ApplicationPath = txtAppPath?.Text ?? "",
                         Arguments = txtAppArguments?.Text ?? "",
-                        RunAsAdmin =
-                            tglRunAsAdmin?.Checked ?? false
+                        RunAsAdmin = tglRunAsAdmin?.Checked ?? false,
+                        WorkingDirectory = ""
                     };
 
                     break;
