@@ -345,12 +345,22 @@ namespace SmartRoutine.UI.Forms
 
         private async System.Threading.Tasks.Task CreateWebView()
         {
+            string userDataFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "SmartRoutine",
+                "WebView2");
+
+            if (!Directory.Exists(userDataFolder))
+                Directory.CreateDirectory(userDataFolder);
+
             _webView = new WebView2
             {
                 Dock = DockStyle.Fill
             };
 
-            await _webView.EnsureCoreWebView2Async();
+            var environment = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, userDataFolder);
+
+            await _webView.EnsureCoreWebView2Async(environment);
         }
 
         private void ShowWebViewControl()
