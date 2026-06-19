@@ -1,6 +1,6 @@
-﻿namespace SmartRoutine.UI
+﻿namespace SmartRoutine.UI.Forms
 {
-    partial class MainForm
+    partial class AutoRunForm
     {
         /// <summary>
         /// Required designer variable.
@@ -31,7 +31,7 @@
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "MainForm";
+            this.Text = "RoutineAutoRunForm";
         }
 
         #endregion
