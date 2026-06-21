@@ -1,12 +1,13 @@
-﻿using Microsoft.Web.WebView2.WinForms;
+﻿using CustomWFUI;
+using CustomWFUI.Forms;
+using CustomWFUI.Styles;
+using Microsoft.Web.WebView2.WinForms;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Services;
 using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-using CustomWFUI;
-using CustomWFUI.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
@@ -52,11 +53,11 @@ namespace SmartRoutine.UI.Forms
             Routine routine,
             RoutineStep step,
             Func<RoutineStep, StepExecutionResult> onExecute)
-            : base(new StyledFormOptions
-            {
-                Title = routine != null ? $"Routine: {routine.Name}" : "Routine",
-                TitleBarBackColor = UIStyles.Colors.BackgroundDarkElevated
-            })
+            : base(StyledFormOptions.CreateStandard(
+                routine != null ? $"Routine: {routine.Name}" : "Routine",
+                ContentAlignment.MiddleCenter,
+                UIColors.BackgroundDarkElevated,
+                Properties.Resources.IconLogo))
         {
             _routine = routine;
             _specificStep = step;

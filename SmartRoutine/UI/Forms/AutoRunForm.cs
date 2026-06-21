@@ -31,19 +31,10 @@ namespace SmartRoutine.UI.Forms
             Routine routine,
             Func<RoutineStep, StepExecutionResult> onStepExecute,
             Action<Routine> onRoutineExecuted)
-            : base(new StyledFormOptions
-            {
-                Type = StyledFormType.Dialog,
-                Borderless = true,
-                Resizable = false,
-                Title = routine != null ? $"Auto-Ausführung: {routine.Name}" : "Auto-Ausführung",
-                TitleTextAlign = ContentAlignment.MiddleLeft,
-                TitleBarBackColor = UIStyles.Colors.BackgroundDarkElevated,
-                ShowMinimizeButton = false,
-                ShowMaximizeButton = false,
-                ShowCloseButton = true,
-                AllowWindowSnapAndMaximize = false
-            })
+            : base(StyledFormOptions.CreateDialog(
+                routine != null ? $"Auto-Ausführung: {routine.Name}" : "Auto-Ausführung",
+                ContentAlignment.MiddleLeft,
+                UIStyles.Colors.BackgroundDarkElevated))
         {
             _routine = routine;
             _onStepExecute = onStepExecute;
