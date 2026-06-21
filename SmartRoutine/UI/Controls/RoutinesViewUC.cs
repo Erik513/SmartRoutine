@@ -185,15 +185,36 @@ namespace SmartRoutine.UI.Controls
             if (_selectedRoutine == null)
                 return;
 
-            StartRoutineClicked?.Invoke(this, _selectedRoutine);
+            Routine routineToStart = _selectedRoutine;
+
+            ClearRoutineSelection();
+
+            StartRoutineClicked?.Invoke(this, routineToStart);
         }
         private void BtnStartRoutineAuto_Click(object sender, EventArgs e)
         {
             if (_selectedRoutine == null)
                 return;
-            StartRoutineAutoClicked?.Invoke(this, _selectedRoutine);
+
+            Routine routineToStart = _selectedRoutine;
+
+            ClearRoutineSelection();
+
+            StartRoutineAutoClicked?.Invoke(this, routineToStart);
         }
 
+        private void ClearRoutineSelection()
+        {
+            lstRoutines.ClearSelected();
+            _selectedRoutine = null;
+
+            btnEditRoutine.Enabled = false;
+            btnDeleteRoutine.Enabled = false;
+            btnStartRoutine.Enabled = false;
+            btnStartRoutineAuto.Enabled = false;
+
+            Refresh();
+        }
 
         private void BuildLayout()
         {

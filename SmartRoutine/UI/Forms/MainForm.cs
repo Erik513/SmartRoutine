@@ -158,28 +158,22 @@ namespace SmartRoutine.UI.Forms
             MarkRoutineAsExecuted(routine);
 
             FormWindowState previousWindowState = WindowState;
-            bool wasVisible = Visible;
 
-            ExecutionForm executionForm = new ExecutionForm(
-                routine,
-                ExecuteRoutineStep);
+            ExecutionForm form = new ExecutionForm(routine, ExecuteRoutineStep);
 
             try
             {
-                WindowState = FormWindowState.Minimized;
-
-                executionForm.ShowDialog(this);
+                form.ShowDialog(this);
             }
             finally
             {
-                executionForm.Dispose();
+                form.Dispose();
 
-                if (wasVisible)
-                {
-                    Show();
-                    WindowState = previousWindowState;
-                    Activate();
-                }
+                WindowState = previousWindowState;
+
+                Show();
+                Activate();
+                _routinesView.Refresh();
             }
         }
         private void ExecuteFullRoutineAuto(Routine routine)

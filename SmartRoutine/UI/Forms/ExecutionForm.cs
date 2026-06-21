@@ -80,6 +80,7 @@ namespace SmartRoutine.UI.Forms
             MinimumSize = new Size(600, 450);
             Size = new Size(1200, 800);
             BackColor = UIStyles.Colors.BackgroundDark;
+            ShowIcon = true;
             CenterToScreen();
         }
 
@@ -429,6 +430,25 @@ namespace SmartRoutine.UI.Forms
             {
                 StartAutoContinueCountdown();
             }
+            KeepExecutionFormInFront();
+        }
+
+        private void KeepExecutionFormInFront()
+        {
+            TopMost = true;
+            BringToFront();
+            Activate();
+
+            Timer timer = new Timer();
+            timer.Interval = 200;
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                timer.Dispose();
+                TopMost = false;
+            };
+
+            timer.Start();
         }
 
         private bool ShouldAutoContinue(
