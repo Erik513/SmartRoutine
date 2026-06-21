@@ -252,7 +252,7 @@ namespace SmartRoutine.UI.Controls
         {
             txtStepName = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtStepName.Dock = DockStyle.Fill;
-            txtStepName.MaxLength = 40;
+            txtStepName.MaxLength = 70;
 
             txtStepDescription = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtStepDescription.Dock = DockStyle.Fill;

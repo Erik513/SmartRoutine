@@ -1,12 +1,14 @@
-﻿using Microsoft.Web.WebView2.WinForms;
+﻿using CustomWFUI;
+using CustomWFUI.Forms;
+using CustomWFUI.Styles;
+using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.WinForms;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Services;
 using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-using CustomWFUI;
-using CustomWFUI.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
@@ -52,11 +54,11 @@ namespace SmartRoutine.UI.Forms
             Routine routine,
             RoutineStep step,
             Func<RoutineStep, StepExecutionResult> onExecute)
-            : base(new StyledFormOptions
-            {
-                Title = routine != null ? $"Routine: {routine.Name}" : "Routine",
-                TitleBarBackColor = UIStyles.Colors.BackgroundDarkElevated
-            })
+            : base(StyledFormOptions.CreateStandard(
+                routine != null ? $"Routine: {routine.Name}" : "Routine",
+                ContentAlignment.MiddleCenter,
+                UIColors.BackgroundDarkElevated,
+                Properties.Resources.IconLogo))
         {
             _routine = routine;
             _specificStep = step;
@@ -79,6 +81,7 @@ namespace SmartRoutine.UI.Forms
             MinimumSize = new Size(600, 450);
             Size = new Size(1200, 800);
             BackColor = UIStyles.Colors.BackgroundDark;
+            ShowIcon = true;
             CenterToScreen();
         }
 
@@ -358,9 +361,24 @@ namespace SmartRoutine.UI.Forms
                 Dock = DockStyle.Fill
             };
 
-            var environment = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, userDataFolder);
+            var environment = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
 
             await _webView.EnsureCoreWebView2Async(environment);
+
+            _webView.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
+        }
+        private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
+        {
+            e.Handled = true;
+
+            if (string.IsNullOrWhiteSpace(e.Uri))
+                return;
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = e.Uri,
+                UseShellExecute = true
+            });
         }
 
         private void ShowWebViewControl()
@@ -428,6 +446,25 @@ namespace SmartRoutine.UI.Forms
             {
                 StartAutoContinueCountdown();
             }
+            KeepExecutionFormInFront();
+        }
+
+        private void KeepExecutionFormInFront()
+        {
+            TopMost = true;
+            BringToFront();
+            Activate();
+
+            Timer timer = new Timer();
+            timer.Interval = 200;
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                timer.Dispose();
+                TopMost = false;
+            };
+
+            timer.Start();
         }
 
         private bool ShouldAutoContinue(
