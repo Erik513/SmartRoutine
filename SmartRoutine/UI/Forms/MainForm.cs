@@ -157,22 +157,44 @@ namespace SmartRoutine.UI.Forms
 
             MarkRoutineAsExecuted(routine);
 
-            FormWindowState previousWindowState = WindowState;
+            bool previousShowInTaskbar = ShowInTaskbar;
+            bool previousVisible = Visible;
 
             ExecutionForm form = new ExecutionForm(routine, ExecuteRoutineStep);
 
+            form.Shown += (s, e) =>
+            {
+                Hide();
+
+                form.ShowInTaskbar = true;
+                form.Activate();
+                form.BringToFront();
+            };
+
+            form.BeforeCloseRequested += (s, e) =>
+            {
+                ShowInTaskbar = previousShowInTaskbar;
+
+                if (previousVisible)
+                    Show();
+
+                Activate();
+                _routinesView.Refresh();
+            };
+
             try
             {
-                WindowState = FormWindowState.Minimized;
-                form.ShowDialog(this);
+                form.ShowDialog();
             }
             finally
             {
                 form.Dispose();
 
-                WindowState = previousWindowState;
+                ShowInTaskbar = previousShowInTaskbar;
 
-                Show();
+                if (previousVisible && !Visible)
+                    Show();
+
                 Activate();
                 _routinesView.Refresh();
             }
