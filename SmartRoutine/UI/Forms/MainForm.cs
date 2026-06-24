@@ -163,6 +163,7 @@ namespace SmartRoutine.UI.Forms
 
             try
             {
+                WindowState = FormWindowState.Minimized;
                 form.ShowDialog(this);
             }
             finally
