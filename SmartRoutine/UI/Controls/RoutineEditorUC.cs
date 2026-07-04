@@ -769,6 +769,8 @@ namespace SmartRoutine.UI.Controls
         }
         private void ClearEditor()
         {
+            rightTlp.Visible = false;
+
             _editingStep = null;
             _editorSnapshotStep = null;
             _currentEditorStepType = null;
@@ -782,6 +784,9 @@ namespace SmartRoutine.UI.Controls
             cmbStepType.SelectedIndex = -1;
 
             editorOptionsTable.ClearRows();
+
+            btnDeleteStep.Enabled = false;
+            btnDuplicateStep.Enabled = false;
 
             SetEditorEnabled(false);
         }
@@ -1099,7 +1104,8 @@ namespace SmartRoutine.UI.Controls
 
         private void BtnDeleteStep_Click(object sender, EventArgs e)
         {
-            if (!(lstSteps.SelectedItem is RoutineStep stepToDelete)) return;
+            if (!(lstSteps.SelectedItem is RoutineStep stepToDelete))
+                return;
 
             bool shouldDelete = AutoConfirmDialogs;
 
@@ -1110,65 +1116,76 @@ namespace SmartRoutine.UI.Controls
                     "Bestätigen",
                     CustomMessageBoxButtons.YesNo,
                     CustomMessageBoxIcon.Question,
-                    FindForm(), 
+                    FindForm(),
                     CustomMessageBoxSize.Small) == DialogResult.Yes;
             }
 
-            if (!shouldDelete) return;
+            if (!shouldDelete)
+                return;
 
             _routineService.RemoveStep(_currentRoutine.Id, stepToDelete.Id);
             _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
-
-            RefreshStepsList(silent: true);
-            CloseStepEditor();
-            SaveChanges?.Invoke(this, _currentRoutine);
-
-            var parentForm = this.FindForm();
-            ToastForm.ShowToast($"✓ Schritt '{stepToDelete.Name}' gelöscht", parentForm);
-        }
-
-
-        // ========== STEP LIST METHODS ==========
-        private void RefreshStepsList(bool silent = false)
-        {
-            if (_currentRoutine == null) return;
+            _originalRoutine = RoutineCloneService.DeepCopy(_currentRoutine);
 
             _isRefreshing = true;
-            RoutineStep selectedStep =
-                lstSteps.SelectedItem as RoutineStep;
+
+            rightTlp.Visible = false;
+            ClearEditor();
+
+            RefreshStepsList(silent: true, keepSelection: false);
+
+            btnDeleteStep.Enabled = false;
+            btnDuplicateStep.Enabled = false;
+
+            _isRefreshing = false;
+
+            SaveChanges?.Invoke(this, _currentRoutine);
+
+            ToastForm.ShowToast(
+                $"✓ Schritt '{stepToDelete.Name}' gelöscht",
+                FindForm());
+        }
+        // ========== STEP LIST METHODS ==========
+        private void RefreshStepsList(bool silent = false, bool keepSelection = true)
+        {
+            if (_currentRoutine == null)
+                return;
+
+            _isRefreshing = true;
+
+            RoutineStep selectedStep = keepSelection
+                ? lstSteps.SelectedItem as RoutineStep
+                : null;
+
             lstSteps.BeginUpdate();
             lstSteps.Items.Clear();
 
-            // Stelle sicher, dass die Steps aus der aktuellen Routine kommen
             var orderedSteps = _currentRoutine.Steps.OrderBy(s => s.Order).ToList();
 
             foreach (var step in orderedSteps)
-            {
-                Debug.WriteLine($"  - {step.Name} (Order: {step.Order})");
                 lstSteps.Items.Add(step);
-            }
 
             lstSteps.EndUpdate();
-            _isRefreshing = false;
 
-            if (selectedStep != null)
+            if (keepSelection && selectedStep != null)
             {
                 for (int i = 0; i < lstSteps.Items.Count; i++)
                 {
-                    RoutineStep step =
-                        lstSteps.Items[i] as RoutineStep;
+                    RoutineStep step = lstSteps.Items[i] as RoutineStep;
 
-                    if (step != null &&
-                        step.Id == selectedStep.Id)
+                    if (step != null && step.Id == selectedStep.Id)
                     {
                         lstSteps.SelectedIndex = i;
                         break;
                     }
                 }
             }
+            else
+            {
+                lstSteps.SelectedIndex = -1;
+            }
 
-            if (!silent)
-                Debug.WriteLine($"RefreshStepsList: {orderedSteps.Count} Schritte geladen");
+            _isRefreshing = false;
         }
         private void BtnSaveStep_Click(object sender, EventArgs e)
         {
@@ -1520,12 +1537,13 @@ namespace SmartRoutine.UI.Controls
         // ========== BACK BUTTON ==========
         private void BtnBack_Click(object sender, EventArgs e)
         {
-            if (!ConfirmSaveStepChangesIfNeeded())
+            if (rightTlp.Visible && !ConfirmSaveStepChangesIfNeeded())
                 return;
 
             rightTlp.Visible = false;
 
-            if (!ValidateRoutineName()) return;
+            if (!ValidateRoutineName())
+                return;
 
             if (HasChanges())
             {
