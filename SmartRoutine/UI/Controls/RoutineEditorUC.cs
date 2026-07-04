@@ -769,8 +769,6 @@ namespace SmartRoutine.UI.Controls
         }
         private void ClearEditor()
         {
-            rightTlp.Visible = false;
-
             _editingStep = null;
             _editorSnapshotStep = null;
             _currentEditorStepType = null;
