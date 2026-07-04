@@ -87,7 +87,7 @@ namespace SmartRoutine.UI.Controls
         private Button btnBrowseDocument;
 
         // Footer
-        private Button btnAddStep, btnDeleteStep;
+        private Button btnDuplicateStep, btnAddStep, btnDeleteStep;
         private Label lblLastExecution;
         private Button btnBack;
 
@@ -347,7 +347,7 @@ namespace SmartRoutine.UI.Controls
             var footerPanel = UIStyles.Panels.CreateDark();
             footerPanel.Dock = DockStyle.Fill;
 
-            var footerTlp = UIStyles.TableLayoutPanels.CreateDark(4, 1);
+            var footerTlp = UIStyles.TableLayoutPanels.CreateDark(5, 1);
             footerTlp.BackColor = UIStyles.Colors.BackgroundDarkElevated;
             footerTlp.Dock = DockStyle.Fill;
             footerTlp.Padding = new Padding(0);
@@ -355,6 +355,7 @@ namespace SmartRoutine.UI.Controls
             footerTlp.ColumnStyles.Clear();
             footerTlp.RowStyles.Clear();
 
+            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
             footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -369,10 +370,11 @@ namespace SmartRoutine.UI.Controls
             lblLastExecution.Margin = new Padding(15, 0, 10, 0);
             lblLastExecution.TextAlign = ContentAlignment.MiddleLeft;
 
-            footerTlp.Controls.Add(btnAddStep, 0, 0);
-            footerTlp.Controls.Add(btnDeleteStep, 1, 0);
-            footerTlp.Controls.Add(lblLastExecution, 2, 0);
-            footerTlp.Controls.Add(btnBack, 3, 0);
+            footerTlp.Controls.Add(btnDuplicateStep, 0, 0);
+            footerTlp.Controls.Add(btnAddStep, 1, 0);
+            footerTlp.Controls.Add(btnDeleteStep, 2, 0);
+            footerTlp.Controls.Add(lblLastExecution, 3, 0);
+            footerTlp.Controls.Add(btnBack, 4, 0);
 
             footerPanel.Controls.Add(footerTlp);
 
@@ -380,33 +382,24 @@ namespace SmartRoutine.UI.Controls
         }
         private void InitializeFooterButtons()
         {
-            btnAddStep = UIStyles.Buttons.CreateGreen(
-                "+",
-                "Schritt hinzufügen",
-                new Size(155, 35),
-                true);
+            btnDuplicateStep = UIStyles.Buttons.CreatePrimary("⧉", "Schritt duplizieren", new Size(155, 35), true);
+            btnDuplicateStep.Dock = DockStyle.Fill;
+            btnDuplicateStep.Margin = new Padding(10, 10, 5, 10);
+            btnDuplicateStep.Enabled = false;
+            btnDuplicateStep.Click += BtnDuplicateStep_Click;
 
+            btnAddStep = UIStyles.Buttons.CreateGreen("+", "Schritt hinzufügen", new Size(155, 35), true);
             btnAddStep.Dock = DockStyle.Fill;
             btnAddStep.Margin = new Padding(10, 10, 5, 10);
             btnAddStep.Click += BtnAddStep_Click;
 
-            btnDeleteStep = UIStyles.Buttons.CreateDanger(
-                "🗑",
-                "Schritt löschen",
-                new Size(155, 35),
-                true);
-
+            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑", "Schritt löschen", new Size(155, 35), true);
             btnDeleteStep.Dock = DockStyle.Fill;
             btnDeleteStep.Margin = new Padding(5, 10, 10, 10);
             btnDeleteStep.Enabled = false;
             btnDeleteStep.Click += BtnDeleteStep_Click;
 
-            btnBack = UIStyles.Buttons.CreatePrimary(
-                "←",
-                "Zurück zur Hauptansicht",
-                new Size(155, 35),
-                true);
-
+            btnBack = UIStyles.Buttons.CreatePrimary("←", "Zurück zur Hauptansicht", new Size(155, 35), true);
             btnBack.Dock = DockStyle.Fill;
             btnBack.Margin = new Padding(10);
             btnBack.Click += BtnBack_Click;
@@ -771,6 +764,7 @@ namespace SmartRoutine.UI.Controls
 
             rightTlp.Visible = false;
             ClearEditor();
+            btnDuplicateStep.Enabled = false;
             btnDeleteStep.Enabled = false;
         }
         private void ClearEditor()
@@ -976,6 +970,7 @@ namespace SmartRoutine.UI.Controls
 
                 rightTlp.Visible = false;
                 ClearEditor();
+                btnDuplicateStep.Enabled = false;
                 btnDeleteStep.Enabled = false;
 
                 _isRefreshing = false;
@@ -995,6 +990,7 @@ namespace SmartRoutine.UI.Controls
                 }
             }
             OpenEditorForStep(selectedStep);
+            btnDuplicateStep.Enabled = true;
             btnDeleteStep.Enabled = true;
         }
 
@@ -1013,6 +1009,73 @@ namespace SmartRoutine.UI.Controls
             lstSteps.Invalidate();
             lstSteps.Update();
         }
+
+        private void BtnDuplicateStep_Click(object sender, EventArgs e)
+        {
+            RoutineStep selectedStep = lstSteps.SelectedItem as RoutineStep;
+
+            if (selectedStep == null || _currentRoutine == null)
+                return;
+
+            string selectedStepId = selectedStep.Id;
+
+            if (!ConfirmSaveStepChangesIfNeeded())
+                return;
+
+            _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
+
+            selectedStep = _currentRoutine.Steps
+                .FirstOrDefault(s => s.Id == selectedStepId);
+
+            if (selectedStep == null)
+                return;
+
+            RoutineStep duplicatedStep = RoutineStepFactory.CreateCopy(selectedStep);
+
+            if (duplicatedStep == null)
+                return;
+
+            duplicatedStep.Id = Guid.NewGuid().ToString();
+            duplicatedStep.Name = selectedStep.Name + " Kopie";
+
+            List<RoutineStep> orderedSteps = _currentRoutine.Steps
+                .OrderBy(s => s.Order)
+                .ToList();
+
+            int originalIndex = orderedSteps.FindIndex(s => s.Id == selectedStep.Id);
+
+            if (originalIndex < 0)
+                return;
+
+            orderedSteps.Insert(originalIndex + 1, duplicatedStep);
+
+            for (int i = 0; i < orderedSteps.Count; i++)
+                orderedSteps[i].Order = i;
+
+            _currentRoutine.Steps = orderedSteps;
+
+            _routineService.SaveRoutine(_currentRoutine);
+            _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
+
+            RefreshStepsList(silent: true);
+            SelectStepById(duplicatedStep.Id);
+
+            ToastForm.ShowToast($"✓ Schritt '{duplicatedStep.Name}' dupliziert", FindForm());
+        }
+
+        private void SelectStepById(string stepId)
+        {
+            for (int i = 0; i < lstSteps.Items.Count; i++)
+            {
+                RoutineStep step = lstSteps.Items[i] as RoutineStep;
+
+                if (step != null && step.Id == stepId)
+                {
+                    lstSteps.SelectedIndex = i;
+                    return;
+                }
+            }
+        }
         private void BtnAddStep_Click(object sender, EventArgs e)
         {
             if (!ConfirmSaveStepChangesIfNeeded())
@@ -1028,7 +1091,7 @@ namespace SmartRoutine.UI.Controls
             {
                 _suppressStepChangeConfirmation = false;
             }
-
+            btnDuplicateStep.Enabled = false;
             btnDeleteStep.Enabled = false;
             OpenEditorForStep(null);
             txtStepName.Focus();
