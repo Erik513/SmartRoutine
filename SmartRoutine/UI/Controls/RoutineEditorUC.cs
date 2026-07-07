@@ -707,6 +707,7 @@ namespace SmartRoutine.UI.Controls
             SaveStep(step);
 
             _editorSnapshotStep = RoutineStepFactory.CreateCopy(step);
+            NormalizeStepForComparison(_editorSnapshotStep);
 
             if (_editingStep != null && _editorSnapshotStep != null)
             {
@@ -814,9 +815,6 @@ namespace SmartRoutine.UI.Controls
                 tglAutoStart.Checked = step.AutoStart;
                 tglAutoContinue.Checked = step.AutoContinue;
 
-                Debug.WriteLine("Load step AutoContinue: " + step.AutoContinue);
-                Debug.WriteLine("Toggle AutoContinue: " + tglAutoContinue.Checked);
-
                 SetSelectedStepType(step.Type);
                 EnsureOptionsEditorForStepType(step.Type);
 
@@ -878,6 +876,10 @@ namespace SmartRoutine.UI.Controls
             if (urlStep != null)
             {
                 urlStep.Url = NormalizeUrl(urlStep.Url);
+
+                if (!urlStep.OpenInExternalBrowser)
+                    urlStep.AutoContinue = false;
+
                 return;
             }
 
@@ -1430,7 +1432,7 @@ namespace SmartRoutine.UI.Controls
             });
 
             tglOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(
-                false,
+                true,
                 "Externer Browser",
                 "In App öffnen");
 
