@@ -179,7 +179,7 @@ namespace SmartRoutine.UI.Forms
                     Show();
 
                 Activate();
-                _routinesView.Refresh();
+                RefreshAfterHiddenExecutionForm();
             };
 
             try
@@ -196,8 +196,16 @@ namespace SmartRoutine.UI.Forms
                     Show();
 
                 Activate();
-                _routinesView.Refresh();
+                RefreshAfterHiddenExecutionForm();
             }
+        }
+
+        private void RefreshAfterHiddenExecutionForm()
+        {
+            // Form wurde während der Routinenausführung per Hide()/Show() ausgeblendet.
+            // Die selbstgezeichnete, gecachte Titelleiste (TitleBarControl) bekommt dabei
+            // keinen automatischen Repaint, deshalb hier das ganze Form explizit invalidieren.
+            Refresh();
         }
         private void ExecuteFullRoutineAuto(Routine routine)
         {
