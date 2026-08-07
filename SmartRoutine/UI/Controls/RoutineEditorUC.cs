@@ -1693,12 +1693,14 @@ namespace SmartRoutine.UI.Controls
                 return false;
             }
 
-            if (System.IO.Directory.Exists(txtFolderPath.Text))
+            // Existenzprüfung: delegiert an RoutineService.ValidateStep, damit die
+            // Regel nur an einer Stelle gepflegt werden muss (auch für Ausführung ohne Editor).
+            var step = new OpenFolderStep { FolderPath = txtFolderPath.Text };
+
+            if (_routineService.ValidateStep(step, out string errorMessage))
                 return true;
 
-            ShowValidationMessage(
-                "Der angegebene Ordner existiert nicht.",
-                showMessageBox);
+            ShowValidationMessage(errorMessage, showMessageBox);
 
             txtFolderPath.Focus();
             return false;
@@ -1715,12 +1717,12 @@ namespace SmartRoutine.UI.Controls
                 return false;
             }
 
-            if (System.IO.File.Exists(txtAppPath.Text))
+            var step = new OpenApplicationStep { ApplicationPath = txtAppPath.Text };
+
+            if (_routineService.ValidateStep(step, out string errorMessage))
                 return true;
 
-            ShowValidationMessage(
-                "Die angegebene Anwendung existiert nicht.",
-                showMessageBox);
+            ShowValidationMessage(errorMessage, showMessageBox);
 
             txtAppPath.Focus();
             return false;
@@ -1737,12 +1739,12 @@ namespace SmartRoutine.UI.Controls
                 return false;
             }
 
-            if (System.IO.File.Exists(txtDocumentPath.Text))
+            var step = new OpenDocumentStep { FilePath = txtDocumentPath.Text };
+
+            if (_routineService.ValidateStep(step, out string errorMessage))
                 return true;
 
-            ShowValidationMessage(
-                "Die ausgewählte Datei existiert nicht.",
-                showMessageBox);
+            ShowValidationMessage(errorMessage, showMessageBox);
 
             txtDocumentPath.Focus();
             return false;
