@@ -1,18 +1,20 @@
-﻿using SmartRoutine.Data;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SmartRoutine.Data;
 using SmartRoutine.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Xunit;
 
 namespace SmartRoutine.Tests.Data
 {
-    public class RoutineRepositoryTests : IDisposable
+    [TestClass]
+    public class RoutineRepositoryTests
     {
-        private readonly string _dbPath;
-        private readonly RoutineRepository _repository;
+        private string _dbPath;
+        private RoutineRepository _repository;
 
-        public RoutineRepositoryTests()
+        [TestInitialize]
+        public void Setup()
         {
             _dbPath = Path.Combine(
                 Path.GetTempPath(),
@@ -21,20 +23,21 @@ namespace SmartRoutine.Tests.Data
             _repository = new RoutineRepository(_dbPath);
         }
 
-        public void Dispose()
+        [TestCleanup]
+        public void Cleanup()
         {
             if (File.Exists(_dbPath))
                 File.Delete(_dbPath);
         }
 
-        [Fact]
+        [TestMethod]
         public void Constructor_WithEmptyPath_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() =>
+            Assert.ThrowsException<ArgumentException>(() =>
                 new RoutineRepository(""));
         }
 
-        [Fact]
+        [TestMethod]
         public void AddRoutine_And_GetRoutine_ReturnsRoutine()
         {
             Routine routine = new Routine
@@ -48,13 +51,13 @@ namespace SmartRoutine.Tests.Data
 
             Routine result = _repository.GetRoutine("routine-1");
 
-            Assert.NotNull(result);
-            Assert.Equal("routine-1", result.Id);
-            Assert.Equal("Test Routine", result.Name);
-            Assert.Equal(1, result.Order);
+            Assert.IsNotNull(result);
+            Assert.AreEqual("routine-1", result.Id);
+            Assert.AreEqual("Test Routine", result.Name);
+            Assert.AreEqual(1, result.Order);
         }
 
-        [Fact]
+        [TestMethod]
         public void LoadRoutines_ReturnsRoutinesOrderedByOrder()
         {
             Routine routine2 = new Routine
@@ -76,12 +79,12 @@ namespace SmartRoutine.Tests.Data
 
             List<Routine> result = _repository.LoadRoutines();
 
-            Assert.Equal(2, result.Count);
-            Assert.Equal("routine-1", result[0].Id);
-            Assert.Equal("routine-2", result[1].Id);
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual("routine-1", result[0].Id);
+            Assert.AreEqual("routine-2", result[1].Id);
         }
 
-        [Fact]
+        [TestMethod]
         public void UpdateRoutine_UpdatesExistingRoutine()
         {
             Routine routine = new Routine
@@ -101,13 +104,13 @@ namespace SmartRoutine.Tests.Data
 
             Routine result = _repository.GetRoutine("routine-1");
 
-            Assert.NotNull(result);
-            Assert.Equal("New Name", result.Name);
-            Assert.Equal(5, result.Order);
-            Assert.NotNull(result.UpdatedAt);
+            Assert.IsNotNull(result);
+            Assert.AreEqual("New Name", result.Name);
+            Assert.AreEqual(5, result.Order);
+            Assert.IsNotNull(result.UpdatedAt);
         }
 
-        [Fact]
+        [TestMethod]
         public void DeleteRoutine_RemovesRoutine()
         {
             Routine routine = new Routine
@@ -122,72 +125,72 @@ namespace SmartRoutine.Tests.Data
 
             Routine result = _repository.GetRoutine("routine-1");
 
-            Assert.Null(result);
+            Assert.IsNull(result);
         }
 
-        [Fact]
+        [TestMethod]
         public void Routine_DefaultValues_AreInitialized()
         {
             Routine routine = new Routine();
 
-            Assert.False(string.IsNullOrWhiteSpace(routine.Id));
-            Assert.Equal(string.Empty, routine.Name);
-            Assert.Equal(0, routine.Order);
-            Assert.NotEqual(default(DateTime), routine.CreatedAt);
-            Assert.Null(routine.UpdatedAt);
-            Assert.Null(routine.LastExecutionAt);
-            Assert.NotNull(routine.Steps);
-            Assert.Empty(routine.Steps);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(routine.Id));
+            Assert.AreEqual(string.Empty, routine.Name);
+            Assert.AreEqual(0, routine.Order);
+            Assert.AreNotEqual(default(DateTime), routine.CreatedAt);
+            Assert.IsNull(routine.UpdatedAt);
+            Assert.IsNull(routine.LastExecutionAt);
+            Assert.IsNotNull(routine.Steps);
+            Assert.AreEqual(0, routine.Steps.Count);
         }
 
-        [Fact]
+        [TestMethod]
         public void OpenUrlStep_DefaultValues_AreInitialized()
         {
             OpenUrlStep step = new OpenUrlStep();
 
-            Assert.False(string.IsNullOrWhiteSpace(step.Id));
-            Assert.Equal(StepType.OpenUrl, step.Type);
-            Assert.Equal(string.Empty, step.Name);
-            Assert.Equal(string.Empty, step.Description);
-            Assert.True(step.Show);
-            Assert.True(step.AutoStart);
-            Assert.Equal(string.Empty, step.Url);
-            Assert.True(step.OpenInExternalBrowser);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(step.Id));
+            Assert.AreEqual(StepType.OpenUrl, step.Type);
+            Assert.AreEqual(string.Empty, step.Name);
+            Assert.AreEqual(string.Empty, step.Description);
+            Assert.IsTrue(step.Show);
+            Assert.IsTrue(step.AutoStart);
+            Assert.AreEqual(string.Empty, step.Url);
+            Assert.IsTrue(step.OpenInExternalBrowser);
         }
 
-        [Fact]
+        [TestMethod]
         public void OpenFolderStep_DefaultValues_AreInitialized()
         {
             OpenFolderStep step = new OpenFolderStep();
 
-            Assert.Equal(StepType.OpenFolder, step.Type);
-            Assert.Equal(string.Empty, step.FolderPath);
-            Assert.True(step.OpenInNewWindow);
+            Assert.AreEqual(StepType.OpenFolder, step.Type);
+            Assert.AreEqual(string.Empty, step.FolderPath);
+            Assert.IsTrue(step.OpenInNewWindow);
         }
 
-        [Fact]
+        [TestMethod]
         public void OpenApplicationStep_DefaultValues_AreInitialized()
         {
             OpenApplicationStep step = new OpenApplicationStep();
 
-            Assert.Equal(StepType.OpenApplication, step.Type);
-            Assert.Equal(string.Empty, step.ApplicationPath);
-            Assert.Equal(string.Empty, step.Arguments);
-            Assert.False(step.RunAsAdmin);
-            Assert.Equal(string.Empty, step.WorkingDirectory);
+            Assert.AreEqual(StepType.OpenApplication, step.Type);
+            Assert.AreEqual(string.Empty, step.ApplicationPath);
+            Assert.AreEqual(string.Empty, step.Arguments);
+            Assert.IsFalse(step.RunAsAdmin);
+            Assert.AreEqual(string.Empty, step.WorkingDirectory);
         }
 
-        [Fact]
+        [TestMethod]
         public void OpenDocumentStep_DefaultValues_AreInitialized()
         {
             OpenDocumentStep step = new OpenDocumentStep();
 
-            Assert.Equal(StepType.OpenDocument, step.Type);
-            Assert.Equal(string.Empty, step.FilePath);
-            Assert.True(step.OpenWithAssociatedApp);
+            Assert.AreEqual(StepType.OpenDocument, step.Type);
+            Assert.AreEqual(string.Empty, step.FilePath);
+            Assert.IsTrue(step.OpenWithAssociatedApp);
         }
 
-        [Fact]
+        [TestMethod]
         public void AddRoutine_WithOpenUrlStep_PersistsStep()
         {
             Routine routine = new Routine
@@ -208,11 +211,11 @@ namespace SmartRoutine.Tests.Data
             Routine loaded =
                 _repository.GetRoutine("routine-1");
 
-            Assert.NotNull(loaded);
-            Assert.Single(loaded.Steps);
+            Assert.IsNotNull(loaded);
+            Assert.AreEqual(1, loaded.Steps.Count);
         }
 
-        [Fact]
+        [TestMethod]
         public void UpdateRoutine_UpdatesSteps()
         {
             Routine routine = new Routine
@@ -234,19 +237,19 @@ namespace SmartRoutine.Tests.Data
             Routine loaded =
                 _repository.GetRoutine("routine-1");
 
-            Assert.Single(loaded.Steps);
+            Assert.AreEqual(1, loaded.Steps.Count);
         }
 
-        [Fact]
+        [TestMethod]
         public void GetRoutine_UnknownId_ReturnsNull()
         {
             Routine result =
                 _repository.GetRoutine("does-not-exist");
 
-            Assert.Null(result);
+            Assert.IsNull(result);
         }
 
-        [Fact]
+        [TestMethod]
         public void RoutineStep_Order_IsPreserved()
         {
             Routine routine = new Routine
@@ -275,17 +278,18 @@ namespace SmartRoutine.Tests.Data
 
             Routine loaded = _repository.GetRoutine("routine-step-order");
 
-            Assert.NotNull(loaded);
-            Assert.NotNull(loaded.Steps);
-            Assert.Equal(2, loaded.Steps.Count);
+            Assert.IsNotNull(loaded);
+            Assert.IsNotNull(loaded.Steps);
+            Assert.AreEqual(2, loaded.Steps.Count);
 
-            Assert.NotNull(loaded.Steps[0]);
-            Assert.NotNull(loaded.Steps[1]);
+            Assert.IsNotNull(loaded.Steps[0]);
+            Assert.IsNotNull(loaded.Steps[1]);
 
-            Assert.Equal(2, loaded.Steps[0].Order);
-            Assert.Equal(1, loaded.Steps[1].Order);
+            Assert.AreEqual(2, loaded.Steps[0].Order);
+            Assert.AreEqual(1, loaded.Steps[1].Order);
         }
-        [Fact]
+
+        [TestMethod]
         public void CompleteCrudWorkflow_Works()
         {
             Routine routine = new Routine
@@ -305,11 +309,11 @@ namespace SmartRoutine.Tests.Data
             Routine updated =
                 _repository.GetRoutine(routine.Id);
 
-            Assert.Equal("Updated", updated.Name);
+            Assert.AreEqual("Updated", updated.Name);
 
             _repository.DeleteRoutine(routine.Id);
 
-            Assert.Null(
+            Assert.IsNull(
                 _repository.GetRoutine(routine.Id));
         }
     }
