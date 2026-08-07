@@ -535,16 +535,16 @@ namespace SmartRoutine.UI.Controls
         private Image GetStepIcon(object item)
         {
             if (item is OpenUrlStep)
-                return Properties.Resources.IconWeb;
+                return UIStyles.Icons.Web;
 
             if (item is OpenFolderStep)
-                return Properties.Resources.IconFolder;
+                return UIStyles.Icons.Folder;
 
             if (item is OpenDocumentStep)
-                return Properties.Resources.IconDocument;
+                return UIStyles.Icons.Document;
 
             if (item is OpenApplicationStep)
-                return Properties.Resources.IconApplication;
+                return UIStyles.Icons.Application;
 
             return null;
         }

@@ -290,19 +290,7 @@
     <None Include="Properties\Resources\AppIcon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\Resources\IconApplication.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\Resources\IconDocument.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\Resources\IconFolder.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Properties\Resources\IconLogo.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\Resources\IconWeb.png" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\MSTest.Analyzers.4.2.3\analyzers\dotnet\cs\MSTest.Analyzers.CodeFixes.dll" />
