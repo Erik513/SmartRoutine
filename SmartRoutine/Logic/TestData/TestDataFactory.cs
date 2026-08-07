@@ -198,7 +198,7 @@ namespace SmartRoutine.Logic.TestData
                     }
                 }
             }; 
-            //routines.Add(logicTestRoutine);
+            routines.Add(logicTestRoutine);
 
             var TestRoutineWithDisabledStep = new Routine
             {
@@ -224,20 +224,20 @@ namespace SmartRoutine.Logic.TestData
                     }
                 }
             };
-            //routines.Add(TestRoutineWithDisabledStep);
+            routines.Add(TestRoutineWithDisabledStep);
 
             for (int i = 0; i < 10; i++)
             {
-                //routines.Add(new Routine
-                //{
-                //    Id = $"test_empty_{i}",
-                //    Name = $"Test {i + 1}",
-                //    Order = 2 + i,
-                //    CreatedAt = now.AddDays(-(i + 1)),
-                //    UpdatedAt = i % 2 == 0 ? now.AddHours(-i) : (DateTime?)null,
-                //    LastExecutionAt = i % 3 == 0 ? now.AddMinutes(-(i + 1) * 10) : (DateTime?)null,
-                //    Steps = new List<RoutineStep>()
-                //});
+                routines.Add(new Routine
+                {
+                    Id = $"test_empty_{i}",
+                    Name = $"Test {i + 1}",
+                    Order = 2 + i,
+                    CreatedAt = now.AddDays(-(i + 1)),
+                    UpdatedAt = i % 2 == 0 ? now.AddHours(-i) : (DateTime?)null,
+                    LastExecutionAt = i % 3 == 0 ? now.AddMinutes(-(i + 1) * 10) : (DateTime?)null,
+                    Steps = new List<RoutineStep>()
+                });
             }
 
             return routines;
