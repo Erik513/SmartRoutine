@@ -5,6 +5,6 @@
         /// <summary>
         /// true = Testdata, false = real data
         /// </summary>
-        public static bool UseTestData { get; set; } = false;  
+        public static bool UseTestData { get; set; } = true;  
     }
 }
