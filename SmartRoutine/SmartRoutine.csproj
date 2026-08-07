@@ -219,6 +219,7 @@
     <Compile Include="Logic\Services\RoutineExecutionSession.cs" />
     <Compile Include="Logic\Services\StepExecutionResult.cs" />
     <Compile Include="Logic\TestData\TestDataFactory.cs" />
+    <Compile Include="Logic\TestData\InMemoryRoutineRepository.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
