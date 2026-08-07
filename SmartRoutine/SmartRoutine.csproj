@@ -247,6 +247,11 @@
     <Compile Include="UI\Controls\RoutineEditorUC.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="UI\Controls\StepEditors\IStepTypeEditor.cs" />
+    <Compile Include="UI\Controls\StepEditors\OpenUrlStepEditor.cs" />
+    <Compile Include="UI\Controls\StepEditors\OpenFolderStepEditor.cs" />
+    <Compile Include="UI\Controls\StepEditors\OpenApplicationStepEditor.cs" />
+    <Compile Include="UI\Controls\StepEditors\OpenDocumentStepEditor.cs" />
     <Compile Include="UI\Controls\RoutineEditorUC.Designer.cs">
       <DependentUpon>RoutineEditorUC.cs</DependentUpon>
     </Compile>

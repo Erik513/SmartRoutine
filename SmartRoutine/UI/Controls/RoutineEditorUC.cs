@@ -1,10 +1,10 @@
 ﻿using CustomWFUI;
 using CustomWFUI.Controls;
 using CustomWFUI.Forms;
-using CustomWFUI.Helpers;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
+using SmartRoutine.UI.Controls.StepEditors;
 using SmartRoutine.UI.Forms;
 using SmartRoutine.UI.Helpers;
 using System;
@@ -69,22 +69,9 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel rightBtnsTlp;
         private Button btnSaveStep, btnCancelStep;
 
-        // Controls based on StepType
-        
-        // OpenURL Controls
-        private TextBox txtUrl;
-        private ToggleSwitch tglOpenInExternBrowser;
-
-        // OpenFolder Controls
-        private TextBox txtFolderPath;
-        private ToggleSwitch tglOpenInNewWindow;
-        // OpenApplication Controls
-        private TextBox txtAppPath;
-        private TextBox txtAppArguments;
-        private ToggleSwitch tglRunAsAdmin;
-        // OpenDocument Controls
-        private TextBox txtDocumentPath;
-        private Button btnBrowseDocument;
+        // Ein IStepTypeEditor pro StepType kapselt dessen Controls, Laden/Speichern und Validierung.
+        private readonly Dictionary<StepType, IStepTypeEditor> _stepEditors;
+        private IStepTypeEditor _activeStepEditor;
 
         // Footer
         private Button btnDuplicateStep, btnAddStep, btnDeleteStep;
@@ -98,6 +85,7 @@ namespace SmartRoutine.UI.Controls
             _originalRoutine = null;
             _currentRoutine = null;
             _editingStep = null;
+            _stepEditors = CreateStepEditors();
 
             this.Dock = DockStyle.Fill;
             this.BackColor = UIStyles.Colors.BackgroundDark;
@@ -109,6 +97,32 @@ namespace SmartRoutine.UI.Controls
             this.UpdateStyles();
 
             InitializeControl();
+        }
+
+        private Dictionary<StepType, IStepTypeEditor> CreateStepEditors()
+        {
+            var editors = new IStepTypeEditor[]
+            {
+                new OpenUrlStepEditor(
+                    _urlValidationService,
+                    (message, showMessageBox) => ShowValidationMessage(message, showMessageBox),
+                    _errorToolTip,
+                    () => UpdateAutoContinueAvailability()),
+
+                new OpenFolderStepEditor(
+                    _routineService,
+                    (message, showMessageBox) => ShowValidationMessage(message, showMessageBox)),
+
+                new OpenApplicationStepEditor(
+                    _routineService,
+                    (message, showMessageBox) => ShowValidationMessage(message, showMessageBox)),
+
+                new OpenDocumentStepEditor(
+                    _routineService,
+                    (message, showMessageBox) => ShowValidationMessage(message, showMessageBox))
+            };
+
+            return editors.ToDictionary(editor => editor.Type);
         }
 
         private void InitializeControl()
@@ -260,9 +274,15 @@ namespace SmartRoutine.UI.Controls
             cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
             cmbStepType.Dock = DockStyle.Fill;
 
+            // Bewusst keine DataSource-Bindung: Ein per DataSource gebundenes ComboBox
+            // erzeugt einen CurrencyManager, dessen Position bei bestimmten WinForms-
+            // internen Ereignissen wieder auf 0 zurückspringen kann, selbst nachdem
+            // SelectedIndex explizit auf -1 gesetzt wurde. Mit einfacher Items-Befüllung
+            // gibt es diesen CurrencyManager gar nicht erst, SelectedIndex = -1 bleibt zuverlässig.
             cmbStepType.DisplayMember = "DisplayName";
-            cmbStepType.ValueMember = "Type";
-            cmbStepType.DataSource = StepTypeHelper.GetStepTypeOptions();
+
+            foreach (StepTypeOption option in StepTypeHelper.GetStepTypeOptions())
+                cmbStepType.Items.Add(option);
 
             cmbStepType.SelectedIndex = -1;
             cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
@@ -487,28 +507,15 @@ namespace SmartRoutine.UI.Controls
             StepType selectedType;
 
             if (!TryGetSelectedStepType(out selectedType))
+            {
+                _activeStepEditor = null;
                 return;
+            }
 
             editorOptionsTable.AddSection("Optionen");
 
-            switch (selectedType)
-            {
-                case StepType.OpenUrl:
-                    CreateOpenUrlControls();
-                    break;
-
-                case StepType.OpenFolder:
-                    CreateOpenFolderControls();
-                    break;
-
-                case StepType.OpenApplication:
-                    CreateOpenApplicationControls();
-                    break;
-
-                case StepType.OpenDocument:
-                    CreateOpenDocumentControls();
-                    break;
-            }
+            _activeStepEditor = _stepEditors[selectedType];
+            _activeStepEditor.BuildControls(editorOptionsTable);
 
             editorOptionsTable.Visible = true;
             editorOptionsTable.PerformLayout();
@@ -521,12 +528,6 @@ namespace SmartRoutine.UI.Controls
         private bool TryGetSelectedStepType(out StepType selectedType)
         {
             selectedType = default(StepType);
-
-            if (cmbStepType.SelectedValue is StepType value)
-            {
-                selectedType = value;
-                return true;
-            }
 
             if (cmbStepType.SelectedItem is StepTypeOption option)
             {
@@ -593,65 +594,6 @@ namespace SmartRoutine.UI.Controls
             if (_currentRoutine.Steps.Count == 0)
                 rightTlp.Visible = false;
         }
-        private void TxtUrl_TextChanged(object sender, EventArgs e)
-        {
-            string url = txtUrl.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                // Leeres Feld - normale Farbe
-                txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
-                _errorToolTip.SetToolTip(txtUrl, "");
-                return;
-            }
-
-            // Live-Validierung während der Eingabe
-            var result = _urlValidationService.ValidateAndRepairUrl(url, false);
-
-            if (result.IsValid)
-            {
-                // Gültige URL - normale Farbe
-                txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
-                _errorToolTip.SetToolTip(txtUrl, "");
-
-                // Wenn die URL repariert wurde, im Hintergrund merken (aber nicht überschreiben während der Eingabe)
-                if (result.RepairedUrl != url && result.RepairedUrl != txtUrl.Tag as string)
-                {
-                    txtUrl.Tag = result.RepairedUrl; // Reparierte URL als Tag speichern
-                }
-            }
-            else
-            {
-                // Ungültige URL - rote Farbe und Fehlermeldung im ToolTip
-                txtUrl.ForeColor = UIStyles.Colors.Red;
-                _errorToolTip.SetToolTip(txtUrl, result.ErrorMessage);
-            }
-        }
-        private void TxtUrl_LostFocus(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtUrl.Text))
-                return;
-
-            var result = _urlValidationService.ValidateAndRepairUrl(txtUrl.Text, false);
-
-            if (result.IsValid)
-            {
-                // Verwende die reparierte URL wenn vorhanden
-                if (result.RepairedUrl != txtUrl.Text)
-                {
-                    txtUrl.Text = result.RepairedUrl;
-                }
-                txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
-                _errorToolTip.SetToolTip(txtUrl, "");
-            }
-            else
-            {
-                txtUrl.ForeColor = UIStyles.Colors.Red;
-                _errorToolTip.SetToolTip(txtUrl, result.ErrorMessage);
-            }
-        }
-
-
         private bool HasChanges()
         {
             if (_originalRoutine == null)
@@ -773,6 +715,7 @@ namespace SmartRoutine.UI.Controls
             _editingStep = null;
             _editorSnapshotStep = null;
             _currentEditorStepType = null;
+            _activeStepEditor = null;
 
             txtStepName.Text = "";
             txtStepDescription.Text = "";
@@ -788,6 +731,15 @@ namespace SmartRoutine.UI.Controls
             btnDuplicateStep.Enabled = false;
 
             SetEditorEnabled(false);
+
+            // Ohne diesen erzwungenen Repaint bleibt z.B. die zuvor im ComboBox
+            // angezeigte Auswahl und die alten Options-Controls optisch stehen,
+            // obwohl der Zustand darunter bereits korrekt zurückgesetzt ist.
+            cmbStepType.Refresh();
+            editorOptionsTable.PerformLayout();
+            editorOptionsTable.Refresh();
+            rightTlp.PerformLayout();
+            rightTlp.Refresh();
         }
 
         private void EnsureOptionsEditorForStepType(StepType stepType)
@@ -824,28 +776,7 @@ namespace SmartRoutine.UI.Controls
                 cmbStepType.PerformLayout();
                 cmbStepType.Refresh();
 
-                switch (step)
-                {
-                    case OpenUrlStep urlStep:
-                        if (txtUrl != null) txtUrl.Text = urlStep.Url;
-                        if (tglOpenInExternBrowser != null) tglOpenInExternBrowser.Checked = urlStep.OpenInExternalBrowser;
-                        break;
-
-                    case OpenFolderStep folderStep:
-                        if (txtFolderPath != null) txtFolderPath.Text = folderStep.FolderPath;
-                        if (tglOpenInNewWindow != null) tglOpenInNewWindow.Checked = folderStep.OpenInNewWindow;
-                        break;
-
-                    case OpenApplicationStep appStep:
-                        if (txtAppPath != null) txtAppPath.Text = appStep.ApplicationPath;
-                        if (txtAppArguments != null) txtAppArguments.Text = appStep.Arguments;
-                        if (tglRunAsAdmin != null) tglRunAsAdmin.Checked = appStep.RunAsAdmin;
-                        break;
-
-                    case OpenDocumentStep docStep:
-                        if (txtDocumentPath != null) txtDocumentPath.Text = docStep.FilePath;
-                        break;
-                }
+                _activeStepEditor?.LoadFrom(step);
 
                 editorOptionsTable.Visible = true;
                 editorOptionsTable.BringToFront();
@@ -872,51 +803,8 @@ namespace SmartRoutine.UI.Controls
             step.Name = step.Name ?? "";
             step.Description = step.Description ?? "";
 
-            OpenUrlStep urlStep = step as OpenUrlStep;
-            if (urlStep != null)
-            {
-                urlStep.Url = NormalizeUrl(urlStep.Url);
-
-                if (!urlStep.OpenInExternalBrowser)
-                    urlStep.AutoContinue = false;
-
-                return;
-            }
-
-            OpenFolderStep folderStep = step as OpenFolderStep;
-            if (folderStep != null)
-            {
-                folderStep.FolderPath = folderStep.FolderPath ?? "";
-                return;
-            }
-
-            OpenApplicationStep appStep = step as OpenApplicationStep;
-            if (appStep != null)
-            {
-                appStep.ApplicationPath = appStep.ApplicationPath ?? "";
-                appStep.Arguments = appStep.Arguments ?? "";
-                appStep.WorkingDirectory = appStep.WorkingDirectory ?? "";
-                return;
-            }
-
-            OpenDocumentStep docStep = step as OpenDocumentStep;
-            if (docStep != null)
-            {
-                docStep.FilePath = docStep.FilePath ?? "";
-            }
-        }
-
-        private string NormalizeUrl(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-                return "";
-
-            var result = _urlValidationService.ValidateAndRepairUrl(url, false);
-
-            if (!result.IsValid)
-                return url.Trim();
-
-            return result.RepairedUrl ?? "";
+            if (_stepEditors.TryGetValue(step.Type, out IStepTypeEditor editor))
+                editor.NormalizeForComparison(step);
         }
         private void SetSelectedStepType(StepType stepType)
         {
@@ -1406,132 +1294,13 @@ namespace SmartRoutine.UI.Controls
             if (!TryGetSelectedStepType(out selectedType))
             {
                 _currentEditorStepType = null;
+                _activeStepEditor = null;
                 editorOptionsTable.ClearRows();
                 return;
             }
             EnsureOptionsEditorForStepType(selectedType);
 
             UpdateAutoContinueAvailability();
-        }
-
-        private void CreateOpenUrlControls()
-        {
-            txtUrl = UIStyles.TextBoxes.CreateBorderstyleNone();
-            txtUrl.Name = "txtUrl";
-
-            txtUrl.TextChanged += TxtUrl_TextChanged;
-            txtUrl.LostFocus += TxtUrl_LostFocus;
-
-            TextDragDropHelper.EnableTextDragDrop(txtUrl, droppedText =>
-            {
-                string cleanedText = droppedText.Trim();
-
-                txtUrl.Text = cleanedText;
-                TxtUrl_TextChanged(txtUrl, EventArgs.Empty);
-                txtUrl.SelectionStart = txtUrl.Text.Length;
-            });
-
-            tglOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(
-                true,
-                "Externer Browser",
-                "In App öffnen");
-
-            tglOpenInExternBrowser.CheckedChanged += TglOpenInExternBrowser_CheckedChanged;
-
-            tglOpenInExternBrowser.Name = "tglOpenInternally";
-            tglOpenInExternBrowser.Anchor = AnchorStyles.Left;
-
-            editorOptionsTable.AddRow("URL", txtUrl);
-            editorOptionsTable.AddRow("Öffnen in", tglOpenInExternBrowser);
-        }
-        private void TglOpenInExternBrowser_CheckedChanged(object sender, EventArgs e)
-        {
-            UpdateAutoContinueAvailability();
-        }
-
-        private void CreateOpenFolderControls()
-        {
-            txtFolderPath = UIStyles.TextBoxes.CreateBorderstyleNone();
-            txtFolderPath.Name = "txtFolderPath";
-
-            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Ordner auswählen", new Size(50, 30));
-
-            btnBrowse.Click += (s, e) =>
-            {
-                using (var dialog = new FolderBrowserDialog())
-                {
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                        txtFolderPath.Text = dialog.SelectedPath;
-                }
-            };
-
-            editorOptionsTable.AddRow(
-                "Ordnerpfad",
-                UIColumn.Percent(txtFolderPath, 100),
-                UIColumn.Absolute(btnBrowse, 50));
-
-            tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
-            tglOpenInNewWindow.Name = "tglOpenInNewWindow";
-            tglOpenInNewWindow.Anchor = AnchorStyles.Left;
-
-            editorOptionsTable.AddRow("Neues Fenster", tglOpenInNewWindow);
-        }
-        private void CreateOpenApplicationControls()
-        {
-            txtAppPath = UIStyles.TextBoxes.CreateBorderstyleNone();
-            txtAppPath.Name = "txtAppPath";
-
-            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Programm auswählen", new Size(50, 30));
-
-            btnBrowse.Click += (s, e) =>
-            {
-                using (var dialog = new OpenFileDialog())
-                {
-                    dialog.Filter = "Anwendungen (*.exe)|*.exe|Alle Dateien (*.*)|*.*";
-
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                        txtAppPath.Text = dialog.FileName;
-                }
-            };
-
-            editorOptionsTable.AddRow(
-                "Programmpfad",
-                UIColumn.Percent(txtAppPath, 100),
-                UIColumn.Absolute(btnBrowse, 50));
-
-            txtAppArguments = UIStyles.TextBoxes.CreateBorderstyleNone();
-            txtAppArguments.Name = "txtAppArguments";
-
-            tglRunAsAdmin = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
-            tglRunAsAdmin.Name = "tglRunAsAdmin";
-            tglRunAsAdmin.Anchor = AnchorStyles.Left;
-
-            editorOptionsTable.AddRow("Argumente", txtAppArguments);
-            editorOptionsTable.AddRow("Als Admin", tglRunAsAdmin);
-        }
-        private void CreateOpenDocumentControls()
-        {
-            txtDocumentPath = UIStyles.TextBoxes.CreateBorderstyleNone();
-            txtDocumentPath.Name = "txtDocumentPath";
-
-            btnBrowseDocument = UIStyles.Buttons.CreateBrowseInFolder("Dokument auswählen", new Size(50, 30));
-
-            btnBrowseDocument.Click += (s, e) =>
-            {
-                using (var dialog = new OpenFileDialog())
-                {
-                    dialog.Filter = "Alle Dateien (*.*)|*.*";
-                    dialog.Title = "Dokument auswählen";
-
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                        txtDocumentPath.Text = dialog.FileName;
-                }
-            };
-
-            editorOptionsTable.AddRow(
-                "Dateipfad",
-                UIColumn.Percent(txtDocumentPath, 100),
-                UIColumn.Absolute(btnBrowseDocument, 50));
         }
 
         // ========== BACK BUTTON ==========
@@ -1609,28 +1378,7 @@ namespace SmartRoutine.UI.Controls
             if (!ValidateStepType(showMessageBox))
                 return false;
 
-            StepType selectedType;
-
-            if (!TryGetSelectedStepType(out selectedType))
-                return false;
-
-            switch (selectedType)
-            {
-                case StepType.OpenUrl:
-                    return ValidateOpenUrlStep(showMessageBox);
-
-                case StepType.OpenFolder:
-                    return ValidateOpenFolderStep(showMessageBox);
-
-                case StepType.OpenApplication:
-                    return ValidateOpenApplicationStep(showMessageBox);
-
-                case StepType.OpenDocument:
-                    return ValidateOpenDocumentStep(showMessageBox);
-
-                default:
-                    return false;
-            }
+            return _activeStepEditor != null && _activeStepEditor.Validate(showMessageBox);
         }
         private bool ValidateStepName(bool showMessageBox)
         {
@@ -1656,100 +1404,6 @@ namespace SmartRoutine.UI.Controls
             cmbStepType.Focus();
             return false;
         }
-        private bool ValidateOpenUrlStep(bool showMessageBox)
-        {
-            if (string.IsNullOrWhiteSpace(txtUrl?.Text))
-            {
-                ShowValidationMessage(
-                    "Bitte geben Sie eine URL ein.",
-                    showMessageBox);
-
-                txtUrl?.Focus();
-                return false;
-            }
-
-            var urlResult = _urlValidationService.ValidateAndRepairUrl(txtUrl.Text, false);
-
-            if (urlResult.IsValid)
-                return true;
-
-            ShowValidationMessage(
-                urlResult.ErrorMessage,
-                showMessageBox,
-                "Ungültige URL");
-
-            txtUrl.Focus();
-            return false;
-        }
-        private bool ValidateOpenFolderStep(bool showMessageBox)
-        {
-            if (string.IsNullOrWhiteSpace(txtFolderPath?.Text))
-            {
-                ShowValidationMessage(
-                    "Bitte geben Sie einen Ordnerpfad ein.",
-                    showMessageBox);
-
-                txtFolderPath?.Focus();
-                return false;
-            }
-
-            // Existenzprüfung: delegiert an RoutineService.ValidateStep, damit die
-            // Regel nur an einer Stelle gepflegt werden muss (auch für Ausführung ohne Editor).
-            var step = new OpenFolderStep { FolderPath = txtFolderPath.Text };
-
-            if (_routineService.ValidateStep(step, out string errorMessage))
-                return true;
-
-            ShowValidationMessage(errorMessage, showMessageBox);
-
-            txtFolderPath.Focus();
-            return false;
-        }
-        private bool ValidateOpenApplicationStep(bool showMessageBox)
-        {
-            if (string.IsNullOrWhiteSpace(txtAppPath?.Text))
-            {
-                ShowValidationMessage(
-                    "Bitte geben Sie einen Programmpfad ein.",
-                    showMessageBox);
-
-                txtAppPath?.Focus();
-                return false;
-            }
-
-            var step = new OpenApplicationStep { ApplicationPath = txtAppPath.Text };
-
-            if (_routineService.ValidateStep(step, out string errorMessage))
-                return true;
-
-            ShowValidationMessage(errorMessage, showMessageBox);
-
-            txtAppPath.Focus();
-            return false;
-        }
-        private bool ValidateOpenDocumentStep(bool showMessageBox)
-        {
-            if (string.IsNullOrWhiteSpace(txtDocumentPath?.Text))
-            {
-                ShowValidationMessage(
-                    "Bitte wählen Sie eine Datei aus.",
-                    showMessageBox);
-
-                txtDocumentPath?.Focus();
-                return false;
-            }
-
-            var step = new OpenDocumentStep { FilePath = txtDocumentPath.Text };
-
-            if (_routineService.ValidateStep(step, out string errorMessage))
-                return true;
-
-            ShowValidationMessage(errorMessage, showMessageBox);
-
-            txtDocumentPath.Focus();
-            return false;
-        }
-
         private void ShowValidationMessage(
             string message,
             bool showMessageBox,
@@ -1767,7 +1421,7 @@ namespace SmartRoutine.UI.Controls
                 CustomMessageBoxSize.Medium);
         }
 
-        private void SaveCurrentStep(bool refreshList = true)
+        private void SaveCurrentStep(bool showSavedToast = true)
         {
             if (!ValidateCurrentStep(false))
                 return;
@@ -1788,32 +1442,35 @@ namespace SmartRoutine.UI.Controls
                 _editorSnapshotStep.Order = _editingStep.Order;
             }
 
-            if (refreshList)
+            // Liste (inkl. Icon/Name) muss immer aktualisiert werden, auch wenn direkt
+            // im Anschluss ausgeführt wird (showSavedToast = false) und daher keine
+            // "gespeichert"-Meldung angezeigt werden soll.
+            RoutineStep selectedStep = _editingStep;
+
+            _isRefreshing = true;
+
+            RefreshStepsList(false);
+
+            if (selectedStep != null)
             {
-                RoutineStep selectedStep = _editingStep;
-
-                _isRefreshing = true;
-
-                RefreshStepsList(false);
-
-                if (selectedStep != null)
+                for (int i = 0; i < lstSteps.Items.Count; i++)
                 {
-                    for (int i = 0; i < lstSteps.Items.Count; i++)
-                    {
-                        RoutineStep item =
-                            lstSteps.Items[i] as RoutineStep;
+                    RoutineStep item =
+                        lstSteps.Items[i] as RoutineStep;
 
-                        if (item != null &&
-                            item.Id == selectedStep.Id)
-                        {
-                            lstSteps.SelectedIndex = i;
-                            break;
-                        }
+                    if (item != null &&
+                        item.Id == selectedStep.Id)
+                    {
+                        lstSteps.SelectedIndex = i;
+                        break;
                     }
                 }
+            }
 
-                _isRefreshing = false;
+            _isRefreshing = false;
 
+            if (showSavedToast)
+            {
                 ToastForm.ShowToast(
                     $"✓ Schritt '{step.Name}' gespeichert",
                     FindForm());
@@ -1822,70 +1479,13 @@ namespace SmartRoutine.UI.Controls
 
         private RoutineStep CreateStepFromEditor()
         {
-            StepType selectedType;
-
-            if (!TryGetSelectedStepType(out selectedType))
+            if (_activeStepEditor == null)
                 return null;
 
-            RoutineStep step;
+            RoutineStep step = _activeStepEditor.CreateStep();
 
-            switch (selectedType)
-            {
-                case StepType.OpenUrl:
-
-                    var urlResult =
-                        _urlValidationService.ValidateAndRepairUrl(
-                            txtUrl?.Text,
-                            false);
-
-                    if (!urlResult.IsValid)
-                        return null;
-
-                    step = new OpenUrlStep
-                    {
-                        Url = urlResult.RepairedUrl,
-                        OpenInExternalBrowser =
-                            tglOpenInExternBrowser?.Checked ?? true
-                    };
-
-                    break;
-
-                case StepType.OpenFolder:
-
-                    step = new OpenFolderStep
-                    {
-                        FolderPath = txtFolderPath?.Text ?? "",
-                        OpenInNewWindow =
-                            tglOpenInNewWindow?.Checked ?? true
-                    };
-
-                    break;
-
-                case StepType.OpenApplication:
-
-                    step = new OpenApplicationStep
-                    {
-                        ApplicationPath = txtAppPath?.Text ?? "",
-                        Arguments = txtAppArguments?.Text ?? "",
-                        RunAsAdmin = tglRunAsAdmin?.Checked ?? false,
-                        WorkingDirectory = ""
-                    };
-
-                    break;
-
-                case StepType.OpenDocument:
-
-                    step = new OpenDocumentStep
-                    {
-                        FilePath = txtDocumentPath?.Text ?? "",
-                        OpenWithAssociatedApp = true
-                    };
-
-                    break;
-
-                default:
-                    return null;
-            }
+            if (step == null)
+                return null;
 
             ApplyCommonStepProperties(step);
 
@@ -1912,28 +1512,13 @@ namespace SmartRoutine.UI.Controls
 
         private void UpdateAutoContinueAvailability()
         {
-            StepType selectedType;
-
-            if (!TryGetSelectedStepType(out selectedType))
+            if (_activeStepEditor == null)
             {
                 tglAutoContinue.Enabled = true;
                 return;
             }
 
-            if (selectedType != StepType.OpenUrl)
-            {
-                tglAutoContinue.Enabled = true;
-                return;
-            }
-
-            bool isInternalUrl =
-                tglOpenInExternBrowser != null &&
-                !tglOpenInExternBrowser.Checked;
-
-            tglAutoContinue.Enabled = !isInternalUrl;
-
-            if (isInternalUrl)
-                tglAutoContinue.Checked = false;
+            _activeStepEditor.UpdateAutoContinueAvailability(tglAutoContinue);
         }
 
         private void SaveStep(RoutineStep step)
