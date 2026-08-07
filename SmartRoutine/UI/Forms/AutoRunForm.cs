@@ -77,9 +77,8 @@ namespace SmartRoutine.UI.Forms
             _stepLabel.TextAlign = ContentAlignment.MiddleCenter;
             _stepLabel.AutoEllipsis = true;
 
-            _progressBar = new ProgressBar();
+            _progressBar = UIStyles.ProgressBars.CreateStandard();
             _progressBar.Dock = DockStyle.Fill;
-            _progressBar.Minimum = 0;
 
             _cancelButton = UIStyles.Buttons.CreateStandard(
                 "✖",
