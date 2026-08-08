@@ -29,8 +29,21 @@
 
   <ItemGroup>
     <!-- CustomWFUI.Forms.AppUpdater needs GitHubSelfUpdater + its polyfills at runtime;
-         nothing here references those types directly. -->
-    <None Include="..\lib\GitHubSelfUpdater\*.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+         nothing here references those types directly, so a loose copy is enough for
+         most of them - .NET's own unification satisfies a legacy net48 assembly's
+         request for an old System.Buffers/System.Memory/etc. from the net8.0 shared
+         framework automatically. System.Text.Json is the one exception: GitHubSelfUpdater
+         (net48) hard-requires exactly 8.0.0.5, which does NOT get unified against the
+         framework's own 8.0.0.0 - it must be a real Reference (not just a copied file)
+         so it ends up in SmartRoutine.deps.json, which is what .NET's assembly resolver
+         actually consults at runtime. Adding the same explicit-Reference treatment to
+         the other polyfills breaks things instead: their vendored copies here are OLDER
+         than what LiteDB itself needs, and an explicit Reference makes MSBuild prefer
+         that older vendored copy over the correct one for every consumer in the app. -->
+    <None Include="..\lib\GitHubSelfUpdater\*.dll" Exclude="..\lib\GitHubSelfUpdater\System.Text.Json.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <Reference Include="System.Text.Json">
+      <HintPath>..\lib\GitHubSelfUpdater\System.Text.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
