@@ -447,7 +447,7 @@ namespace SmartRoutine.UI.Controls
             editorBaseTable.AddRow("Beschreibung", txtStepDescription);
             editorBaseTable.AddRow("Aktion", cmbStepType);
             
-            FlowLayoutPanel autostartPanel = UIStyles.FlowPanels.CreateStandard();
+            FlowLayoutPanel autostartPanel = UIStyles.FlowLayoutPanels.CreateStandard();
             autostartPanel.Dock = DockStyle.Left;
             Label lblAutoStart = UIStyles.Labels.CreateNormal("Start");
             lblAutoStart.Margin = new Padding(0, 4, 5, 0);
@@ -456,7 +456,7 @@ namespace SmartRoutine.UI.Controls
             autostartPanel.Controls.Add(lblAutoStart);
             autostartPanel.Controls.Add(tglAutoStart);
 
-            FlowLayoutPanel autocontinuePanel = UIStyles.FlowPanels.CreateStandard();
+            FlowLayoutPanel autocontinuePanel = UIStyles.FlowLayoutPanels.CreateStandard();
             autocontinuePanel.Dock = DockStyle.Left;
             Label lblAutoContinue = UIStyles.Labels.CreateNormal("Weiter");
             lblAutoContinue.Margin = new Padding(0, 4, 5, 0);
