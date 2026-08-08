@@ -33,7 +33,7 @@ namespace SmartRoutine.Tests.Data
         [TestMethod]
         public void Constructor_WithEmptyPath_ThrowsArgumentException()
         {
-            Assert.ThrowsException<ArgumentException>(() =>
+            Assert.ThrowsExactly<ArgumentException>(() =>
                 new RoutineRepository(""));
         }
 
