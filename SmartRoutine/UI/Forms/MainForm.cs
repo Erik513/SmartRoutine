@@ -4,6 +4,8 @@ using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
 using System;
 using System.Drawing;
+using System.Net.Http;
+using System.Reflection;
 using System.Windows.Forms;
 using CustomWFUI;
 using CustomWFUI.Forms;
@@ -17,11 +19,16 @@ namespace SmartRoutine.UI.Forms
         private static readonly Size DefaultWindowSize = new Size(1024, 768);
         private static readonly Size MinimumWindowSize = new Size(800, 600);
 
+        private const string UpdateRepositoryOwner = "Erik513";
+        private const string UpdateRepositoryName = "SmartRoutine";
+        private static readonly TimeSpan UpdateCheckTimeout = TimeSpan.FromSeconds(5);
+
         private readonly IRoutineService _routineService;
 
         private RoutinesViewUC _routinesView;
         private RoutineEditorUC _editorView;
         private Routine _currentRoutine;
+        private bool _updateCheckStarted;
 
         public MainForm(IRoutineService routineService)
             : base(StyledFormOptions.CreateStandard(
@@ -47,6 +54,38 @@ namespace SmartRoutine.UI.Forms
         {
             CleanupBeforeClose();
             base.OnFormClosing(e);
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+
+            // OnShown feuert auch erneut, wenn das Form nach ExecuteFullRoutine's
+            // Hide()/Show()-Wechsel wieder sichtbar wird - der Update-Check soll
+            // aber nur einmal pro Programmstart laufen.
+            if (_updateCheckStarted)
+                return;
+
+            _updateCheckStarted = true;
+
+            CheckForUpdatesAsync();
+        }
+
+        private async void CheckForUpdatesAsync()
+        {
+            using (HttpClient checkHttpClient = new HttpClient())
+            using (HttpClient downloadHttpClient = new HttpClient())
+            {
+                AppUpdater updater = new AppUpdater(
+                    UpdateRepositoryOwner,
+                    UpdateRepositoryName,
+                    checkHttpClient,
+                    downloadHttpClient);
+
+                Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+
+                await updater.CheckForUpdateAsync(currentVersion, UpdateCheckTimeout, this);
+            }
         }
 
         private void ConfigureForm()
