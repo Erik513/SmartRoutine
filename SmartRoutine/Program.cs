@@ -1,4 +1,6 @@
-﻿using CustomWFUI.Helpers;
+﻿using CustomWFUI;
+using CustomWFUI.Helpers;
+using CustomWFUI.Styles;
 using SmartRoutine.Data;
 using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Logic.Interfaces;
@@ -17,6 +19,8 @@ namespace SmartRoutine
         private static void Main()
         {
             RegisterGlobalExceptionCleanup();
+
+            UIStyles.Language = UILanguage.German;
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
