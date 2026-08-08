@@ -14,6 +14,8 @@ namespace SmartRoutine.UI.Forms
 {
     public partial class ExecutionForm : StyledForm
     {
+        public event EventHandler BeforeCloseRequested;
+
         private const int FooterHeight = 60;
         private const int FooterInfoColumnWidth = 35;
         private const int FooterCounterColumnWidth = 65;
@@ -683,6 +685,7 @@ namespace SmartRoutine.UI.Forms
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            BeforeCloseRequested?.Invoke(this, EventArgs.Empty);
             StopAndDisposeWebView();
             DisposePopup();
             StopAutoContinueCountdown();

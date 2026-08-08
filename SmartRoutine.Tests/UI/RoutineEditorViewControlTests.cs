@@ -255,10 +255,56 @@ namespace SmartRoutine.Tests.UI
             var editorOptionsTable =
                 GetPrivateField<StyledPropertyTable>(_editor, "editorOptionsTable");
 
-            var txtUrl = GetPrivateField<TextBox>(_editor, "txtUrl");
+            // txtUrl gehört jetzt zum OpenUrlStepEditor (nicht mehr direktes Feld von
+            // RoutineEditorUC), daher Suche über den Control-Baum statt Reflection auf das Feld.
+            var txtUrl = FindControlByName(editorOptionsTable, "txtUrl");
 
             Assert.IsTrue(editorOptionsTable.Visible);
             Assert.IsNotNull(txtUrl);
+        }
+
+        [TestMethod]
+        public void AddStep_AfterSelectingNonUrlStep_ClearsStepTypeSelection()
+        {
+            // Regressionstest: cmbStepType ist NICHT mehr per DataSource gebunden.
+            // Vorher sprang die Auswahl beim Klick auf "Schritt hinzufügen" wieder auf
+            // "Webseite öffnen" (Index 0) zurück, aber nur wenn zuvor ein Schritt eines
+            // ANDEREN Typs (z.B. Ordner öffnen) ausgewählt war.
+            _testRoutine.Steps.Add(new OpenFolderStep
+            {
+                Id = "folder-step",
+                Name = "Dokumente",
+                FolderPath = "C:\\Test"
+            });
+
+            _editor.LoadRoutine(_testRoutine);
+
+            var lstSteps = GetPrivateField<StyledListBoxControl>(_editor, "lstSteps");
+            lstSteps.SelectedIndex = 0;
+
+            var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
+            Assert.AreNotEqual(-1, cmbStepType.SelectedIndex, "Vorbedingung: Ordner-Step sollte einen Typ auswählen.");
+
+            var btnAddStep = GetPrivateField<Button>(_editor, "btnAddStep");
+            btnAddStep.PerformClick();
+
+            Assert.AreEqual(-1, cmbStepType.SelectedIndex);
+        }
+
+        private Control FindControlByName(Control root, string name)
+        {
+            foreach (Control child in root.Controls)
+            {
+                if (child.Name == name)
+                    return child;
+
+                var found = FindControlByName(child, name);
+
+                if (found != null)
+                    return found;
+            }
+
+            return null;
         }
 
 

@@ -55,7 +55,7 @@ namespace SmartRoutine.Tests
         private RoutineService CreateService()
         {
             var repo = new InMemoryRepository();
-            return new RoutineService(repo, false); // false = KEINE TestDataFactory!
+            return new RoutineService(repo);
         }
 
         [TestMethod]
@@ -155,7 +155,7 @@ namespace SmartRoutine.Tests
             var mockRepo = new Mock<IRoutineRepository>();
             mockRepo.Setup(r => r.LoadRoutines()).Returns(new List<Routine>());
 
-            var service = new RoutineService(mockRepo.Object, false);
+            var service = new RoutineService(mockRepo.Object);
 
             service.CreateRoutine("Test Routine");
 
@@ -303,7 +303,7 @@ namespace SmartRoutine.Tests
             var routine = new Routine { Id = "123", Name = "Test" };
             mockRepo.Setup(r => r.LoadRoutines()).Returns(new List<Routine> { routine });
 
-            var service = new RoutineService(mockRepo.Object, false);
+            var service = new RoutineService(mockRepo.Object);
 
             service.DeleteRoutine("123");
 

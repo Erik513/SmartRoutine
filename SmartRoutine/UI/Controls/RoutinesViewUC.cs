@@ -139,7 +139,7 @@ namespace SmartRoutine.UI.Controls
             btnStartRoutine.Margin = new Padding(5, 5, 0, 5);
             btnStartRoutine.Click += BtnStartRoutine_Click;
 
-            btnStartRoutineAuto = UIStyles.Buttons.CreateGreen("⚡", "Routine automatisch starten", new Size(30, 30), true);
+            btnStartRoutineAuto = UIStyles.Buttons.CreateGreen("⚡", "Routine mit Auto-Ausführung starten", new Size(30, 30), true);
             btnStartRoutineAuto.Dock = DockStyle.Fill;
             btnStartRoutineAuto.Margin = new Padding(0, 5, 5, 5);
             btnStartRoutineAuto.Click += BtnStartRoutineAuto_Click;

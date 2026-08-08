@@ -1,7 +1,6 @@
 ﻿using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
-using SmartRoutine.Logic.TestData;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,51 +12,18 @@ namespace SmartRoutine.Logic.Services
     public class RoutineService : IRoutineService
     {
         private readonly IRoutineRepository _repository;
-        private List<Routine> _testRoutines;
-        private readonly bool _useTestData;
 
-        public bool UseTestData => _useTestData;
-
-        public RoutineService(IRoutineRepository repository = null, bool useTestData = false)
+        public RoutineService(IRoutineRepository repository)
         {
-            _repository = repository;
-            _useTestData = useTestData;
-
-            if (_useTestData)
-            {
-                LoadTestData();
-            }
-            else if (_repository == null)
-            {
-                throw new ArgumentNullException(
-                    nameof(repository),
-                    "Repository is required when test data is disabled.");
-            }
-        }
-
-        private void LoadTestData()
-        {
-            var testData = new TestDataFactory();
-            _testRoutines = testData.GetTestRoutines();
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
         public List<Routine> GetAllRoutines()
         {
-            List<Routine> routines;
+            var routines = _repository.LoadRoutines()
+                .OrderBy(r => r.Order)
+                .ToList();
 
-            if (_useTestData)
-            {
-                routines = _testRoutines;
-            }
-            else
-            {
-                routines = _repository.LoadRoutines();
-            }
-
-            // Routinen nach Order sortieren
-            routines = routines.OrderBy(r => r.Order).ToList();
-
-            // UND: Steps in jeder Routine sortieren
             foreach (var routine in routines)
             {
                 if (routine.Steps != null && routine.Steps.Any())
@@ -71,16 +37,7 @@ namespace SmartRoutine.Logic.Services
 
         public Routine GetRoutine(string id)
         {
-            Routine routine;
-
-            if (_useTestData)
-            {
-                routine = _testRoutines?.FirstOrDefault(r => r.Id == id);
-            }
-            else
-            {
-                routine = _repository.GetRoutine(id);
-            }
+            var routine = _repository.GetRoutine(id);
 
             if (routine != null && routine.Steps != null && routine.Steps.Any())
             {
@@ -94,51 +51,25 @@ namespace SmartRoutine.Logic.Services
 
         public Routine CreateRoutine(string name)
         {
-            if (_useTestData)
+            var routines = _repository.LoadRoutines();
+            int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
+
+            var routine = new Routine
             {
-                int maxOrder = _testRoutines.Count > 0 ? _testRoutines.Max(r => r.Order) : -1;
+                Id = Guid.NewGuid().ToString(),
+                Name = name,
+                Order = maxOrder + 1,
+                CreatedAt = DateTime.Now,
+                Steps = new List<RoutineStep>()
+            };
 
-                var newRoutine = new Routine
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Name = name,
-                    Order = maxOrder + 1,
-                    CreatedAt = DateTime.Now,
-                    Steps = new List<RoutineStep>(),
-                };
-
-                _testRoutines.Add(newRoutine);
-                return newRoutine;
-            }
-            else
-            {
-                var routines = _repository.LoadRoutines();
-                int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
-
-                var routine = new Routine
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Name = name,
-                    Order = maxOrder + 1,
-                    CreatedAt = DateTime.Now,
-                    Steps = new List<RoutineStep>()
-                };
-
-                _repository.AddRoutine(routine);
-                return routine;
-            }
+            _repository.AddRoutine(routine);
+            return routine;
         }
 
         public void DeleteRoutine(string id)
         {
-            if (_useTestData)
-            {
-                _testRoutines.RemoveAll(r => r.Id == id);
-            }
-            else
-            {
-                _repository.DeleteRoutine(id);
-            }
+            _repository.DeleteRoutine(id);
         }
 
         public void ReorderRoutines(List<Routine> reorderedRoutines)
@@ -150,16 +81,9 @@ namespace SmartRoutine.Logic.Services
                 reorderedRoutines[i].Order = i; // nur Routine.Order
             }
 
-            if (_useTestData)
+            foreach (var routine in reorderedRoutines)
             {
-                _testRoutines = reorderedRoutines.ToList(); // neue Liste
-            }
-            else
-            {
-                foreach (var routine in reorderedRoutines)
-                {
-                    _repository.UpdateRoutine(routine);
-                }
+                _repository.UpdateRoutine(routine);
             }
         }
 
@@ -169,46 +93,6 @@ namespace SmartRoutine.Logic.Services
 
             NormalizeStepOrders(routine);
 
-            if (_useTestData)
-                SaveRoutineInMemory(routine);
-            else
-                SaveRoutineInRepository(routine);
-        }
-
-        private void NormalizeStepOrders(Routine routine)
-        {
-            if (routine.Steps == null)
-                routine.Steps = new List<RoutineStep>();
-
-            var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
-
-            for (int i = 0; i < orderedSteps.Count; i++)
-                orderedSteps[i].Order = i;
-
-            routine.Steps = orderedSteps;
-        }
-
-        private void SaveRoutineInMemory(Routine routine)
-        {
-            var index = _testRoutines.FindIndex(r => r.Id == routine.Id);
-
-            if (index >= 0)
-            {
-                routine.UpdatedAt = DateTime.Now;
-                _testRoutines[index] = routine;
-                return;
-            }
-
-            int maxOrder = _testRoutines.Count > 0 ? _testRoutines.Max(r => r.Order) : -1;
-
-            routine.Order = maxOrder + 1;
-            routine.CreatedAt = DateTime.Now;
-
-            _testRoutines.Add(routine);
-        }
-
-        private void SaveRoutineInRepository(Routine routine)
-        {
             var existing = _repository.GetRoutine(routine.Id);
 
             if (existing != null)
@@ -231,6 +115,18 @@ namespace SmartRoutine.Logic.Services
             _repository.AddRoutine(routine);
         }
 
+        private void NormalizeStepOrders(Routine routine)
+        {
+            if (routine.Steps == null)
+                routine.Steps = new List<RoutineStep>();
+
+            var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
+
+            for (int i = 0; i < orderedSteps.Count; i++)
+                orderedSteps[i].Order = i;
+
+            routine.Steps = orderedSteps;
+        }
 
         private RoutineStep CopyStep(RoutineStep original)
         {
@@ -268,10 +164,7 @@ namespace SmartRoutine.Logic.Services
             {
                 routine.Steps[index] = step;
 
-                if (!_useTestData)
-                {
-                    _repository.UpdateRoutine(routine);
-                }
+                _repository.UpdateRoutine(routine);
             }
         }
 
@@ -320,10 +213,7 @@ namespace SmartRoutine.Logic.Services
 
             routine.Steps = steps;
 
-            if (!_useTestData)
-            {
-                _repository.UpdateRoutine(routine);
-            }
+            _repository.UpdateRoutine(routine);
         }
 
         public StepExecutionResult ExecuteStep(RoutineStep step)
