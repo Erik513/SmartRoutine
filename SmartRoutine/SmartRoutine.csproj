@@ -22,18 +22,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="CustomWFUI">
-      <HintPath>..\lib\CustomWFUI\CustomWFUI.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- CustomWFUI.Forms.AppUpdater needs GitHubSelfUpdater + its polyfills at runtime;
-         nothing here references those types directly, so a loose copy is enough -
-         GitHubSelfUpdater registers its own AssemblyResolve fallback for the BCL-facade
-         assemblies (System.Text.Json etc.) that a net8.0 host ships at a different exact
-         version than its net48 build hard-requires, so no special-casing is needed here. -->
-    <None Include="..\lib\GitHubSelfUpdater\*.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <!-- CustomWFUI now multi-targets net48;net8.0-windows itself, so this picks up
+         its net8.0-windows leg directly - no more vendored DLL, and no more manual
+         GitHubSelfUpdater copy either, since CustomWFUI's net8.0-windows build
+         already references GitHubSelfUpdater via its own ProjectReference and pulls
+         its dependencies (System.Text.Json etc.) through normal NuGet/deps.json
+         resolution. -->
+    <ProjectReference Include="..\..\CustomWFUI\CustomWFUI\CustomWFUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
