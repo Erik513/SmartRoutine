@@ -129,7 +129,7 @@ namespace SmartRoutine.UI.Controls
             btnEditRoutine.Margin = new Padding(5);
             btnEditRoutine.Click += BtnEditRoutine_Click;
 
-            btnDeleteRoutine = UIStyles.Buttons.CreateDanger("🗑", "Routine löschen", new Size(30, 30), true);
+            btnDeleteRoutine = UIStyles.Buttons.CreateRed("🗑", "Routine löschen", new Size(30, 30), true);
             btnDeleteRoutine.Dock = DockStyle.Fill;
             btnDeleteRoutine.Margin = new Padding(5);
             btnDeleteRoutine.Click += BtnDeleteRoutine_Click;

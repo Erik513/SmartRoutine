@@ -413,7 +413,7 @@ namespace SmartRoutine.UI.Controls
             btnAddStep.Margin = new Padding(10, 10, 5, 10);
             btnAddStep.Click += BtnAddStep_Click;
 
-            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑", "Schritt löschen", new Size(155, 35), true);
+            btnDeleteStep = UIStyles.Buttons.CreateRed("🗑", "Schritt löschen", new Size(155, 35), true);
             btnDeleteStep.Dock = DockStyle.Fill;
             btnDeleteStep.Margin = new Padding(5, 10, 10, 10);
             btnDeleteStep.Enabled = false;
