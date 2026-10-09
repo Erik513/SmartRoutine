@@ -7,10 +7,14 @@ using System.Drawing;
 using System.Net.Http;
 using System.Reflection;
 using System.Windows.Forms;
-using CustomWFUI;
-using CustomWFUI.Forms;
-using CustomWFUI.Styles;
-using CustomWFUI.Helpers;
+using ErikwnkWFUI;
+using ErikwnkWFUI.Forms;
+using ErikwnkWFUI.Styles;
+using ErikwnkCore;
+using MessageBox = ErikwnkWFUI.Forms.MessageBox;
+using MessageBoxButtons = ErikwnkWFUI.Forms.MessageBoxButtons;
+using MessageBoxIcon = ErikwnkWFUI.Forms.MessageBoxIcon;
+using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace SmartRoutine.UI.Forms
 {
@@ -174,13 +178,13 @@ namespace SmartRoutine.UI.Forms
             if (routine == null)
                 return;
 
-            DialogResult result = CustomMessageBox.Show(
+            DialogResult result = MessageBox.Show(
                 $"Routine '{routine.Name}' wirklich löschen?",
                 "Bestätigen",
-                CustomMessageBoxButtons.YesNo,
-                CustomMessageBoxIcon.Warning,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
                 this,
-                CustomMessageBoxSize.Small);
+                MessageBoxSize.Small);
 
             if (result != DialogResult.Yes)
                 return;
@@ -251,15 +255,15 @@ namespace SmartRoutine.UI.Forms
             if (!CanExecuteRoutine(routine))
                 return;
 
-            DialogResult result = CustomMessageBox.Show(
+            DialogResult result = MessageBox.Show(
                 $"Möchten Sie die Routine '{routine.Name}' automatisch ausführen?\n\n" +
                 "Alle aktivierten Schritte werden nacheinander gestartet.\n" +
                 "Interne URL-Schritte werden dabei einmalig im externen Browser geöffnet.",
                 "Automatische Ausführung starten",
-                CustomMessageBoxButtons.YesNo,
-                CustomMessageBoxIcon.Question,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question,
                 this,
-                CustomMessageBoxSize.Medium);
+                MessageBoxSize.Medium);
 
             if (result != DialogResult.Yes)
                 return;
@@ -329,13 +333,13 @@ namespace SmartRoutine.UI.Forms
 
         private void ShowInfoMessage(string message, string title)
         {
-            CustomMessageBox.Show(
+            MessageBox.Show(
                 message,
                 title,
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Info,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Info,
                 this,
-                CustomMessageBoxSize.Small);
+                MessageBoxSize.Small);
         }
 
         private void CleanupBeforeClose()

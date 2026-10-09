@@ -22,13 +22,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- CustomWFUI now multi-targets net48;net8.0-windows itself, so this picks up
+    <!-- ErikwnkWFUI multi-targets net48;net8.0-windows itself, so this picks up
          its net8.0-windows leg directly - no more vendored DLL, and no more manual
-         GitHubSelfUpdater copy either, since CustomWFUI's net8.0-windows build
-         already references GitHubSelfUpdater via its own ProjectReference and pulls
+         ErikwnkCore copy either, since ErikwnkWFUI's net8.0-windows build
+         already references ErikwnkCore via its own ProjectReference and pulls
          its dependencies (System.Text.Json etc.) through normal NuGet/deps.json
          resolution. -->
-    <ProjectReference Include="..\..\CustomWFUI\CustomWFUI\CustomWFUI.csproj" />
+    <ProjectReference Include="..\..\ErikwnkWFUI\ErikwnkWFUI\ErikwnkWFUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-using CustomWFUI.Controls;
+using ErikwnkWFUI.Controls;
 using SmartRoutine.Data.Models;
 
 namespace SmartRoutine.UI.Controls.StepEditors
@@ -10,7 +10,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
         StepType Type { get; }
 
         // Baut die typspezifischen Controls und fügt sie der übergebenen Optionen-Tabelle hinzu.
-        void BuildControls(StyledPropertyTable optionsTable);
+        void BuildControls(PropertyTable optionsTable);
 
         // Lädt die Werte eines vorhandenen Steps in die Controls.
         void LoadFrom(RoutineStep step);

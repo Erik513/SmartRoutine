@@ -1,5 +1,5 @@
-﻿using CustomWFUI;
-using CustomWFUI.Forms;
+﻿using ErikwnkWFUI;
+using ErikwnkWFUI.Forms;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Services;
 using System;
@@ -69,10 +69,12 @@ namespace SmartRoutine.UI.Forms
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));
 
             _statusLabel = UIStyles.Labels.CreateTitle("Routine wird ausgeführt...");
+            // CreateTitle is transparent now; the dark background was its old default.
+            _statusLabel.BackColor = UIStyles.Colors.BackgroundDark;
             _statusLabel.Dock = DockStyle.Fill;
             _statusLabel.TextAlign = ContentAlignment.MiddleCenter;
 
-            _stepLabel = UIStyles.Labels.CreateNormal("");
+            _stepLabel = UIStyles.Labels.CreateStandard("");
             _stepLabel.Dock = DockStyle.Fill;
             _stepLabel.TextAlign = ContentAlignment.MiddleCenter;
             _stepLabel.AutoEllipsis = true;

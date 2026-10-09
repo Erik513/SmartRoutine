@@ -1,6 +1,6 @@
-﻿using CustomWFUI;
-using CustomWFUI.Controls;
-using CustomWFUI.Forms;
+﻿using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
+using ErikwnkWFUI.Forms;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.UI.Helpers;
@@ -27,10 +27,10 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel mainLayout;
         private TableLayoutPanel buttonPanel;
 
-        private StyledListBoxControl lstRoutines;
+        private ListBoxControl lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine, btnStartRoutineAuto;
 
-        private InfoPopupForm _routineInfoPopup = new InfoPopupForm("Routine-Details:");
+        private InfoPopupForm _routineInfoPopup = UIStyles.InfoPopups.CreateStandard();
         private int _lastHoveredRoutineIndex = -1;
 
         private const string DefaultRoutineNamePrefix = "Meine Routine ";
@@ -83,7 +83,7 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeRoutineList()
         {
-            lstRoutines = new StyledListBoxControl(
+            lstRoutines = new ListBoxControl(
                 displayTextMember: "Name",
                 allowReorder: true,
                 showEnumeration: false,
@@ -404,7 +404,7 @@ namespace SmartRoutine.UI.Controls
                 .OrderBy(s => s.Order)
                 .ToList();
 
-            _routineInfoPopup.ShowSectionsAtMouseDelayed(
+            _routineInfoPopup.ShowAtMouseDelayed(
                 lstRoutines.InnerListBox,
                 Control.MousePosition,
                 new InfoPopupSection(

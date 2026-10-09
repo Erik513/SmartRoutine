@@ -1,4 +1,4 @@
-﻿using CustomWFUI.Controls;
+﻿using ErikwnkWFUI.Controls;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SmartRoutine.Data.Models;
@@ -7,6 +7,7 @@ using SmartRoutine.UI.Controls;
 using System;
 using System.Reflection;
 using System.Windows.Forms;
+using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace SmartRoutine.Tests.UI
 {
@@ -33,6 +34,21 @@ namespace SmartRoutine.Tests.UI
             };
 
             _editor = new RoutineEditorUC(_mockService.Object, _mockUrlValidation.Object);
+        }
+
+        [TestCleanup]
+        public void TearDown()
+        {
+            // RoutineEditorUC creates a ListBoxControl (lstSteps) with
+            // AllowDrop=true for its drag-to-reorder support, which registers
+            // a real OLE drop target (RegisterDragDrop) on the underlying
+            // window handle. That's only revoked when the control's handle is
+            // destroyed, which happens via Dispose() - without this, every
+            // test in this class leaked one undisposed editor (and its OLE
+            // registration) for the lifetime of the whole test run, which
+            // could crash the test host after enough of them accumulate.
+            _editor?.Dispose();
+            _editor = null;
         }
 
 
@@ -77,7 +93,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<StyledListBoxControl>(
+                GetPrivateField<ListBoxControl>(
                     _editor,
                     "lstSteps");
 
@@ -142,7 +158,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<StyledListBoxControl>(
+                GetPrivateField<ListBoxControl>(
                     _editor,
                     "lstSteps");
 
@@ -253,7 +269,7 @@ namespace SmartRoutine.Tests.UI
             cmbStepType.SelectedIndex = 0;
 
             var editorOptionsTable =
-                GetPrivateField<StyledPropertyTable>(_editor, "editorOptionsTable");
+                GetPrivateField<PropertyTable>(_editor, "editorOptionsTable");
 
             // txtUrl gehört jetzt zum OpenUrlStepEditor (nicht mehr direktes Feld von
             // RoutineEditorUC), daher Suche über den Control-Baum statt Reflection auf das Feld.
@@ -279,7 +295,7 @@ namespace SmartRoutine.Tests.UI
 
             _editor.LoadRoutine(_testRoutine);
 
-            var lstSteps = GetPrivateField<StyledListBoxControl>(_editor, "lstSteps");
+            var lstSteps = GetPrivateField<ListBoxControl>(_editor, "lstSteps");
             lstSteps.SelectedIndex = 0;
 
             var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
@@ -332,7 +348,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<StyledListBoxControl>(
+                GetPrivateField<ListBoxControl>(
                     _editor,
                     "lstSteps");
 

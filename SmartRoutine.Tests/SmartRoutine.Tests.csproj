@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SmartRoutine\SmartRoutine.csproj" />
-    <ProjectReference Include="..\..\CustomWFUI\CustomWFUI\CustomWFUI.csproj" />
+    <ProjectReference Include="..\..\ErikwnkWFUI\ErikwnkWFUI\ErikwnkWFUI.csproj" />
   </ItemGroup>
 
 </Project>

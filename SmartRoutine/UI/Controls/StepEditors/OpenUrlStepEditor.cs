@@ -1,6 +1,6 @@
-using CustomWFUI;
-using CustomWFUI.Controls;
-using CustomWFUI.Helpers;
+using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
+using ErikwnkWFUI.Helpers;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using System;
@@ -32,7 +32,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _onAutoContinueAvailabilityMightChange = onAutoContinueAvailabilityMightChange;
         }
 
-        public void BuildControls(StyledPropertyTable optionsTable)
+        public void BuildControls(PropertyTable optionsTable)
         {
             _txtUrl = UIStyles.TextBoxes.CreateBorderstyleNone();
             _txtUrl.Name = "txtUrl";

@@ -1,6 +1,6 @@
-﻿using CustomWFUI;
-using CustomWFUI.Forms;
-using CustomWFUI.Styles;
+﻿using ErikwnkWFUI;
+using ErikwnkWFUI.Forms;
+using ErikwnkWFUI.Styles;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using SmartRoutine.Data.Models;
@@ -75,7 +75,7 @@ namespace SmartRoutine.UI.Forms
             ConfigureForm();
 
             _toolTip = UIStyles.ToolTips.CreateToolTip();
-            _infoPopup = new InfoPopupForm("Beschreibung:");
+            _infoPopup = UIStyles.InfoPopups.CreateStandard();
         }
 
         private void ConfigureForm()
@@ -162,7 +162,7 @@ namespace SmartRoutine.UI.Forms
 
         private Label CreateInfoLabel()
         {
-            Label label = UIStyles.Labels.CreateNormal("ⓘ");
+            Label label = UIStyles.Labels.CreateStandard("ⓘ");
 
             label.Dock = DockStyle.Fill;
             label.ForeColor = UIStyles.Colors.TextSecondary;
@@ -182,7 +182,7 @@ namespace SmartRoutine.UI.Forms
 
         private Label CreateStepCounterLabel()
         {
-            Label label = UIStyles.Labels.CreateNormal("1/1");
+            Label label = UIStyles.Labels.CreateStandard("1/1");
 
             label.Dock = DockStyle.Fill;
             label.ForeColor = UIStyles.Colors.TextSecondary;
@@ -577,7 +577,8 @@ namespace SmartRoutine.UI.Forms
             if (_session == null || _session.CurrentStep == null || _infoPopup == null)
                 return;
 
-            _infoPopup.ShowInfo(_session.CurrentStep.Description, _infoLabel);
+            _infoPopup.SetContent("Beschreibung", _session.CurrentStep.Description);
+            _infoPopup.ShowNextTo(_infoLabel);
         }
 
         private void ShowToastWhenReady(string message)

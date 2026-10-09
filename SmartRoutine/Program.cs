@@ -1,6 +1,6 @@
-﻿using CustomWFUI;
-using CustomWFUI.Helpers;
-using CustomWFUI.Styles;
+﻿using ErikwnkWFUI;
+using ErikwnkCore;
+using ErikwnkWFUI.Styles;
 using SmartRoutine.Data;
 using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Logic.Interfaces;
@@ -12,7 +12,6 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows.Forms;
 
 namespace SmartRoutine
@@ -24,11 +23,19 @@ namespace SmartRoutine
         [STAThread]
         private static void Main()
         {
-            using (Mutex singleInstanceMutex = new Mutex(true, SingleInstanceMutexName, out bool isFirstInstance))
+            using (SingleInstanceGuard guard = new SingleInstanceGuard(SingleInstanceMutexName))
             {
-                if (!isFirstInstance)
+                if (!guard.IsFirstInstance)
                 {
                     BringExistingInstanceToFront();
+
+                    ErikwnkWFUI.Forms.MessageBox.Show(
+                        "SmartRoutine läuft bereits.",
+                        "SmartRoutine",
+                        ErikwnkWFUI.Forms.MessageBoxButtons.OK,
+                        ErikwnkWFUI.Forms.MessageBoxIcon.Info,
+                        size: ErikwnkWFUI.Forms.MessageBoxSize.Small);
+
                     return;
                 }
 

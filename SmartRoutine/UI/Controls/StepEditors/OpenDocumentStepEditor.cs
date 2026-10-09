@@ -1,5 +1,5 @@
-using CustomWFUI;
-using CustomWFUI.Controls;
+using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using System;
@@ -25,12 +25,12 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _showValidationMessage = showValidationMessage;
         }
 
-        public void BuildControls(StyledPropertyTable optionsTable)
+        public void BuildControls(PropertyTable optionsTable)
         {
             _txtDocumentPath = UIStyles.TextBoxes.CreateBorderstyleNone();
             _txtDocumentPath.Name = "txtDocumentPath";
 
-            var btnBrowseDocument = UIStyles.Buttons.CreateBrowseInFolder("Dokument auswählen", new Size(50, 30));
+            var btnBrowseDocument = UIStyles.Buttons.CreateSymbol(UIStyles.Symbols.Folder, "Dokument auswählen", new Size(50, 30), UIStyles.Colors.Sets.Yellow);
 
             btnBrowseDocument.Click += (s, e) =>
             {

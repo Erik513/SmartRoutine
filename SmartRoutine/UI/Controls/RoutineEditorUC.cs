@@ -1,6 +1,9 @@
-﻿using CustomWFUI;
-using CustomWFUI.Controls;
-using CustomWFUI.Forms;
+﻿using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
+using ErikwnkWFUI.Forms;
+using MessageBox = ErikwnkWFUI.Forms.MessageBox;
+using MessageBoxButtons = ErikwnkWFUI.Forms.MessageBoxButtons;
+using MessageBoxIcon = ErikwnkWFUI.Forms.MessageBoxIcon;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
@@ -13,6 +16,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -45,9 +49,9 @@ namespace SmartRoutine.UI.Controls
 
         // Linke Seite
         private TableLayoutPanel leftTlp;
-        private StyledPropertyTable routineInfoTable;
+        private PropertyTable routineInfoTable;
         private TextBox txtRoutineName;
-        private StyledListBoxControl lstSteps;
+        private ListBoxControl lstSteps;
 
         // Rechte Seite
         private TableLayoutPanel rightTlp;
@@ -56,12 +60,12 @@ namespace SmartRoutine.UI.Controls
         private Label lblStepNameTitle;
         private ToggleSwitch tglStepEnabled;
 
-        private StyledPropertyTable editorBaseTable;
+        private PropertyTable editorBaseTable;
         private TextBox txtStepName;
         private TextBox txtStepDescription;
         private ComboBox cmbStepType;
         private ToggleSwitch tglAutoStart;
-        private StyledPropertyTable editorOptionsTable;
+        private PropertyTable editorOptionsTable;
         private ToggleSwitch tglAutoContinue;
 
         private Panel rightFillPanel;
@@ -160,7 +164,7 @@ namespace SmartRoutine.UI.Controls
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
             leftTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            routineInfoTable = new StyledPropertyTable();
+            routineInfoTable = new PropertyTable();
 
             txtRoutineName = UIStyles.TextBoxes.CreateBorderstyleNone();
             txtRoutineName.Dock = DockStyle.Fill;
@@ -169,7 +173,7 @@ namespace SmartRoutine.UI.Controls
             
             routineInfoTable.AddRow("Routinenname", UIColumn.Percent(txtRoutineName, 100));
 
-            lstSteps = new StyledListBoxControl(
+            lstSteps = new ListBoxControl(
                 displayTextMember: "Name",
                 allowReorder: true,
                 showEnumeration: true,
@@ -304,7 +308,7 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeEditorTables()
         {
-            editorBaseTable = new StyledPropertyTable
+            editorBaseTable = new PropertyTable
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true
@@ -312,7 +316,7 @@ namespace SmartRoutine.UI.Controls
 
             BuildBaseEditorTable();
 
-            editorOptionsTable = new StyledPropertyTable
+            editorOptionsTable = new PropertyTable
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true
@@ -449,7 +453,7 @@ namespace SmartRoutine.UI.Controls
             
             FlowLayoutPanel autostartPanel = UIStyles.FlowLayoutPanels.CreateStandard();
             autostartPanel.Dock = DockStyle.Left;
-            Label lblAutoStart = UIStyles.Labels.CreateNormal("Start");
+            Label lblAutoStart = UIStyles.Labels.CreateStandard("Start");
             lblAutoStart.Margin = new Padding(0, 4, 5, 0);
             lblAutoStart.AutoSize = true;
 
@@ -458,7 +462,7 @@ namespace SmartRoutine.UI.Controls
 
             FlowLayoutPanel autocontinuePanel = UIStyles.FlowLayoutPanels.CreateStandard();
             autocontinuePanel.Dock = DockStyle.Left;
-            Label lblAutoContinue = UIStyles.Labels.CreateNormal("Weiter");
+            Label lblAutoContinue = UIStyles.Labels.CreateStandard("Weiter");
             lblAutoContinue.Margin = new Padding(0, 4, 5, 0);
             lblAutoContinue.AutoSize = true;
 
@@ -608,13 +612,13 @@ namespace SmartRoutine.UI.Controls
             if (!HasEditorChanges())
                 return true;
 
-            DialogResult result = CustomMessageBox.Show(
+            DialogResult result = MessageBox.Show(
                 "Möchten Sie die Änderungen am aktuellen Schritt speichern?",
                 "Änderungen speichern",
-                CustomMessageBoxButtons.YesNoCancel,
-                CustomMessageBoxIcon.Question,
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question,
                 FindForm(),
-                CustomMessageBoxSize.Medium);
+                MessageBoxSize.Medium);
 
             if (result == DialogResult.Cancel)
                 return false;
@@ -993,13 +997,13 @@ namespace SmartRoutine.UI.Controls
 
             if (!shouldDelete)
             {
-                shouldDelete = CustomMessageBox.Show(
+                shouldDelete = MessageBox.Show(
                     $"Schritt '{stepToDelete.Name}' wirklich löschen?",
                     "Bestätigen",
-                    CustomMessageBoxButtons.YesNo,
-                    CustomMessageBoxIcon.Question,
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question,
                     FindForm(),
-                    CustomMessageBoxSize.Small) == DialogResult.Yes;
+                    MessageBoxSize.Small) == DialogResult.Yes;
             }
 
             if (!shouldDelete)
@@ -1153,13 +1157,13 @@ namespace SmartRoutine.UI.Controls
                 return true;
             }
 
-            CustomMessageBox.Show(
+            MessageBox.Show(
                 validationError,
                 "Ausführung nicht möglich",
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Warning,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning,
                 FindForm(),
-                CustomMessageBoxSize.Small);
+                MessageBoxSize.Small);
 
             return false;
         }
@@ -1269,13 +1273,13 @@ namespace SmartRoutine.UI.Controls
         }
         private DialogResult AskToSaveChanges()
         {
-            return CustomMessageBox.Show(
+            return MessageBox.Show(
                 "Möchten Sie die Änderungen vor der Ausführung speichern?",
                 "Änderungen speichern",
-                CustomMessageBoxButtons.YesNoCancel,
-                CustomMessageBoxIcon.Question,
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question,
                 FindForm(),
-                CustomMessageBoxSize.Medium);
+                MessageBoxSize.Medium);
         }
 
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
@@ -1325,13 +1329,13 @@ namespace SmartRoutine.UI.Controls
             {
                 if (!AutoConfirmDialogs)
                 {
-                    CustomMessageBox.Show(
+                    MessageBox.Show(
                         "Bitte geben Sie einen Namen für die Routine ein.",
                         "Validierung",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Warning,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning,
                         FindForm(),
-                        CustomMessageBoxSize.Small);
+                        MessageBoxSize.Small);
                 }
 
                 txtRoutineName.Focus();
@@ -1348,13 +1352,13 @@ namespace SmartRoutine.UI.Controls
             {
                 if (!AutoConfirmDialogs)
                 {
-                    CustomMessageBox.Show(
+                    MessageBox.Show(
                         $"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
                         "Validierung",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Warning,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning,
                         FindForm(),
-                        CustomMessageBoxSize.Medium);
+                        MessageBoxSize.Medium);
                 }
 
                 txtRoutineName.Focus();
@@ -1406,13 +1410,13 @@ namespace SmartRoutine.UI.Controls
             if (!showMessageBox || AutoConfirmDialogs)
                 return;
 
-            CustomMessageBox.Show(
+            MessageBox.Show(
                 message,
                 title,
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Warning,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning,
                 FindForm(),
-                CustomMessageBoxSize.Medium);
+                MessageBoxSize.Medium);
         }
 
         private void SaveCurrentStep(bool showSavedToast = true)
