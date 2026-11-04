@@ -34,7 +34,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
 
         public void BuildControls(PropertyTable optionsTable)
         {
-            _txtUrl = UIStyles.TextBoxes.CreateBorderstyleNone();
+            _txtUrl = UIStyles.TextBoxes.CreateBorderless();
             _txtUrl.Name = "txtUrl";
 
             _txtUrl.TextChanged += TxtUrl_TextChanged;

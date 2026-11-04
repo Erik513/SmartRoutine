@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using TableLayoutPanel = System.Windows.Forms.TableLayoutPanel;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -27,7 +28,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel mainLayout;
         private TableLayoutPanel buttonPanel;
 
-        private ListBoxControl lstRoutines;
+        private TitledListBox lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine, btnStartRoutineAuto;
 
         private InfoPopupForm _routineInfoPopup = UIStyles.InfoPopups.CreateStandard();
@@ -83,22 +84,20 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeRoutineList()
         {
-            lstRoutines = new ListBoxControl(
-                displayTextMember: "Name",
+            lstRoutines = UIStyles.TitledListBoxes.CreateStandard(
+                headerTitle: "Meine Routinen",
+                displayMember: "Name",
                 allowReorder: true,
                 showEnumeration: false,
-                headerTitle: "Meine Routinen",
-                headerTextAlign: ContentAlignment.MiddleCenter)
-            {
-                Dock = DockStyle.Fill,
-                ItemHeightCustom = 35,
-                Visible = true
-            };
+                headerTextAlign: ContentAlignment.MiddleCenter);
+            lstRoutines.Dock = DockStyle.Fill;
 
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
             lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
-            lstRoutines.MouseMove += LstRoutines_MouseMove;
-            lstRoutines.MouseLeave += LstRoutines_MouseLeave;
+            // The hover popup works on the inner list: TitledListBox raises its mouse events in its own
+            // coordinates (title bar included), but IndexFromPoint expects the coordinates of the list.
+            lstRoutines.InnerListBox.MouseMove += LstRoutines_MouseMove;
+            lstRoutines.InnerListBox.MouseLeave += LstRoutines_MouseLeave;
         }
         private void InitializeButtonPanel()
         {
@@ -368,7 +367,7 @@ namespace SmartRoutine.UI.Controls
 
         private void LstRoutines_MouseMove(object sender, MouseEventArgs e)
         {
-            int index = lstRoutines.IndexFromPoint(e.Location);
+            int index = lstRoutines.InnerListBox.IndexFromPoint(e.Location);
 
             if (index < 0 || index >= lstRoutines.Items.Count)
             {

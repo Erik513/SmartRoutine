@@ -17,6 +17,9 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using ComboBox = System.Windows.Forms.ComboBox;
+using FlowLayoutPanel = System.Windows.Forms.FlowLayoutPanel;
+using Panel = System.Windows.Forms.Panel;
+using TableLayoutPanel = System.Windows.Forms.TableLayoutPanel;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -51,7 +54,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel leftTlp;
         private PropertyTable routineInfoTable;
         private TextBox txtRoutineName;
-        private ListBoxControl lstSteps;
+        private TitledListBox lstSteps;
 
         // Rechte Seite
         private TableLayoutPanel rightTlp;
@@ -166,24 +169,24 @@ namespace SmartRoutine.UI.Controls
 
             routineInfoTable = new PropertyTable();
 
-            txtRoutineName = UIStyles.TextBoxes.CreateBorderstyleNone();
+            txtRoutineName = UIStyles.TextBoxes.CreateBorderless();
             txtRoutineName.Dock = DockStyle.Fill;
             txtRoutineName.MaxLength = 40;
             txtRoutineName.Leave += TxtRoutineName_Leave;
             
-            routineInfoTable.AddRow("Routinenname", UIColumn.Percent(txtRoutineName, 100));
+            routineInfoTable.AddRow("Routinenname", PropertyColumn.Percent(txtRoutineName, 100));
 
-            lstSteps = new ListBoxControl(
-                displayTextMember: "Name",
+            lstSteps = UIStyles.TitledListBoxes.CreateStandard(
+                headerTitle: "Meine Schritte",
+                displayMember: "Name",
                 allowReorder: true,
                 showEnumeration: true,
-                headerTitle: "Meine Schritte",
-                headerTextAlign: ContentAlignment.MiddleCenter)
-            {
-                Dock = DockStyle.Fill,
-                ItemHeightCustom = 35,
-                Visible = true
-            };
+                headerTextAlign: ContentAlignment.MiddleCenter);
+            lstSteps.Dock = DockStyle.Fill;
+
+            // The selected step is the one in the editor next to the list: a click into the editor
+            // (name box, combo box, switches) must not take the selection away and close the editor.
+            lstSteps.DeselectOnOutsideClick = false;
 
             lstSteps.IsItemDisabled = item => item is RoutineStep step && !step.Show;
             lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
@@ -268,11 +271,11 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeEditorControls()
         {
-            txtStepName = UIStyles.TextBoxes.CreateBorderstyleNone();
+            txtStepName = UIStyles.TextBoxes.CreateBorderless();
             txtStepName.Dock = DockStyle.Fill;
             txtStepName.MaxLength = 70;
 
-            txtStepDescription = UIStyles.TextBoxes.CreateBorderstyleNone();
+            txtStepDescription = UIStyles.TextBoxes.CreateBorderless();
             txtStepDescription.Dock = DockStyle.Fill;
 
             cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
@@ -471,8 +474,8 @@ namespace SmartRoutine.UI.Controls
 
             editorBaseTable.AddRow(
                 "Automatisierung",
-                UIColumn.Percent(autostartPanel, 50),
-                UIColumn.Percent(autocontinuePanel, 50));
+                PropertyColumn.Percent(autostartPanel, 50),
+                PropertyColumn.Percent(autocontinuePanel, 50));
 
             txtStepDescription.MouseEnter += (s, e) =>
             {
@@ -618,7 +621,7 @@ namespace SmartRoutine.UI.Controls
                 MessageBoxButtons.YesNoCancel,
                 MessageBoxIcon.Question,
                 FindForm(),
-                MessageBoxSize.Medium);
+                FormSize.Medium);
 
             if (result == DialogResult.Cancel)
                 return false;
@@ -1003,7 +1006,7 @@ namespace SmartRoutine.UI.Controls
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question,
                     FindForm(),
-                    MessageBoxSize.Small) == DialogResult.Yes;
+                    FormSize.Small) == DialogResult.Yes;
             }
 
             if (!shouldDelete)
@@ -1163,7 +1166,7 @@ namespace SmartRoutine.UI.Controls
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning,
                 FindForm(),
-                MessageBoxSize.Small);
+                FormSize.Small);
 
             return false;
         }
@@ -1279,7 +1282,7 @@ namespace SmartRoutine.UI.Controls
                 MessageBoxButtons.YesNoCancel,
                 MessageBoxIcon.Question,
                 FindForm(),
-                MessageBoxSize.Medium);
+                FormSize.Medium);
         }
 
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
@@ -1335,7 +1338,7 @@ namespace SmartRoutine.UI.Controls
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning,
                         FindForm(),
-                        MessageBoxSize.Small);
+                        FormSize.Small);
                 }
 
                 txtRoutineName.Focus();
@@ -1358,7 +1361,7 @@ namespace SmartRoutine.UI.Controls
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning,
                         FindForm(),
-                        MessageBoxSize.Medium);
+                        FormSize.Medium);
                 }
 
                 txtRoutineName.Focus();
@@ -1416,7 +1419,7 @@ namespace SmartRoutine.UI.Controls
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning,
                 FindForm(),
-                MessageBoxSize.Medium);
+                FormSize.Medium);
         }
 
         private void SaveCurrentStep(bool showSavedToast = true)

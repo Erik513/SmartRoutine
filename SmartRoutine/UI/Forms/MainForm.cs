@@ -18,7 +18,7 @@ using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace SmartRoutine.UI.Forms
 {
-    public partial class MainForm : StyledForm
+    public partial class MainForm : AppForm
     {
         private static readonly Size DefaultWindowSize = new Size(1024, 768);
         private static readonly Size MinimumWindowSize = new Size(800, 600);
@@ -35,7 +35,7 @@ namespace SmartRoutine.UI.Forms
         private bool _updateCheckStarted;
 
         public MainForm(IRoutineService routineService)
-            : base(StyledFormOptions.CreateStandard(
+            : base(FormOptions.CreateStandard(
                 "SmartRoutine",
                 ContentAlignment.MiddleLeft,
                 UIColors.BackgroundDarkElevated,
@@ -184,7 +184,7 @@ namespace SmartRoutine.UI.Forms
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 this,
-                MessageBoxSize.Small);
+                FormSize.Small);
 
             if (result != DialogResult.Yes)
                 return;
@@ -263,7 +263,7 @@ namespace SmartRoutine.UI.Forms
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question,
                 this,
-                MessageBoxSize.Medium);
+                FormSize.Medium);
 
             if (result != DialogResult.Yes)
                 return;
@@ -339,7 +339,7 @@ namespace SmartRoutine.UI.Forms
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Info,
                 this,
-                MessageBoxSize.Small);
+                FormSize.Small);
         }
 
         private void CleanupBeforeClose()

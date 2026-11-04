@@ -28,7 +28,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
 
         public void BuildControls(PropertyTable optionsTable)
         {
-            _txtFolderPath = UIStyles.TextBoxes.CreateBorderstyleNone();
+            _txtFolderPath = UIStyles.TextBoxes.CreateBorderless();
             _txtFolderPath.Name = "txtFolderPath";
 
             var btnBrowse = UIStyles.Buttons.CreateSymbol(UIStyles.Symbols.Folder, "Ordner auswählen", new Size(50, 30), UIStyles.Colors.Sets.Yellow);
@@ -44,8 +44,8 @@ namespace SmartRoutine.UI.Controls.StepEditors
 
             optionsTable.AddRow(
                 "Ordnerpfad",
-                UIColumn.Percent(_txtFolderPath, 100),
-                UIColumn.Absolute(btnBrowse, 50));
+                PropertyColumn.Percent(_txtFolderPath, 100),
+                PropertyColumn.Absolute(btnBrowse, 50));
 
             _tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
             _tglOpenInNewWindow.Name = "tglOpenInNewWindow";

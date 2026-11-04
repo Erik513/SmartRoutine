@@ -34,7 +34,7 @@ namespace SmartRoutine
                         "SmartRoutine",
                         ErikwnkWFUI.Forms.MessageBoxButtons.OK,
                         ErikwnkWFUI.Forms.MessageBoxIcon.Info,
-                        size: ErikwnkWFUI.Forms.MessageBoxSize.Small);
+                        size: ErikwnkWFUI.Forms.FormSize.Small);
 
                     return;
                 }

@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
-    public partial class AutoRunForm : StyledForm
+    public partial class AutoRunForm : AppForm
     {
         private readonly Routine _routine;
         private readonly Func<RoutineStep, StepExecutionResult> _onStepExecute;
@@ -31,7 +31,7 @@ namespace SmartRoutine.UI.Forms
             Routine routine,
             Func<RoutineStep, StepExecutionResult> onStepExecute,
             Action<Routine> onRoutineExecuted)
-            : base(StyledFormOptions.CreateDialog(
+            : base(FormOptions.CreateDialog(
                 routine != null ? $"Auto-Ausführung: {routine.Name}" : "Auto-Ausführung",
                 ContentAlignment.MiddleLeft,
                 UIStyles.Colors.BackgroundDarkElevated))

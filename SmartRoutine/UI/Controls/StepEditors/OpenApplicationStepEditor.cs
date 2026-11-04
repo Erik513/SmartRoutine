@@ -29,7 +29,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
 
         public void BuildControls(PropertyTable optionsTable)
         {
-            _txtAppPath = UIStyles.TextBoxes.CreateBorderstyleNone();
+            _txtAppPath = UIStyles.TextBoxes.CreateBorderless();
             _txtAppPath.Name = "txtAppPath";
 
             var btnBrowse = UIStyles.Buttons.CreateSymbol(UIStyles.Symbols.Folder, "Programm auswählen", new Size(50, 30), UIStyles.Colors.Sets.Yellow);
@@ -47,10 +47,10 @@ namespace SmartRoutine.UI.Controls.StepEditors
 
             optionsTable.AddRow(
                 "Programmpfad",
-                UIColumn.Percent(_txtAppPath, 100),
-                UIColumn.Absolute(btnBrowse, 50));
+                PropertyColumn.Percent(_txtAppPath, 100),
+                PropertyColumn.Absolute(btnBrowse, 50));
 
-            _txtAppArguments = UIStyles.TextBoxes.CreateBorderstyleNone();
+            _txtAppArguments = UIStyles.TextBoxes.CreateBorderless();
             _txtAppArguments.Name = "txtAppArguments";
 
             _tglRunAsAdmin = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");

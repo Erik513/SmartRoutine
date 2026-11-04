@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
-    public partial class ExecutionForm : StyledForm
+    public partial class ExecutionForm : AppForm
     {
         public event EventHandler BeforeCloseRequested;
 
@@ -56,7 +56,7 @@ namespace SmartRoutine.UI.Forms
             Routine routine,
             RoutineStep step,
             Func<RoutineStep, StepExecutionResult> onExecute)
-            : base(StyledFormOptions.CreateStandard(
+            : base(FormOptions.CreateStandard(
                 routine != null ? $"Routine: {routine.Name}" : "Routine",
                 ContentAlignment.MiddleCenter,
                 UIColors.BackgroundDarkElevated,

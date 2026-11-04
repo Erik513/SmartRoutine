@@ -8,6 +8,7 @@ using System;
 using System.Reflection;
 using System.Windows.Forms;
 using ComboBox = System.Windows.Forms.ComboBox;
+using TableLayoutPanel = System.Windows.Forms.TableLayoutPanel;
 
 namespace SmartRoutine.Tests.UI
 {
@@ -39,7 +40,7 @@ namespace SmartRoutine.Tests.UI
         [TestCleanup]
         public void TearDown()
         {
-            // RoutineEditorUC creates a ListBoxControl (lstSteps) with
+            // RoutineEditorUC creates a TitledListBox (lstSteps) with
             // AllowDrop=true for its drag-to-reorder support, which registers
             // a real OLE drop target (RegisterDragDrop) on the underlying
             // window handle. That's only revoked when the control's handle is
@@ -93,7 +94,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<ListBoxControl>(
+                GetPrivateField<TitledListBox>(
                     _editor,
                     "lstSteps");
 
@@ -158,7 +159,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<ListBoxControl>(
+                GetPrivateField<TitledListBox>(
                     _editor,
                     "lstSteps");
 
@@ -295,7 +296,7 @@ namespace SmartRoutine.Tests.UI
 
             _editor.LoadRoutine(_testRoutine);
 
-            var lstSteps = GetPrivateField<ListBoxControl>(_editor, "lstSteps");
+            var lstSteps = GetPrivateField<TitledListBox>(_editor, "lstSteps");
             lstSteps.SelectedIndex = 0;
 
             var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
@@ -348,7 +349,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<ListBoxControl>(
+                GetPrivateField<TitledListBox>(
                     _editor,
                     "lstSteps");
 
