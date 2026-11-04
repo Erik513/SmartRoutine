@@ -20,6 +20,8 @@ namespace SmartRoutine.UI.Forms
         private const int FooterInfoColumnWidth = 35;
         private const int FooterCounterColumnWidth = 65;
         private const int NavigationButtonSize = 50;
+        private const int AutoContinueSeconds = 2;
+        private const int BringToFrontMilliseconds = 200;
 
         private readonly Routine _routine;
         private readonly RoutineStep _specificStep;
@@ -27,7 +29,6 @@ namespace SmartRoutine.UI.Forms
 
         private RoutineExecutionSession _session;
 
-        private WebView2 _webView;
         private Panel _stepContentPanel;
 
         private Label _stepCounterLabel;
@@ -220,7 +221,7 @@ namespace SmartRoutine.UI.Forms
             navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
 
             _previousButton = CreateNavigationButton(UIStyles.Buttons.Presets.SkipBack, "Vorheriger Schritt", OnPreviousButtonClick);
-            _executeButton = CreateExecuteButton();
+            _executeButton = CreateNavigationButton(UIStyles.Buttons.Presets.Play, "Schritt ausführen", OnExecuteButtonClick);
             _nextButton = CreateNavigationButton(UIStyles.Buttons.Presets.SkipForward, "Nächster Schritt", OnNextButtonClick);
 
             navigationPanel.Controls.Add(_previousButton, 0, 0);
@@ -240,20 +241,6 @@ namespace SmartRoutine.UI.Forms
             button.Dock = DockStyle.Fill;
             button.Margin = new Padding(3, 0, 3, 0);
             button.Click += clickHandler;
-
-            return button;
-        }
-
-        private Button CreateExecuteButton()
-        {
-            Button button = UIStyles.Buttons.CreateSymbol(
-                UIStyles.Buttons.Presets.Play,
-                "Schritt ausführen",
-                new Size(NavigationButtonSize, NavigationButtonSize));
-
-            button.Dock = DockStyle.Fill;
-            button.Margin = new Padding(3, 0, 3, 0);
-            button.Click += OnExecuteButtonClick;
 
             return button;
         }
@@ -286,16 +273,11 @@ namespace SmartRoutine.UI.Forms
 
         private void UpdateNextButtonState()
         {
-            if (_session.CanGoNext)
-            {
-                _nextButton.Text = UIStyles.Symbols.SkipForward;
-                UIStyles.Buttons.UpdateTooltip(_nextButton, "Nächster Schritt");
-                _nextButton.Enabled = true;
-                return;
-            }
+            // On the last step the button ends the routine.
+            bool canGoNext = _session.CanGoNext;
 
-            _nextButton.Text = UIStyles.Symbols.Check;
-            UIStyles.Buttons.UpdateTooltip(_nextButton, "Routine beenden");
+            _nextButton.Text = canGoNext ? UIStyles.Symbols.SkipForward : UIStyles.Symbols.Check;
+            UIStyles.Buttons.UpdateTooltip(_nextButton, canGoNext ? "Nächster Schritt" : "Routine beenden");
             _nextButton.Enabled = true;
         }
 
@@ -317,100 +299,6 @@ namespace SmartRoutine.UI.Forms
             panel.Dock = DockStyle.Fill;
 
             _stepContentPanel.Controls.Add(panel);
-        }
-
-        private async void ShowWebView(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-                return;
-
-            try
-            {
-                if (_webView == null)
-                    await CreateWebView();
-
-                ShowWebViewControl();
-                _webView.CoreWebView2.Navigate(url);
-            }
-            catch
-            {
-                ShowToastWhenReady("WebView konnte nicht geöffnet werden.");
-            }
-        }
-
-        private async System.Threading.Tasks.Task CreateWebView()
-        {
-            string userDataFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "SmartRoutine",
-                "WebView2");
-
-            if (!Directory.Exists(userDataFolder))
-                Directory.CreateDirectory(userDataFolder);
-
-            _webView = new WebView2
-            {
-                Dock = DockStyle.Fill
-            };
-
-            var environment = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
-
-            await _webView.EnsureCoreWebView2Async(environment);
-
-            _webView.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
-        }
-        private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
-        {
-            e.Handled = true;
-
-            if (string.IsNullOrWhiteSpace(e.Uri))
-                return;
-
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = e.Uri,
-                UseShellExecute = true
-            });
-        }
-
-        private void ShowWebViewControl()
-        {
-            if (_stepContentPanel.Controls.Contains(_webView))
-                return;
-
-            _stepContentPanel.Controls.Clear();
-            _stepContentPanel.Controls.Add(_webView);
-        }
-
-        private void StopWebViewAudio()
-        {
-            if (_webView == null || _webView.CoreWebView2 == null)
-                return;
-
-            try
-            {
-                _webView.CoreWebView2.Stop();
-                _webView.CoreWebView2.Navigate("about:blank");
-            }
-            catch
-            {
-            }
-        }
-
-        private void StopAndDisposeWebView()
-        {
-            if (_webView == null)
-                return;
-
-            try
-            {
-                StopWebViewAudio();
-                _webView.Dispose();
-                _webView = null;
-            }
-            catch
-            {
-            }
         }
 
         private void ExecuteCurrentStep()
@@ -470,7 +358,7 @@ namespace SmartRoutine.UI.Forms
             StopBringToFrontTimer();
 
             _bringToFrontTimer = new Timer();
-            _bringToFrontTimer.Interval = 200;
+            _bringToFrontTimer.Interval = BringToFrontMilliseconds;
             _bringToFrontTimer.Tick += (s, e) =>
             {
                 StopBringToFrontTimer();
@@ -543,7 +431,7 @@ namespace SmartRoutine.UI.Forms
         {
             StopAutoContinueCountdown();
 
-            _autoContinueSecondsLeft = 2;
+            _autoContinueSecondsLeft = AutoContinueSeconds;
 
             UpdateAutoContinueText();
 
@@ -662,7 +550,7 @@ namespace SmartRoutine.UI.Forms
             ToastForm.ShowToast(message, this);
         }
 
-        private string GetSuccessMessage(RoutineStep step)
+        private static string GetSuccessMessage(RoutineStep step)
         {
             OpenUrlStep urlStep = step as OpenUrlStep;
             if (urlStep != null)
