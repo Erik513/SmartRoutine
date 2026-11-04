@@ -272,13 +272,23 @@ namespace SmartRoutine.UI.Controls
 
         private void SaveCurrentStepWithoutReselect()
         {
-            if (!ValidateCurrentStep(false))
+            if (PersistEditorStep() == null)
                 return;
+
+            RefreshStepsList(silent: true);
+        }
+
+        // Validates the editor input, saves it as the step and renews the snapshot used to detect changes.
+        // Returns the saved step, or null when nothing was saved.
+        private RoutineStep PersistEditorStep()
+        {
+            if (!ValidateCurrentStep(false))
+                return null;
 
             RoutineStep step = CreateStepFromEditor();
 
             if (step == null)
-                return;
+                return null;
 
             SaveStep(step);
 
@@ -291,7 +301,7 @@ namespace SmartRoutine.UI.Controls
                 _editorSnapshotStep.Order = _editingStep.Order;
             }
 
-            RefreshStepsList(silent: true);
+            return step;
         }
 
         private void RestoreCurrentEditingStepSelection()
@@ -299,22 +309,30 @@ namespace SmartRoutine.UI.Controls
             _isRefreshing = true;
 
             if (_editingStep != null)
-            {
-                for (int i = 0; i < lstSteps.Items.Count; i++)
-                {
-                    RoutineStep step = lstSteps.Items[i] as RoutineStep;
-
-                    if (step != null && step.Id == _editingStep.Id)
-                    {
-                        lstSteps.SelectedIndex = i;
-                        break;
-                    }
-                }
-            }
+                TrySelectStep(_editingStep.Id);
 
             _isRefreshing = false;
         }
 
+        // Selects the list item of the step with this id; false when the list has none.
+        private bool TrySelectStep(string stepId)
+        {
+            if (stepId == null)
+                return false;
+
+            for (int i = 0; i < lstSteps.Items.Count; i++)
+            {
+                RoutineStep step = lstSteps.Items[i] as RoutineStep;
+
+                if (step != null && step.Id == stepId)
+                {
+                    lstSteps.SelectedIndex = i;
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         private void OpenEditorForStep(RoutineStep step = null)
         {
@@ -585,24 +603,11 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
 
             RefreshStepsList(silent: true);
-            SelectStepById(duplicatedStep.Id);
+            TrySelectStep(duplicatedStep.Id);
 
             ToastForm.ShowToast($"✓ Schritt '{duplicatedStep.Name}' dupliziert", FindForm());
         }
 
-        private void SelectStepById(string stepId)
-        {
-            for (int i = 0; i < lstSteps.Items.Count; i++)
-            {
-                RoutineStep step = lstSteps.Items[i] as RoutineStep;
-
-                if (step != null && step.Id == stepId)
-                {
-                    lstSteps.SelectedIndex = i;
-                    return;
-                }
-            }
-        }
         private void BtnAddStep_Click(object sender, EventArgs e)
         {
             if (!ConfirmSaveStepChangesIfNeeded())
@@ -691,16 +696,7 @@ namespace SmartRoutine.UI.Controls
 
             if (keepSelection && selectedStep != null)
             {
-                for (int i = 0; i < lstSteps.Items.Count; i++)
-                {
-                    RoutineStep step = lstSteps.Items[i] as RoutineStep;
-
-                    if (step != null && step.Id == selectedStep.Id)
-                    {
-                        lstSteps.SelectedIndex = i;
-                        break;
-                    }
-                }
+                TrySelectStep(selectedStep.Id);
             }
             else
             {
@@ -799,24 +795,10 @@ namespace SmartRoutine.UI.Controls
         }
         private void SaveCurrentStep(bool showSavedToast = true)
         {
-            if (!ValidateCurrentStep(false))
-                return;
-
-            var step = CreateStepFromEditor();
+            RoutineStep step = PersistEditorStep();
 
             if (step == null)
                 return;
-
-            SaveStep(step);
-
-            _editorSnapshotStep = RoutineStepFactory.CreateCopy(step);
-            NormalizeStepForComparison(_editorSnapshotStep);
-
-            if (_editingStep != null && _editorSnapshotStep != null)
-            {
-                _editorSnapshotStep.Id = _editingStep.Id;
-                _editorSnapshotStep.Order = _editingStep.Order;
-            }
 
             // Liste (inkl. Icon/Name) muss immer aktualisiert werden, auch wenn direkt
             // im Anschluss ausgeführt wird (showSavedToast = false) und daher keine
@@ -828,20 +810,7 @@ namespace SmartRoutine.UI.Controls
             RefreshStepsList(false);
 
             if (selectedStep != null)
-            {
-                for (int i = 0; i < lstSteps.Items.Count; i++)
-                {
-                    RoutineStep item =
-                        lstSteps.Items[i] as RoutineStep;
-
-                    if (item != null &&
-                        item.Id == selectedStep.Id)
-                    {
-                        lstSteps.SelectedIndex = i;
-                        break;
-                    }
-                }
-            }
+                TrySelectStep(selectedStep.Id);
 
             _isRefreshing = false;
 
