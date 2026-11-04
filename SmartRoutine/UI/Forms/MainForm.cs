@@ -31,7 +31,6 @@ namespace SmartRoutine.UI.Forms
 
         private RoutinesViewUC _routinesView;
         private RoutineEditorUC _editorView;
-        private Routine _currentRoutine;
         private bool _updateCheckStarted;
 
         public MainForm(IRoutineService routineService)
@@ -145,8 +144,6 @@ namespace SmartRoutine.UI.Forms
 
         private void ShowEditorView(Routine routine, bool isNewRoutine)
         {
-            _currentRoutine = routine;
-
             _routinesView.Hide();
             _editorView.Show();
             _editorView.LoadRoutine(routine, isNewRoutine);
@@ -158,19 +155,7 @@ namespace SmartRoutine.UI.Forms
                 return;
 
             _routineService.SaveRoutine(routine);
-            RefreshCurrentRoutineIfNeeded(routine);
             _routinesView.LoadRoutines();
-        }
-
-        private void RefreshCurrentRoutineIfNeeded(Routine routine)
-        {
-            if (_currentRoutine == null)
-                return;
-
-            if (_currentRoutine.Id != routine.Id)
-                return;
-
-            _currentRoutine = _routineService.GetRoutine(routine.Id);
         }
 
         private void DeleteRoutine(Routine routine)
@@ -215,15 +200,7 @@ namespace SmartRoutine.UI.Forms
             };
 
             form.BeforeCloseRequested += (s, e) =>
-            {
-                ShowInTaskbar = previousShowInTaskbar;
-
-                if (previousVisible)
-                    Show();
-
-                Activate();
-                RefreshAfterHiddenExecutionForm();
-            };
+                RestoreAfterExecution(previousShowInTaskbar, previousVisible);
 
             try
             {
@@ -233,14 +210,20 @@ namespace SmartRoutine.UI.Forms
             {
                 form.Dispose();
 
-                ShowInTaskbar = previousShowInTaskbar;
-
-                if (previousVisible && !Visible)
-                    Show();
-
-                Activate();
-                RefreshAfterHiddenExecutionForm();
+                RestoreAfterExecution(previousShowInTaskbar, previousVisible);
             }
+        }
+
+        // Brings the main window back the way it was before the execution form hid it.
+        private void RestoreAfterExecution(bool showInTaskbar, bool wasVisible)
+        {
+            ShowInTaskbar = showInTaskbar;
+
+            if (wasVisible && !Visible)
+                Show();
+
+            Activate();
+            RefreshAfterHiddenExecutionForm();
         }
 
         private void RefreshAfterHiddenExecutionForm()
@@ -288,9 +271,7 @@ namespace SmartRoutine.UI.Forms
             if (routine == null)
                 return;
 
-            routine.LastExecutionAt = DateTime.Now;
-
-            _routineService.SaveRoutine(routine);
+            MarkRoutineAsExecuted(routine);
 
             _routinesView.LoadRoutines();
         }
