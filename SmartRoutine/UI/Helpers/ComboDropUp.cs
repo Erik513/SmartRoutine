@@ -117,12 +117,16 @@ namespace SmartRoutine.UI.Helpers
                 if (height <= 0 && GetWindowRect(Handle, out current))
                     height = current.Bottom - current.Top;
 
-                int top = _comboBox.PointToScreen(Point.Empty).Y - height;
+                Point boxOnScreen = _comboBox.PointToScreen(Point.Empty);
+                int top = boxOnScreen.Y - height;
 
                 // No room above the box: the list stays where the system puts it.
                 if (height <= 0 || top < Screen.FromControl(_comboBox).WorkingArea.Top)
                     return;
 
+                // Both coordinates are set: when the system does not move the window (SWP_NOMOVE) the
+                // values in the structure are not a position at all.
+                position.x = boxOnScreen.X;
                 position.y = top;
                 position.flags &= ~SwpNoMove;
 
