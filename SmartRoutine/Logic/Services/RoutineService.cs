@@ -25,12 +25,7 @@ namespace SmartRoutine.Logic.Services
                 .ToList();
 
             foreach (var routine in routines)
-            {
-                if (routine.Steps != null && routine.Steps.Any())
-                {
-                    routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
-                }
-            }
+                SortSteps(routine);
 
             return routines;
         }
@@ -39,26 +34,39 @@ namespace SmartRoutine.Logic.Services
         {
             var routine = _repository.GetRoutine(id);
 
-            if (routine != null && routine.Steps != null && routine.Steps.Any())
-            {
-                routine.Steps = routine.Steps
-                    .OrderBy(s => s.Order)
-                    .ToList();
-            }
+            SortSteps(routine);
 
             return routine;
         }
 
-        public Routine CreateRoutine(string name)
+        private static void SortSteps(Routine routine)
+        {
+            if (routine != null && routine.Steps != null && routine.Steps.Any())
+                routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
+        }
+
+        // The steps get the order of their position in the list.
+        private static void RenumberSteps(List<RoutineStep> steps)
+        {
+            for (int i = 0; i < steps.Count; i++)
+                steps[i].Order = i;
+        }
+
+        // A new routine goes to the end of the list.
+        private int GetNextRoutineOrder()
         {
             var routines = _repository.LoadRoutines();
-            int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
 
+            return routines.Count > 0 ? routines.Max(r => r.Order) + 1 : 0;
+        }
+
+        public Routine CreateRoutine(string name)
+        {
             var routine = new Routine
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = name,
-                Order = maxOrder + 1,
+                Order = GetNextRoutineOrder(),
                 CreatedAt = DateTime.Now,
                 Steps = new List<RoutineStep>()
             };
@@ -106,24 +114,20 @@ namespace SmartRoutine.Logic.Services
                 return;
             }
 
-            var routines = _repository.LoadRoutines();
-            int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
-
-            routine.Order = maxOrder + 1;
+            routine.Order = GetNextRoutineOrder();
             routine.CreatedAt = DateTime.Now;
 
             _repository.AddRoutine(routine);
         }
 
-        private void NormalizeStepOrders(Routine routine)
+        private static void NormalizeStepOrders(Routine routine)
         {
             if (routine.Steps == null)
                 routine.Steps = new List<RoutineStep>();
 
             var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
 
-            for (int i = 0; i < orderedSteps.Count; i++)
-                orderedSteps[i].Order = i;
+            RenumberSteps(orderedSteps);
 
             routine.Steps = orderedSteps;
         }
@@ -154,10 +158,8 @@ namespace SmartRoutine.Logic.Services
         public void UpdateStep(string routineId, RoutineStep step)
         {
             var routine = GetRoutine(routineId);
-            if (routine == null)
-            {
+            if (routine == null || step == null)
                 return;
-            }
 
             var index = routine.Steps.ToList().FindIndex(s => s.Id == step.Id);
             if (index >= 0)
@@ -180,10 +182,7 @@ namespace SmartRoutine.Logic.Services
 
             var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
 
-            for (int i = 0; i < orderedSteps.Count; i++)
-            {
-                orderedSteps[i].Order = i;
-            }
+            RenumberSteps(orderedSteps);
 
             routine.Steps = orderedSteps;
             routine.UpdatedAt = DateTime.Now;
@@ -208,8 +207,7 @@ namespace SmartRoutine.Logic.Services
             steps.RemoveAt(oldIndex);
             steps.Insert(newIndex, step);
 
-            for (int i = 0; i < steps.Count; i++)
-                steps[i].Order = i;
+            RenumberSteps(steps);
 
             routine.Steps = steps;
 
@@ -247,11 +245,7 @@ namespace SmartRoutine.Logic.Services
         {
             if (step.OpenInExternalBrowser)
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = step.Url,
-                    UseShellExecute = true
-                });
+                StartWithShell(step.Url);
 
                 return StepExecutionResult.None();
             }
@@ -259,13 +253,19 @@ namespace SmartRoutine.Logic.Services
             return StepExecutionResult.OpenInternalUrl(step.Url);
         }
 
-        private void ExecuteOpenFolder(OpenFolderStep step)
+        // Opens a URL, folder or file with the program Windows has for it.
+        private static void StartWithShell(string target)
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = step.FolderPath,
+                FileName = target,
                 UseShellExecute = true
             });
+        }
+
+        private void ExecuteOpenFolder(OpenFolderStep step)
+        {
+            StartWithShell(step.FolderPath);
         }
 
         private void ExecuteOpenApplication(OpenApplicationStep step)
@@ -283,14 +283,12 @@ namespace SmartRoutine.Logic.Services
 
         private void ExecuteOpenDocument(OpenDocumentStep step)
         {
-            if (System.IO.File.Exists(step.FilePath))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = step.FilePath,
-                    UseShellExecute = true
-                });
-            }
+            // A missing file is an error the caller reports: before, nothing happened and the
+            // execution form still said "opened".
+            if (!File.Exists(step.FilePath))
+                throw new FileNotFoundException("Die Datei existiert nicht.", step.FilePath);
+
+            StartWithShell(step.FilePath);
         }
 
         public bool ValidateStep(
