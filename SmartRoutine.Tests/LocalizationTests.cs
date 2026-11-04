@@ -57,7 +57,8 @@ namespace SmartRoutine.Tests
         {
             string sourceFolder = FindSourceFolder();
             var usedKeys = new Dictionary<string, string>();
-            var call = new Regex(@"Loc\.(?:S|F)\(\s*""([A-Za-z0-9_.]+)""");
+            // A complete key as the first argument ("Area.Name" followed by , or )): not "StepType." + type.
+            var call = new Regex(@"Loc\.(?:S|F)\(\s*""([A-Za-z0-9_.]+)""\s*[,)]");
 
             foreach (string file in Directory.EnumerateFiles(sourceFolder, "*.cs", SearchOption.AllDirectories))
             {

@@ -4,6 +4,7 @@ using MessageBox = ErikwnkWFUI.Forms.MessageBox;
 using MessageBoxButtons = ErikwnkWFUI.Forms.MessageBoxButtons;
 using MessageBoxIcon = ErikwnkWFUI.Forms.MessageBoxIcon;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls.StepEditors;
 using SmartRoutine.UI.Forms;
@@ -62,15 +63,16 @@ namespace SmartRoutine.UI.Controls
             txtRoutineName.MaxLength = 40;
             txtRoutineName.EditAccepted += TxtRoutineName_EditAccepted;
             
-            routineInfoTable.AddRow("Routinenname", PropertyColumn.Percent(txtRoutineName, 100));
+            routineInfoTable.AddRow(Loc.F("Editor.RoutineName"), PropertyColumn.Percent(txtRoutineName, 100));
 
             lstSteps = UIStyles.TitledListBoxes.CreateStandard(
-                headerTitle: "Meine Schritte",
+                headerTitle: Loc.S("Editor.StepsTitle"),
                 displayMember: "Name",
                 allowReorder: true,
                 showEnumeration: true,
                 headerTextAlign: ContentAlignment.MiddleCenter);
             lstSteps.Dock = DockStyle.Fill;
+            UIStyles.Localize(lstSteps, list => list.Title = Loc.S("Editor.StepsTitle"));
 
             // The selected step is the one in the editor next to the list: a click into the editor
             // (name box, combo box, switches) must not take the selection away and close the editor.
@@ -124,12 +126,12 @@ namespace SmartRoutine.UI.Controls
             lblStepNameTitle = UIStyles.Labels.CreateTitle();
             lblStepNameTitle.Dock = DockStyle.Fill;
             lblStepNameTitle.BackColor = Color.Transparent;
-            lblStepNameTitle.Text = "Schritt bearbeiten";
+            UIStyles.Localize(lblStepNameTitle, label => label.Text = Loc.S(_stepTitleKey));
 
-            tglStepEnabled = UIStyles.ToggleSwitches.CreateStandard(
+            tglStepEnabled = LocalizedControls.CreateToggle(
                 true,
-                "Schritt ist aktiviert",
-                "Schritt ist deaktiviert");
+                "Editor.Toggle.StepEnabled",
+                "Editor.Toggle.StepDisabled");
 
             tglStepEnabled.Anchor = AnchorStyles.None;
             tglStepEnabled.CheckedChanged += TglStepEnabled_CheckedChanged;
@@ -157,23 +159,21 @@ namespace SmartRoutine.UI.Controls
             // gibt es diesen CurrencyManager gar nicht erst, SelectedIndex = -1 bleibt zuverlässig.
             cmbStepType.DisplayMember = "DisplayName";
 
-            foreach (StepTypeOption option in StepTypeHelper.GetStepTypeOptions())
-                cmbStepType.Items.Add(option);
-
-            cmbStepType.SelectedIndex = -1;
+            // Fills the list now and again each time the language changes (the texts of the actions).
+            UIStyles.Localize(cmbStepType, combo => RefreshStepTypeTexts());
             cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
 
-            tglAutoStart = UIStyles.ToggleSwitches.CreateStandard(
+            tglAutoStart = LocalizedControls.CreateToggle(
                 true,
-                "Automatisch starten",
-                "Nicht automatisch starten");
+                "Editor.Toggle.AutoStartOn",
+                "Editor.Toggle.AutoStartOff");
 
             tglAutoStart.Anchor = AnchorStyles.Left;
 
-            tglAutoContinue = UIStyles.ToggleSwitches.CreateStandard(
+            tglAutoContinue = LocalizedControls.CreateToggle(
                 false,
-                "Automatisch zum nächsten Schritt wechseln",
-                "Nach Ausführung anhalten");
+                "Editor.Toggle.ContinueOn",
+                "Editor.Toggle.ContinueOff");
 
             tglAutoContinue.Anchor = AnchorStyles.Left;
         }
@@ -219,17 +219,17 @@ namespace SmartRoutine.UI.Controls
 
             rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnSaveStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Save, "Speichern", new Size(100, 35));
+            btnSaveStep = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Save, "Common.Save", new Size(100, 35));
             btnSaveStep.Dock = DockStyle.Fill;
             btnSaveStep.Margin = new Padding(5);
             btnSaveStep.Click += BtnSaveStep_Click;
 
-            btnCancelStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Cancel, "Abbrechen", new Size(100, 35));
+            btnCancelStep = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Cancel, "Common.Cancel", new Size(100, 35));
             btnCancelStep.Dock = DockStyle.Fill;
             btnCancelStep.Margin = new Padding(5);
             btnCancelStep.Click += BtnCancelStep_Click;
 
-            btnExecuteStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Play, "Schritt ausführen", new Size(100, 35));
+            btnExecuteStep = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Play, "Editor.Button.Execute", new Size(100, 35));
             btnExecuteStep.Dock = DockStyle.Fill;
             btnExecuteStep.Margin = new Padding(5);
             btnExecuteStep.Click += BtnExecuteStep_Click;
@@ -262,6 +262,7 @@ namespace SmartRoutine.UI.Controls
             InitializeFooterButtons();
 
             lblLastExecution = UIStyles.Labels.CreateMuted();
+            UIStyles.Localize(lblLastExecution, label => UpdateLastExecutionText());
             lblLastExecution.Dock = DockStyle.Fill;
             lblLastExecution.Margin = new Padding(15, 0, 10, 0);
             lblLastExecution.TextAlign = ContentAlignment.MiddleLeft;
@@ -278,24 +279,24 @@ namespace SmartRoutine.UI.Controls
         }
         private void InitializeFooterButtons()
         {
-            btnDuplicateStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Copy, "Schritt duplizieren", new Size(155, 35));
+            btnDuplicateStep = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Copy, "Editor.Button.Duplicate", new Size(155, 35));
             btnDuplicateStep.Dock = DockStyle.Fill;
             btnDuplicateStep.Margin = new Padding(10, 10, 5, 10);
             btnDuplicateStep.Enabled = false;
             btnDuplicateStep.Click += BtnDuplicateStep_Click;
 
-            btnAddStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Add, "Schritt hinzufügen", new Size(155, 35));
+            btnAddStep = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Add, "Editor.Button.Add", new Size(155, 35));
             btnAddStep.Dock = DockStyle.Fill;
             btnAddStep.Margin = new Padding(10, 10, 5, 10);
             btnAddStep.Click += BtnAddStep_Click;
 
-            btnDeleteStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Delete, "Schritt löschen", new Size(155, 35));
+            btnDeleteStep = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Delete, "Editor.Button.Delete", new Size(155, 35));
             btnDeleteStep.Dock = DockStyle.Fill;
             btnDeleteStep.Margin = new Padding(5, 10, 10, 10);
             btnDeleteStep.Enabled = false;
             btnDeleteStep.Click += BtnDeleteStep_Click;
 
-            btnBack = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Back, "Zurück zur Hauptansicht", new Size(155, 35));
+            btnBack = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Back, "Editor.Button.Back", new Size(155, 35));
             btnBack.Dock = DockStyle.Fill;
             btnBack.Margin = new Padding(10);
             btnBack.Click += BtnBack_Click;
@@ -318,10 +319,10 @@ namespace SmartRoutine.UI.Controls
 
             editorBaseTable.ClearRows();
 
-            editorBaseTable.AddSection("Schrittinformationen");
-            editorBaseTable.AddRow("Name", txtStepName);
-            editorBaseTable.AddRow("Beschreibung", txtStepDescription);
-            editorBaseTable.AddRow("Aktion", cmbStepType);
+            editorBaseTable.AddSection(Loc.F("Editor.Section.StepInfo"));
+            editorBaseTable.AddRow(Loc.F("Editor.Row.Name"), txtStepName);
+            editorBaseTable.AddRow(Loc.F("Editor.Row.Description"), txtStepDescription);
+            editorBaseTable.AddRow(Loc.F("Editor.Row.Action"), cmbStepType);
             
             FlowLayoutPanel autostartPanel = UIStyles.FlowLayoutPanels.CreateTransparent();
             autostartPanel.Dock = DockStyle.Left;
@@ -329,7 +330,8 @@ namespace SmartRoutine.UI.Controls
             // PropertyTable takes the row height from the control's height when the row is added,
             // so give it the real height now (AutoSize would only apply after the first layout).
             autostartPanel.Height = 30;
-            Label lblAutoStart = UIStyles.Labels.CreateStandard("Start");
+            Label lblAutoStart = UIStyles.Labels.CreateStandard(Loc.S("Editor.Label.Start"));
+            UIStyles.Localize(lblAutoStart, l => l.Text = Loc.S("Editor.Label.Start"));
             lblAutoStart.Margin = new Padding(0, 4, 5, 0);
             lblAutoStart.AutoSize = true;
 
@@ -342,7 +344,8 @@ namespace SmartRoutine.UI.Controls
             // PropertyTable takes the row height from the control's height when the row is added,
             // so give it the real height now (AutoSize would only apply after the first layout).
             autocontinuePanel.Height = 30;
-            Label lblAutoContinue = UIStyles.Labels.CreateStandard("Weiter");
+            Label lblAutoContinue = UIStyles.Labels.CreateStandard(Loc.S("Editor.Label.Continue"));
+            UIStyles.Localize(lblAutoContinue, l => l.Text = Loc.S("Editor.Label.Continue"));
             lblAutoContinue.Margin = new Padding(0, 4, 5, 0);
             lblAutoContinue.AutoSize = true;
 
@@ -350,7 +353,7 @@ namespace SmartRoutine.UI.Controls
             autocontinuePanel.Controls.Add(tglAutoContinue);
 
             editorBaseTable.AddRow(
-                "Automatisierung",
+                Loc.F("Editor.Row.Automation"),
                 PropertyColumn.Percent(autostartPanel, 50),
                 PropertyColumn.Percent(autocontinuePanel, 50));
         }
@@ -370,7 +373,7 @@ namespace SmartRoutine.UI.Controls
                 return;
             }
 
-            editorOptionsTable.AddSection("Optionen");
+            editorOptionsTable.AddSection(Loc.F("Editor.Section.Options"));
 
             _activeStepEditor = _stepEditors[selectedType];
             _activeStepEditor.BuildControls(editorOptionsTable);

@@ -8,6 +8,7 @@ using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls.StepEditors;
 using SmartRoutine.UI.Forms;
 using SmartRoutine.UI.Helpers;
+using SmartRoutine.Localization;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -32,8 +33,8 @@ namespace SmartRoutine.UI.Controls
                 if (!AutoConfirmDialogs)
                 {
                     MessageBox.Show(
-                        "Bitte geben Sie einen Namen für die Routine ein.",
-                        "Validierung",
+                        Loc.S("Editor.Validation.RoutineNameEmpty"),
+                        Loc.S("Editor.Validation.Title"),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning,
                         FindForm(),
@@ -56,7 +57,7 @@ namespace SmartRoutine.UI.Controls
                 {
                     MessageBox.Show(
                         $"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
-                        "Validierung",
+                        Loc.S("Editor.Validation.Title"),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning,
                         FindForm(),
@@ -85,7 +86,7 @@ namespace SmartRoutine.UI.Controls
                 return true;
 
             ShowValidationMessage(
-                "Bitte geben Sie einen Namen für den Schritt ein.",
+                Loc.S("Editor.Validation.StepNameEmpty"),
                 showMessageBox);
 
             txtStepName.Focus();
@@ -97,7 +98,7 @@ namespace SmartRoutine.UI.Controls
                 return true;
 
             ShowValidationMessage(
-                "Bitte wählen Sie einen Aktionstyp aus.",
+                Loc.S("Editor.Validation.StepTypeEmpty"),
                 showMessageBox);
 
             cmbStepType.Focus();
@@ -106,14 +107,14 @@ namespace SmartRoutine.UI.Controls
         private void ShowValidationMessage(
             string message,
             bool showMessageBox,
-            string title = "Fehler bei Validierung")
+            string title = null)
         {
             if (!showMessageBox || AutoConfirmDialogs)
                 return;
 
             MessageBox.Show(
                 message,
-                title,
+                title ?? Loc.S("Editor.Validation.ErrorTitle"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning,
                 FindForm(),

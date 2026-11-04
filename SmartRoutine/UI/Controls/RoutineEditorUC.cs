@@ -5,6 +5,7 @@ using MessageBox = ErikwnkWFUI.Forms.MessageBox;
 using MessageBoxButtons = ErikwnkWFUI.Forms.MessageBoxButtons;
 using MessageBoxIcon = ErikwnkWFUI.Forms.MessageBoxIcon;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls.StepEditors;
@@ -211,10 +212,7 @@ namespace SmartRoutine.UI.Controls
             if (isNewRoutine)
                 txtRoutineName.BeginEdit();
 
-            lblLastExecution.Text =
-                _currentRoutine.LastExecutionAt.HasValue
-                    ? $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
-                    : "";
+            UpdateLastExecutionText();
 
             lstSteps.SelectedIndex = -1;
             rightTlp.Visible = false;
@@ -247,8 +245,8 @@ namespace SmartRoutine.UI.Controls
                 return true;
 
             DialogResult result = MessageBox.Show(
-                "Möchten Sie die Änderungen am aktuellen Schritt speichern?",
-                "Änderungen speichern",
+                Loc.S("Editor.SaveChanges.Step"),
+                Loc.S("Editor.SaveChanges.Title"),
                 MessageBoxButtons.YesNoCancel,
                 MessageBoxIcon.Question,
                 FindForm(),
@@ -332,12 +330,55 @@ namespace SmartRoutine.UI.Controls
             return false;
         }
 
+        // The key of the text above the step editor ("edit step" / "new step"); the label follows the language.
+        private string _stepTitleKey = "Editor.StepEdit";
+
+        // "Last run: 5 minutes ago" at the bottom of the page; empty for a routine that was never run.
+        private void UpdateLastExecutionText()
+        {
+            if (lblLastExecution == null)
+                return;
+
+            lblLastExecution.Text =
+                _currentRoutine != null && _currentRoutine.LastExecutionAt.HasValue
+                    ? Loc.S("Editor.LastRun", DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt))
+                    : "";
+        }
+
+        // Fills the list of actions with the texts of the current language and keeps what was selected.
+        // (Without a data source on purpose, see InitializeEditorControls; no event while it is filled.)
+        private void RefreshStepTypeTexts()
+        {
+            StepType selectedType;
+            bool hadSelection = TryGetSelectedStepType(out selectedType);
+            bool wasLoading = _isLoadingStep;
+
+            _isLoadingStep = true;
+
+            try
+            {
+                cmbStepType.Items.Clear();
+
+                foreach (StepTypeOption option in StepTypeHelper.GetStepTypeOptions())
+                    cmbStepType.Items.Add(option);
+
+                if (hadSelection)
+                    SetSelectedStepType(selectedType);
+                else
+                    cmbStepType.SelectedIndex = -1;
+            }
+            finally
+            {
+                _isLoadingStep = wasLoading;
+            }
+        }
+
         private void OpenEditorForStep(RoutineStep step = null)
         {
             rightTlp.Visible = true;
-            lblStepNameTitle.Text = step != null
-                ? "Schritt bearbeiten"
-                : "Neuen Schritt erstellen";
+
+            _stepTitleKey = step != null ? "Editor.StepEdit" : "Editor.StepNew";
+            lblStepNameTitle.Text = Loc.S(_stepTitleKey);
 
             if (step != null)
             {
@@ -557,7 +598,7 @@ namespace SmartRoutine.UI.Controls
                 steps[i].Order = i;
         }
 
-        // Puts a copy of the step right behind it (new id, name + " Kopie") and renumbers the list.
+        // Puts a copy of the step right behind it (new id, name + the copy suffix) and renumbers the list.
         // Returns the copy, or null when the step is not in the list.
         private static RoutineStep InsertDuplicateAfter(List<RoutineStep> orderedSteps, RoutineStep original)
         {
@@ -572,7 +613,7 @@ namespace SmartRoutine.UI.Controls
                 return null;
 
             duplicate.Id = Guid.NewGuid().ToString();
-            duplicate.Name = original.Name + " Kopie";
+            duplicate.Name = original.Name + Loc.S("Editor.CopySuffix");
 
             orderedSteps.Insert(originalIndex + 1, duplicate);
             RenumberSteps(orderedSteps);
@@ -617,7 +658,7 @@ namespace SmartRoutine.UI.Controls
             RefreshStepsList(silent: true);
             TrySelectStep(duplicatedStep.Id);
 
-            ToastForm.ShowToast($"✓ Schritt '{duplicatedStep.Name}' dupliziert", FindForm());
+            ToastForm.ShowToast(Loc.S("Editor.Toast.Duplicated", duplicatedStep.Name), FindForm());
         }
 
         private void BtnAddStep_Click(object sender, EventArgs e)
@@ -651,8 +692,8 @@ namespace SmartRoutine.UI.Controls
             if (!shouldDelete)
             {
                 shouldDelete = MessageBox.Show(
-                    $"Schritt '{stepToDelete.Name}' wirklich löschen?",
-                    "Bestätigen",
+                    Loc.S("Editor.DeleteStep.Text", stepToDelete.Name),
+                    Loc.S("Common.Confirm"),
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question,
                     FindForm(),
@@ -677,7 +718,7 @@ namespace SmartRoutine.UI.Controls
             SaveChanges?.Invoke(this, _currentRoutine);
 
             ToastForm.ShowToast(
-                $"✓ Schritt '{stepToDelete.Name}' gelöscht",
+                Loc.S("Editor.Toast.Deleted", stepToDelete.Name),
                 FindForm());
         }
         // ========== STEP LIST METHODS ==========
@@ -755,8 +796,8 @@ namespace SmartRoutine.UI.Controls
         private DialogResult AskToSaveChanges()
         {
             return MessageBox.Show(
-                "Möchten Sie die Änderungen vor der Ausführung speichern?",
-                "Änderungen speichern",
+                Loc.S("Editor.SaveChanges.BeforeRun"),
+                Loc.S("Editor.SaveChanges.Title"),
                 MessageBoxButtons.YesNoCancel,
                 MessageBoxIcon.Question,
                 FindForm(),
@@ -825,7 +866,7 @@ namespace SmartRoutine.UI.Controls
             if (showSavedToast)
             {
                 ToastForm.ShowToast(
-                    $"✓ Schritt '{step.Name}' gespeichert",
+                    Loc.S("Editor.Toast.Saved", step.Name),
                     FindForm());
             }
         }

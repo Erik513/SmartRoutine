@@ -2,6 +2,8 @@ using ErikwnkWFUI;
 using ErikwnkWFUI.Controls;
 using ErikwnkWFUI.Helpers;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
+using SmartRoutine.UI.Helpers;
 using SmartRoutine.Logic.Interfaces;
 using System;
 using System.Windows.Forms;
@@ -46,10 +48,10 @@ namespace SmartRoutine.UI.Controls.StepEditors
                 _txtUrl.SelectionStart = _txtUrl.Text.Length;
             });
 
-            _tglOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(
+            _tglOpenInExternBrowser = LocalizedControls.CreateToggle(
                 true,
-                "Externer Browser",
-                "In App öffnen");
+                "StepEditor.Url.Toggle.External",
+                "StepEditor.Url.Toggle.InApp");
 
             _tglOpenInExternBrowser.CheckedChanged += (s, e) =>
                 _onAutoContinueAvailabilityMightChange?.Invoke();
@@ -57,8 +59,8 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _tglOpenInExternBrowser.Name = "tglOpenInternally";
             _tglOpenInExternBrowser.Anchor = AnchorStyles.Left;
 
-            optionsTable.AddRow("URL", _txtUrl);
-            optionsTable.AddRow("Öffnen in", _tglOpenInExternBrowser);
+            optionsTable.AddRow(Loc.F("StepEditor.Url.Row.Url"), _txtUrl);
+            optionsTable.AddRow(Loc.F("StepEditor.Url.Row.OpenIn"), _tglOpenInExternBrowser);
         }
 
         public void LoadFrom(RoutineStep step)
@@ -116,7 +118,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
         {
             if (string.IsNullOrWhiteSpace(_txtUrl?.Text))
             {
-                _showValidationMessage("Bitte geben Sie eine URL ein.", showMessageBox);
+                _showValidationMessage(Loc.S("StepEditor.Url.Validation.Empty"), showMessageBox);
 
                 _txtUrl?.Focus();
                 return false;

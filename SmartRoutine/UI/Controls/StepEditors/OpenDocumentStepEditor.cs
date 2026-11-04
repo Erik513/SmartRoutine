@@ -1,6 +1,8 @@
 using ErikwnkWFUI;
 using ErikwnkWFUI.Controls;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
+using SmartRoutine.UI.Helpers;
 using SmartRoutine.Logic.Interfaces;
 using System;
 using System.Drawing;
@@ -30,14 +32,14 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _txtDocumentPath = UIStyles.TextBoxes.CreateBorderless();
             _txtDocumentPath.Name = "txtDocumentPath";
 
-            var btnBrowseDocument = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Browse, "Dokument auswählen", new Size(50, 30));
+            var btnBrowseDocument = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Browse, "StepEditor.Document.Browse", new Size(50, 30));
 
             btnBrowseDocument.Click += (s, e) =>
             {
                 using (var dialog = new OpenFileDialog())
                 {
-                    dialog.Filter = "Alle Dateien (*.*)|*.*";
-                    dialog.Title = "Dokument auswählen";
+                    dialog.Filter = Loc.S("StepEditor.Document.Filter");
+                    dialog.Title = Loc.S("StepEditor.Document.Browse");
 
                     if (dialog.ShowDialog() == DialogResult.OK)
                         _txtDocumentPath.Text = dialog.FileName;
@@ -45,7 +47,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
             };
 
             optionsTable.AddRow(
-                "Dateipfad",
+                Loc.F("StepEditor.Document.Row.Path"),
                 PropertyColumn.Percent(_txtDocumentPath, 100),
                 PropertyColumn.Absolute(btnBrowseDocument, 50));
         }
@@ -83,7 +85,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
         {
             if (string.IsNullOrWhiteSpace(_txtDocumentPath?.Text))
             {
-                _showValidationMessage("Bitte wählen Sie eine Datei aus.", showMessageBox);
+                _showValidationMessage(Loc.S("StepEditor.Document.Validation.Empty"), showMessageBox);
 
                 _txtDocumentPath?.Focus();
                 return false;

@@ -133,5 +133,103 @@ namespace SmartRoutine.Tests.UI
                 service.Verify(s => s.CreateRoutine("My routine 6"), Times.Once);
             }
         }
+
+        // Editor
+
+        private static RoutineEditorUC CreateEditor()
+        {
+            return new RoutineEditorUC(new Mock<IRoutineService>().Object, new Mock<IUrlValidationService>().Object);
+        }
+
+        [TestMethod]
+        public void Editor_ActionList_FollowsTheLanguageAndKeepsTheSelection()
+        {
+            using (RoutineEditorUC editor = CreateEditor())
+            {
+                var combo = Field<System.Windows.Forms.ComboBox>(editor, "cmbStepType");
+
+                Assert.AreEqual(4, combo.Items.Count);
+                Assert.AreEqual("Webseite öffnen", ((StepTypeOption)combo.Items[0]).DisplayName);
+
+                combo.SelectedIndex = 2;
+
+                UIStyles.Language = UILanguage.English;
+
+                Assert.AreEqual(4, combo.Items.Count);
+                Assert.AreEqual(2, combo.SelectedIndex);
+                Assert.AreEqual("Start program", ((StepTypeOption)combo.SelectedItem).DisplayName);
+                Assert.AreEqual(StepType.OpenApplication, ((StepTypeOption)combo.SelectedItem).Type);
+            }
+        }
+
+        [TestMethod]
+        public void Editor_ActionList_WithoutSelection_StaysWithoutSelection()
+        {
+            using (RoutineEditorUC editor = CreateEditor())
+            {
+                var combo = Field<System.Windows.Forms.ComboBox>(editor, "cmbStepType");
+
+                UIStyles.Language = UILanguage.English;
+
+                Assert.AreEqual(-1, combo.SelectedIndex);
+                Assert.AreEqual("Open website", ((StepTypeOption)combo.Items[0]).DisplayName);
+            }
+        }
+
+        [TestMethod]
+        public void Editor_LastRunText_FollowsTheLanguage()
+        {
+            using (RoutineEditorUC editor = CreateEditor())
+            {
+                var label = Field<Label>(editor, "lblLastExecution");
+
+                editor.LoadRoutine(new Routine { Id = "r", Name = "R", LastExecutionAt = DateTime.Now.AddMinutes(-5) });
+
+                Assert.AreEqual("Zuletzt gestartet: Vor 5 Minuten", label.Text);
+
+                UIStyles.Language = UILanguage.English;
+
+                Assert.AreEqual("Last run: 5 minutes ago", label.Text);
+            }
+        }
+
+        [TestMethod]
+        public void Editor_LastRunText_IsEmptyForARoutineThatWasNeverRun()
+        {
+            using (RoutineEditorUC editor = CreateEditor())
+            {
+                editor.LoadRoutine(new Routine { Id = "r", Name = "R" });
+
+                Assert.AreEqual("", Field<Label>(editor, "lblLastExecution").Text);
+            }
+        }
+
+        [TestMethod]
+        public void Editor_StepListTitleAndButtons_FollowTheLanguage()
+        {
+            using (RoutineEditorUC editor = CreateEditor())
+            {
+                var list = Field<TitledListBox>(editor, "lstSteps");
+
+                Assert.AreEqual("Meine Schritte", list.Title);
+
+                UIStyles.Language = UILanguage.English;
+
+                Assert.AreEqual("My steps", list.Title);
+            }
+        }
+
+        [TestMethod]
+        public void Editor_DuplicateStep_GetsTheCopySuffixOfTheCurrentLanguage()
+        {
+            var method = typeof(RoutineEditorUC).GetMethod("InsertDuplicateAfter", BindingFlags.NonPublic | BindingFlags.Static);
+            var original = new OpenUrlStep { Id = "a", Name = "Open news", Url = "https://news.example" };
+
+            UIStyles.Language = UILanguage.English;
+
+            var copy = (RoutineStep)method.Invoke(null, new object[] { new List<RoutineStep> { original }, original });
+
+            Assert.AreEqual("Open news copy", copy.Name);
+        }
     }
 }

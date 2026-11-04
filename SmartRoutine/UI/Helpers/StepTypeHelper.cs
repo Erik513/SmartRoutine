@@ -1,4 +1,5 @@
 ﻿using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using System;
 using System.Collections.Generic;
 
@@ -6,18 +7,15 @@ namespace SmartRoutine.UI.Helpers
 {
     public static class StepTypeHelper
     {
-        private static readonly Dictionary<StepType, string> StepTypeDisplayNames =
-            new Dictionary<StepType, string>
-            {
-                { StepType.OpenUrl, "Webseite öffnen" },
-                { StepType.OpenFolder, "Ordner öffnen" },
-                { StepType.OpenApplication, "Programm starten" },
-                { StepType.OpenDocument, "Dokument öffnen" }
-            };
-
+        // The text of an action in the current language: the key is "StepType.<name of the type>".
         public static Dictionary<StepType, string> GetStepTypeDisplayNames()
         {
-            return new Dictionary<StepType, string>(StepTypeDisplayNames);
+            Dictionary<StepType, string> names = new Dictionary<StepType, string>();
+
+            foreach (StepType type in Enum.GetValues(typeof(StepType)))
+                names[type] = GetDisplayName(type);
+
+            return names;
         }
 
         public static List<StepTypeOption> GetStepTypeOptions()
@@ -26,39 +24,30 @@ namespace SmartRoutine.UI.Helpers
                 new List<StepTypeOption>();
 
             foreach (StepType type in Enum.GetValues(typeof(StepType)))
-            {
-                list.Add(
-                    new StepTypeOption(
-                        type,
-                        GetDisplayName(type)));
-            }
+                list.Add(new StepTypeOption(type));
 
             return list;
         }
 
         public static string GetDisplayName(StepType type)
         {
-            string displayName;
-
-            if (StepTypeDisplayNames.TryGetValue(type, out displayName))
-                return displayName;
-
-            return type.ToString();
+            return Loc.S("StepType." + type);
         }
     }
 
+    // An entry of the list of actions. The text is asked each time it is read, so it follows the language.
     public class StepTypeOption
     {
         public StepType Type { get; private set; }
 
-        public string DisplayName { get; private set; }
+        public string DisplayName
+        {
+            get { return StepTypeHelper.GetDisplayName(Type); }
+        }
 
-        public StepTypeOption(
-            StepType type,
-            string displayName)
+        public StepTypeOption(StepType type)
         {
             Type = type;
-            DisplayName = displayName ?? "";
         }
     }
 }

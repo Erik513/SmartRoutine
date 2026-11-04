@@ -1,6 +1,8 @@
 using ErikwnkWFUI;
 using ErikwnkWFUI.Controls;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
+using SmartRoutine.UI.Helpers;
 using SmartRoutine.Logic.Interfaces;
 using System;
 using System.Drawing;
@@ -31,7 +33,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _txtFolderPath = UIStyles.TextBoxes.CreateBorderless();
             _txtFolderPath.Name = "txtFolderPath";
 
-            var btnBrowse = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Browse, "Ordner auswählen", new Size(50, 30));
+            var btnBrowse = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Browse, "StepEditor.Folder.Browse", new Size(50, 30));
 
             btnBrowse.Click += (s, e) =>
             {
@@ -43,15 +45,15 @@ namespace SmartRoutine.UI.Controls.StepEditors
             };
 
             optionsTable.AddRow(
-                "Ordnerpfad",
+                Loc.F("StepEditor.Folder.Row.Path"),
                 PropertyColumn.Percent(_txtFolderPath, 100),
                 PropertyColumn.Absolute(btnBrowse, 50));
 
-            _tglOpenInNewWindow = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
+            _tglOpenInNewWindow = LocalizedControls.CreateYesNoToggle(false);
             _tglOpenInNewWindow.Name = "tglOpenInNewWindow";
             _tglOpenInNewWindow.Anchor = AnchorStyles.Left;
 
-            optionsTable.AddRow("Neues Fenster", _tglOpenInNewWindow);
+            optionsTable.AddRow(Loc.F("StepEditor.Folder.Row.NewWindow"), _tglOpenInNewWindow);
         }
 
         public void LoadFrom(RoutineStep step)
@@ -88,7 +90,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
         {
             if (string.IsNullOrWhiteSpace(_txtFolderPath?.Text))
             {
-                _showValidationMessage("Bitte geben Sie einen Ordnerpfad ein.", showMessageBox);
+                _showValidationMessage(Loc.S("StepEditor.Folder.Validation.Empty"), showMessageBox);
 
                 _txtFolderPath?.Focus();
                 return false;

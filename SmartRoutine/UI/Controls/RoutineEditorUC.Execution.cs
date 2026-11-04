@@ -4,6 +4,7 @@ using MessageBox = ErikwnkWFUI.Forms.MessageBox;
 using MessageBoxButtons = ErikwnkWFUI.Forms.MessageBoxButtons;
 using MessageBoxIcon = ErikwnkWFUI.Forms.MessageBoxIcon;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Forms;
 using System;
@@ -96,7 +97,7 @@ namespace SmartRoutine.UI.Controls
 
             MessageBox.Show(
                 validationError,
-                "Ausführung nicht möglich",
+                Loc.S("Editor.CannotRun.Title"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning,
                 FindForm(),
