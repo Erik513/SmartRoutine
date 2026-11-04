@@ -123,3 +123,36 @@ namespace SmartRoutine.Tests
         }
     }
 }
+
+namespace SmartRoutine.Tests
+{
+    [TestClass]
+    public class StartupLanguageTests
+    {
+        [DataTestMethod]
+        [DataRow("de-DE")]
+        [DataRow("de-AT")]
+        [DataRow("de-CH")]
+        [DataRow("de")]
+        public void GermanWindows_StartsInGerman(string culture)
+        {
+            Assert.AreEqual(ErikwnkWFUI.Styles.UILanguage.German, SmartRoutine.Localization.StartupLanguage.For(new System.Globalization.CultureInfo(culture)));
+        }
+
+        [DataTestMethod]
+        [DataRow("en-US")]
+        [DataRow("en-GB")]
+        [DataRow("fr-FR")]
+        [DataRow("ja-JP")]
+        public void AnyOtherWindows_StartsInEnglish(string culture)
+        {
+            Assert.AreEqual(ErikwnkWFUI.Styles.UILanguage.English, SmartRoutine.Localization.StartupLanguage.For(new System.Globalization.CultureInfo(culture)));
+        }
+
+        [TestMethod]
+        public void NoCulture_StartsInEnglish()
+        {
+            Assert.AreEqual(ErikwnkWFUI.Styles.UILanguage.English, SmartRoutine.Localization.StartupLanguage.For(null));
+        }
+    }
+}
