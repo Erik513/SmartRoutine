@@ -11,9 +11,12 @@
     <Version>1.1.0</Version>
     <Product>SmartRoutine</Product>
     <AssemblyTitle>SmartRoutine</AssemblyTitle>
-    <Description>Automatisierung wiederkehrender Arbeitsabläufe</Description>
+    <Description>Automation of recurring workflows</Description>
     <Copyright>© 2026 Erik Wink</Copyright>
-    <NeutralLanguage>de-DE</NeutralLanguage>
+    <NeutralLanguage>en-US</NeutralLanguage>
+      <!-- The WebView2 package brings WPF assemblies (WindowsBase) of an older target that the .NET 8 reference pack also has;
+         the conflict is harmless because the program uses only the WinForms control. -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

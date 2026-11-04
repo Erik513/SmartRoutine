@@ -243,15 +243,14 @@ namespace SmartRoutine.Tests.UI
             var txtStepName = GetPrivateField<TextBox>(_editor, "txtStepName");
             txtStepName.Text = ""; // Empty name
 
-            try
-            {
-                var btnSaveStep = GetPrivateField<Button>(_editor, "btnSaveStep");
-                btnSaveStep.PerformClick();
-            }
-            catch
-            {
-                Assert.IsTrue(true);
-            }
+            var btnSaveStep = GetPrivateField<Button>(_editor, "btnSaveStep");
+            btnSaveStep.PerformClick();
+
+            // The step is not saved, and the editor stays open for the correction.
+            _mockService.Verify(
+                s => s.AddStep(It.IsAny<string>(), It.IsAny<RoutineStep>()),
+                Times.Never);
+            Assert.IsTrue(GetPrivateField<TableLayoutPanel>(_editor, "rightTlp").Visible);
         }
 
 
@@ -439,10 +438,13 @@ namespace SmartRoutine.Tests.UI
             EventArgs.Empty
                 });
 
+            // The order of a step is its position in the list, whatever its Order said before.
             _mockService.Verify(
                 s => s.SaveRoutine(
                     It.Is<Routine>(
-                        r => r.Steps.Count == 2)),
+                        r => r.Steps.Count == 2 &&
+                             r.Steps[0].Id == "1" && r.Steps[0].Order == 0 &&
+                             r.Steps[1].Id == "2" && r.Steps[1].Order == 1)),
                 Times.Once);
         }
 
@@ -478,7 +480,11 @@ namespace SmartRoutine.Tests.UI
         [TestMethod]
         public void RenumberSteps_EmptyList_DoesNotThrow()
         {
-            InvokeStatic("RenumberSteps", new System.Collections.Generic.List<RoutineStep>());
+            var steps = new System.Collections.Generic.List<RoutineStep>();
+
+            InvokeStatic("RenumberSteps", steps);
+
+            Assert.AreEqual(0, steps.Count);
         }
 
         [TestMethod]

@@ -6,6 +6,9 @@
     <IsPackable>false</IsPackable>
     <RootNamespace>SmartRoutine.Tests</RootNamespace>
     <AssemblyName>SmartRoutine.Tests</AssemblyName>
+      <!-- The WebView2 package brings WPF assemblies (WindowsBase) of an older target that the .NET 8 reference pack also has;
+         the conflict is harmless because the program uses only the WinForms control. -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

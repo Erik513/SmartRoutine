@@ -191,30 +191,6 @@ namespace SmartRoutine.Logic.Services
             _repository.UpdateRoutine(routine);
         }
 
-
-        public void ReorderSteps(string routineId, int oldIndex, int newIndex)
-        {
-            var routine = GetRoutine(routineId);
-            if (routine == null) return;
-
-            var steps = routine.Steps.ToList();
-
-            // Validation: both indexes must be in range
-            if (oldIndex < 0 || oldIndex >= steps.Count) return;
-            if (newIndex < 0 || newIndex >= steps.Count) return;
-            if (oldIndex == newIndex) return;
-
-            var step = steps[oldIndex];
-            steps.RemoveAt(oldIndex);
-            steps.Insert(newIndex, step);
-
-            RenumberSteps(steps);
-
-            routine.Steps = steps;
-
-            _repository.UpdateRoutine(routine);
-        }
-
         public StepExecutionResult ExecuteStep(RoutineStep step)
         {
             if (step == null)

@@ -363,7 +363,11 @@ namespace SmartRoutine.Tests.Data
         [TestMethod]
         public void DeleteRoutine_UnknownId_DoesNotThrow()
         {
+            _repository.AddRoutine(new Routine { Id = "kept" });
+
             _repository.DeleteRoutine("ghost");
+
+            Assert.AreEqual(1, _repository.LoadRoutines().Count);
         }
 
         [TestMethod]

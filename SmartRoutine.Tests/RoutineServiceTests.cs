@@ -521,53 +521,6 @@ namespace SmartRoutine.Tests
         }
 
 
-        // REORDER STEPS
-
-        [TestMethod]
-        public void ReorderSteps_ChangesStepOrder()
-        {
-            var service = CreateService();
-            service.CreateRoutine("Test");
-            var routine = service.GetAllRoutines().First();
-
-            service.AddStep(routine.Id, new OpenUrlStep { Id = "step-1", Name = "Step 1" });
-            service.AddStep(routine.Id, new OpenUrlStep { Id = "step-2", Name = "Step 2" });
-            service.AddStep(routine.Id, new OpenUrlStep { Id = "step-3", Name = "Step 3" });
-
-            service.ReorderSteps(routine.Id, 0, 2);
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-
-            Assert.AreEqual("step-2", updatedRoutine.Steps[0].Id);
-            Assert.AreEqual("step-3", updatedRoutine.Steps[1].Id);
-            Assert.AreEqual("step-1", updatedRoutine.Steps[2].Id);
-
-            Assert.AreEqual(0, updatedRoutine.Steps[0].Order);
-            Assert.AreEqual(1, updatedRoutine.Steps[1].Order);
-            Assert.AreEqual(2, updatedRoutine.Steps[2].Order);
-        }
-
-        [TestMethod]
-        public void ReorderSteps_WithInvalidIndices_DoesNothing()
-        {
-            var service = CreateService();
-            service.CreateRoutine("Test");
-            var routine = service.GetAllRoutines().First();
-
-            service.AddStep(routine.Id, new OpenUrlStep { Id = "step-1", Name = "Step 1" });
-            service.AddStep(routine.Id, new OpenUrlStep { Id = "step-2", Name = "Step 2" });
-
-            service.ReorderSteps(routine.Id, -1, 1);
-            service.ReorderSteps(routine.Id, 0, 99);
-
-            var updatedRoutine = service.GetRoutine(routine.Id);
-
-            Assert.AreEqual("step-1", updatedRoutine.Steps[0].Id);
-            Assert.AreEqual("step-2", updatedRoutine.Steps[1].Id);
-            Assert.AreEqual(0, updatedRoutine.Steps[0].Order);
-            Assert.AreEqual(1, updatedRoutine.Steps[1].Order);
-        }
-
         [TestMethod]
         public void ValidateStep_WithNullValue_ReturnsFalse()
         {

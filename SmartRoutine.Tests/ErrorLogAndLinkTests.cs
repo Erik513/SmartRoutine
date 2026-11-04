@@ -86,7 +86,7 @@ namespace SmartRoutine.Tests
     [TestClass]
     public class ExternalLinkPolicyTests
     {
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("https://example.com/page")]
         [DataRow("http://example.com")]
         [DataRow("HTTPS://EXAMPLE.COM")]
@@ -97,7 +97,7 @@ namespace SmartRoutine.Tests
             Assert.IsTrue(ExternalLinkPolicy.IsAllowed(uri));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("file:///C:/Windows/System32/calc.exe")]
         [DataRow("ms-msdt:/id PCWDiagnostic")]
         [DataRow("javascript:alert(1)")]

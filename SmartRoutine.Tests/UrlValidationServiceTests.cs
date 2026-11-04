@@ -8,7 +8,7 @@ namespace SmartRoutine.Tests
     {
         private readonly UrlValidationService _service = new UrlValidationService();
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("https://example.com")]
         [DataRow("HTTP://EXAMPLE.COM")]
         [DataRow("ftp://files.example.com")]
@@ -21,7 +21,7 @@ namespace SmartRoutine.Tests
             Assert.IsTrue(_service.IsValidUrl(url));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(null)]
         [DataRow("")]
         [DataRow("   ")]
@@ -33,7 +33,7 @@ namespace SmartRoutine.Tests
             Assert.IsFalse(_service.IsValidUrl(url));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("example.com", "https://example.com")]
         [DataRow("www.example.de/pfad?x=1", "https://www.example.de/pfad?x=1")]
         [DataRow("192.168.1.1", "http://192.168.1.1")]

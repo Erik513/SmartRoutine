@@ -129,7 +129,7 @@ namespace SmartRoutine.Tests
     [TestClass]
     public class StartupLanguageTests
     {
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("de-DE")]
         [DataRow("de-AT")]
         [DataRow("de-CH")]
@@ -139,7 +139,7 @@ namespace SmartRoutine.Tests
             Assert.AreEqual(ErikwnkWFUI.Styles.UILanguage.German, SmartRoutine.Localization.StartupLanguage.For(new System.Globalization.CultureInfo(culture)));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("en-US")]
         [DataRow("en-GB")]
         [DataRow("fr-FR")]

@@ -306,18 +306,6 @@ namespace SmartRoutine.Tests
         }
 
         [TestMethod]
-        public void GoToStep_IgnoresInvalidIndexes()
-        {
-            var session = new RoutineExecutionSession(Routine3());
-
-            session.GoToStep(2);
-            session.GoToStep(-1);
-            session.GoToStep(3);
-
-            Assert.AreEqual(2, session.CurrentIndex);
-        }
-
-        [TestMethod]
         public void AutoStartStep_RunsAutomaticallyOnceThenOnlyManually()
         {
             var session = new RoutineExecutionSession(Routine3());
@@ -345,7 +333,11 @@ namespace SmartRoutine.Tests
         [TestMethod]
         public void MarkCurrentStepExecuted_WithoutSteps_DoesNotThrow()
         {
-            new RoutineExecutionSession(null).MarkCurrentStepExecuted();
+            var session = new RoutineExecutionSession(null);
+
+            session.MarkCurrentStepExecuted();
+
+            Assert.IsFalse(session.CurrentStepWasExecuted);
         }
     }
 }

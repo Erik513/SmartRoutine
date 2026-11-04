@@ -51,13 +51,6 @@ namespace SmartRoutine.Localization
             return () => S(key, args);
         }
 
-        /// <summary>Raised when the language has changed (for what cannot be bound to one control).</summary>
-        public static event EventHandler LanguageChanged
-        {
-            add { AppLocalization.LanguageChanged += value; }
-            remove { AppLocalization.LanguageChanged -= value; }
-        }
-
         /// <summary>All keys and texts of a language (for the tests that compare the tables).</summary>
         public static IReadOnlyDictionary<string, string> Table(AppLanguage language)
         {
