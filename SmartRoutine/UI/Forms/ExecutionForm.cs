@@ -81,7 +81,7 @@ namespace SmartRoutine.UI.Forms
         {
             ConfigureForm();
 
-            _infoPopup = UIStyles.InfoPopups.CreateStandard();
+            _infoPopup = UIStyles.InfoPopups.CreatePrimary();
 
             // The popup also shows while another program is in front (the form is often next to others).
             _infoPopup.ShowAlways = true;

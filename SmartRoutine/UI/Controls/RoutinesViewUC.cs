@@ -34,7 +34,7 @@ namespace SmartRoutine.UI.Controls
         private TitledListBox lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine, btnStartRoutineAuto;
 
-        private InfoPopupForm _routineInfoPopup = UIStyles.InfoPopups.CreateStandard();
+        private InfoPopupForm _routineInfoPopup = UIStyles.InfoPopups.CreatePrimary();
         private int _lastHoveredRoutineIndex = -1;
 
 
@@ -89,7 +89,7 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeRoutineList()
         {
-            lstRoutines = UIStyles.TitledListBoxes.CreateStandard(
+            lstRoutines = UIStyles.TitledListBoxes.CreatePrimary(
                 headerTitle: Loc.S("Routines.Title"),
                 displayMember: "Name",
                 allowReorder: true,

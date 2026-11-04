@@ -27,7 +27,7 @@ namespace SmartRoutine.UI.Helpers
         /// <summary>A toggle switch whose two tooltips (on / off) are texts by key.</summary>
         public static ToggleSwitch CreateToggle(bool isChecked, string checkedKey, string uncheckedKey)
         {
-            ToggleSwitch toggle = UIStyles.ToggleSwitches.CreateStandard(isChecked);
+            ToggleSwitch toggle = UIStyles.ToggleSwitches.CreatePrimary(isChecked);
 
             UIStyles.Localize(toggle, t =>
             {

@@ -58,14 +58,14 @@ namespace SmartRoutine.UI.Controls
 
             routineInfoTable = new PropertyTable();
 
-            txtRoutineName = UIStyles.TextBoxes.CreateLockable();
+            txtRoutineName = UIStyles.TextBoxes.CreateLockable(colors: UIStyles.Colors.Sets.Primary);
             txtRoutineName.Dock = DockStyle.Fill;
             txtRoutineName.MaxLength = 40;
             txtRoutineName.EditAccepted += TxtRoutineName_EditAccepted;
             
             routineInfoTable.AddRow(Loc.F("Editor.RoutineName"), PropertyColumn.Percent(txtRoutineName, 100));
 
-            lstSteps = UIStyles.TitledListBoxes.CreateStandard(
+            lstSteps = UIStyles.TitledListBoxes.CreatePrimary(
                 headerTitle: Loc.S("Editor.StepsTitle"),
                 displayMember: "Name",
                 allowReorder: true,
@@ -149,7 +149,7 @@ namespace SmartRoutine.UI.Controls
             txtStepDescription = UIStyles.TextBoxes.CreateBorderless();
             txtStepDescription.Dock = DockStyle.Fill;
 
-            cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
+            cmbStepType = UIStyles.ComboBoxes.CreatePrimary(ComboBoxStyle.DropDownList);
             cmbStepType.Dock = DockStyle.Fill;
 
             // No DataSource binding on purpose: a combo box bound by DataSource
