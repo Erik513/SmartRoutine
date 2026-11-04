@@ -1,6 +1,7 @@
 ﻿using ErikwnkWFUI;
 using ErikwnkWFUI.Controls;
 using ErikwnkWFUI.Forms;
+using ErikwnkWFUI.Styles;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.UI.Helpers;
@@ -119,30 +120,11 @@ namespace SmartRoutine.UI.Controls
 
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnNewRoutine = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Add, "Neue Routine erstellen");
-            btnNewRoutine.Dock = DockStyle.Fill;
-            btnNewRoutine.Margin = new Padding(5);
-            btnNewRoutine.Click += BtnNewRoutine_Click;
-
-            btnEditRoutine = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Edit, "Routine bearbeiten");
-            btnEditRoutine.Dock = DockStyle.Fill;
-            btnEditRoutine.Margin = new Padding(5);
-            btnEditRoutine.Click += BtnEditRoutine_Click;
-
-            btnDeleteRoutine = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Delete, "Routine löschen");
-            btnDeleteRoutine.Dock = DockStyle.Fill;
-            btnDeleteRoutine.Margin = new Padding(5);
-            btnDeleteRoutine.Click += BtnDeleteRoutine_Click;
-
-            btnStartRoutine = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Play, "Routine starten");
-            btnStartRoutine.Dock = DockStyle.Fill;
-            btnStartRoutine.Margin = new Padding(5, 5, 0, 5);
-            btnStartRoutine.Click += BtnStartRoutine_Click;
-
-            btnStartRoutineAuto = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Lightning, "Routine mit Auto-Ausführung starten");
-            btnStartRoutineAuto.Dock = DockStyle.Fill;
-            btnStartRoutineAuto.Margin = new Padding(0, 5, 5, 5);
-            btnStartRoutineAuto.Click += BtnStartRoutineAuto_Click;
+            btnNewRoutine = CreateRoutineButton(UIStyles.Buttons.Presets.Add, "Neue Routine erstellen", new Padding(5), BtnNewRoutine_Click);
+            btnEditRoutine = CreateRoutineButton(UIStyles.Buttons.Presets.Edit, "Routine bearbeiten", new Padding(5), BtnEditRoutine_Click);
+            btnDeleteRoutine = CreateRoutineButton(UIStyles.Buttons.Presets.Delete, "Routine löschen", new Padding(5), BtnDeleteRoutine_Click);
+            btnStartRoutine = CreateRoutineButton(UIStyles.Buttons.Presets.Play, "Routine starten", new Padding(5, 5, 0, 5), BtnStartRoutine_Click);
+            btnStartRoutineAuto = CreateRoutineButton(UIStyles.Buttons.Presets.Lightning, "Routine mit Auto-Ausführung starten", new Padding(0, 5, 5, 5), BtnStartRoutineAuto_Click);
 
             buttonPanel.Controls.Add(btnNewRoutine, 0, 0);
             buttonPanel.Controls.Add(btnEditRoutine, 1, 0);
@@ -151,10 +133,20 @@ namespace SmartRoutine.UI.Controls
             buttonPanel.Controls.Add(btnStartRoutineAuto, 5, 0);
         }
 
+        private static Button CreateRoutineButton(UIButtonPreset preset, string tooltip, Padding margin, EventHandler onClick)
+        {
+            Button button = UIStyles.Buttons.CreateSymbol(preset, tooltip);
+            button.Dock = DockStyle.Fill;
+            button.Margin = margin;
+            button.Click += onClick;
+
+            return button;
+        }
+
         private void BtnNewRoutine_Click(object sender, EventArgs e)
         {
-            int nextNumber = GetNextRoutineNumber();
-            string newRoutineName = $"Meine Routine {nextNumber}";
+            int nextNumber = GetNextRoutineNumber(_routineService.GetAllRoutines());
+            string newRoutineName = DefaultRoutineNamePrefix + nextNumber;
 
             var newRoutine = _routineService.CreateRoutine(newRoutineName);
 
@@ -198,16 +190,16 @@ namespace SmartRoutine.UI.Controls
 
         private void BtnStartRoutine_Click(object sender, EventArgs e)
         {
-            if (_selectedRoutine == null)
-                return;
-
-            Routine routineToStart = _selectedRoutine;
-
-            ClearRoutineSelection();
-
-            StartRoutineClicked?.Invoke(this, routineToStart);
+            StartSelectedRoutine(StartRoutineClicked);
         }
+
         private void BtnStartRoutineAuto_Click(object sender, EventArgs e)
+        {
+            StartSelectedRoutine(StartRoutineAutoClicked);
+        }
+
+        // Clears the selection and raises the given start event for the routine that was selected.
+        private void StartSelectedRoutine(EventHandler<Routine> startEvent)
         {
             if (_selectedRoutine == null)
                 return;
@@ -216,7 +208,7 @@ namespace SmartRoutine.UI.Controls
 
             ClearRoutineSelection();
 
-            StartRoutineAutoClicked?.Invoke(this, routineToStart);
+            startEvent?.Invoke(this, routineToStart);
         }
 
         private void ClearRoutineSelection()
@@ -245,15 +237,14 @@ namespace SmartRoutine.UI.Controls
         }
 
 
-        private int GetNextRoutineNumber()
+        // The number for the next default name: one more than the highest "Meine Routine <n>" in use.
+        private static int GetNextRoutineNumber(IEnumerable<Routine> routines)
         {
-            var routines = _routineService.GetAllRoutines();
-
             int maxNumber = routines
-                .Where(r => r.Name.StartsWith(DefaultRoutineNamePrefix))
+                .Where(r => r.Name != null && r.Name.StartsWith(DefaultRoutineNamePrefix))
                 .Select(r =>
                 {
-                    string numberPart = r.Name.Substring("Meine Routine ".Length);
+                    string numberPart = r.Name.Substring(DefaultRoutineNamePrefix.Length);
                     return int.TryParse(numberPart, out int num) ? num : 0;
                 })
                 .DefaultIfEmpty(0)
@@ -261,8 +252,6 @@ namespace SmartRoutine.UI.Controls
 
             return maxNumber + 1;
         }
-
-
 
         private void CenterControls(TableLayoutPanel layout)
         {
@@ -372,7 +361,7 @@ namespace SmartRoutine.UI.Controls
             _routineInfoPopup.Hide();
         }
 
-        private string BuildStepListText(List<RoutineStep> steps)
+        private static string BuildStepListText(List<RoutineStep> steps)
         {
             if (steps == null || steps.Count == 0)
                 return "Keine";
