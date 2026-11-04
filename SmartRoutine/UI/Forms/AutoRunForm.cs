@@ -21,6 +21,7 @@ namespace SmartRoutine.UI.Forms
         private Label _statusLabel;
         private Label _stepLabel;
         private ProgressBar _progressBar;
+        private readonly System.Collections.Generic.List<string> _failedSteps = new System.Collections.Generic.List<string>();
         private Button _cancelButton;
 
         private bool _cancelRequested;
@@ -147,8 +148,16 @@ namespace SmartRoutine.UI.Forms
             if (_currentIndex >= _steps.Count)
             {
                 MarkRoutineExecuted();
-                _statusLabel.Text = "Fertig.";
-                _stepLabel.Text = "Alle Schritte wurden ausgeführt.";
+                if (_failedSteps.Count == 0)
+                {
+                    _statusLabel.Text = "Fertig.";
+                    _stepLabel.Text = "Alle Schritte wurden ausgeführt.";
+                }
+                else
+                {
+                    _statusLabel.Text = "Fertig, aber mit Fehlern.";
+                    _stepLabel.Text = "Nicht ausgeführt: " + string.Join(", ", _failedSteps);
+                }
                 _cancelButton.Text = UIStyles.Symbols.Check;
                 UIStyles.Buttons.UpdateTooltip(_cancelButton, "Schließen");
                 _cancelButton.Enabled = true;
@@ -174,7 +183,8 @@ namespace SmartRoutine.UI.Forms
             }
             catch
             {
-                // Optional später: Fehlerliste anzeigen
+                // The run goes on with the next step; the failed ones are listed at the end.
+                _failedSteps.Add(step.Name);
             }
 
             _currentIndex++;

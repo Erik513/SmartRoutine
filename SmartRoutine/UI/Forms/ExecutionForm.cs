@@ -40,6 +40,9 @@ namespace SmartRoutine.UI.Forms
 
         private InfoPopupForm _infoPopup;
         private string _pendingToastMessage;
+        private string _pendingErrorMessage;
+        private bool _isExecuting;
+        private Timer _bringToFrontTimer;
 
         private Timer _autoContinueTimer;
         private int _autoContinueSecondsLeft;
@@ -415,12 +418,32 @@ namespace SmartRoutine.UI.Forms
             if (_session == null || _session.CurrentStep == null)
                 return;
 
+            // A second click while the step is still being started must not start it twice.
+            if (_isExecuting)
+                return;
+
             RoutineStep step = _session.CurrentStep;
 
             StepExecutionResult result = null;
 
-            if (_onStepExecute != null)
-                result = _onStepExecute(step);
+            _isExecuting = true;
+
+            try
+            {
+                if (_onStepExecute != null)
+                    result = _onStepExecute(step);
+            }
+            catch (Exception ex)
+            {
+                // The step failed (a file, folder or program that is gone, no permission ...): it is not
+                // marked as executed, nothing continues by itself, and the user is told.
+                ReportExecutionFailure(step, ex);
+                return;
+            }
+            finally
+            {
+                _isExecuting = false;
+            }
 
             _session.MarkCurrentStepExecuted();
 
@@ -444,16 +467,57 @@ namespace SmartRoutine.UI.Forms
             BringToFront();
             Activate();
 
-            Timer timer = new Timer();
-            timer.Interval = 200;
-            timer.Tick += (s, e) =>
+            StopBringToFrontTimer();
+
+            _bringToFrontTimer = new Timer();
+            _bringToFrontTimer.Interval = 200;
+            _bringToFrontTimer.Tick += (s, e) =>
             {
-                timer.Stop();
-                timer.Dispose();
-                TopMost = false;
+                StopBringToFrontTimer();
+
+                if (!IsDisposed)
+                    TopMost = false;
             };
 
-            timer.Start();
+            _bringToFrontTimer.Start();
+        }
+
+        private void StopBringToFrontTimer()
+        {
+            if (_bringToFrontTimer == null)
+                return;
+
+            _bringToFrontTimer.Stop();
+            _bringToFrontTimer.Dispose();
+            _bringToFrontTimer = null;
+        }
+
+        private void ReportExecutionFailure(RoutineStep step, Exception ex)
+        {
+            _pendingErrorMessage =
+                $"Der Schritt '{step?.Name}' konnte nicht ausgeführt werden:\n\n{ex.Message}";
+
+            // Shown at once when the window is up; when the step ran while the window was still being
+            // built (an auto-start step), OnShown shows it.
+            if (IsHandleCreated && Visible)
+                ShowPendingErrorIfNeeded();
+        }
+
+        private void ShowPendingErrorIfNeeded()
+        {
+            if (string.IsNullOrWhiteSpace(_pendingErrorMessage))
+                return;
+
+            string message = _pendingErrorMessage;
+            _pendingErrorMessage = null;
+
+            ErikwnkWFUI.Forms.MessageBox.Show(
+                message,
+                "Ausführung fehlgeschlagen",
+                ErikwnkWFUI.Forms.MessageBoxButtons.OK,
+                ErikwnkWFUI.Forms.MessageBoxIcon.Warning,
+                this,
+                FormSize.Medium);
         }
 
         private bool ShouldAutoContinue(
@@ -562,7 +626,11 @@ namespace SmartRoutine.UI.Forms
             if (_session == null || _session.CurrentStep == null || _infoPopup == null)
                 return;
 
-            _infoPopup.SetContent("Beschreibung", _session.CurrentStep.Description);
+            string description = _session.CurrentStep.Description;
+
+            _infoPopup.SetContent(
+                "Beschreibung",
+                string.IsNullOrWhiteSpace(description) ? "Keine Beschreibung" : description);
             _infoPopup.ShowNextTo(_infoLabel);
         }
 
@@ -667,6 +735,7 @@ namespace SmartRoutine.UI.Forms
             TopMost = false;
 
             ShowPendingToastIfNeeded();
+            ShowPendingErrorIfNeeded();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -675,6 +744,7 @@ namespace SmartRoutine.UI.Forms
             StopAndDisposeWebView();
             DisposePopup();
             StopAutoContinueCountdown();
+            StopBringToFrontTimer();
 
             base.OnFormClosing(e);
         }
