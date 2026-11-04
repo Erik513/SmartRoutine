@@ -40,6 +40,9 @@ namespace SmartRoutine.UI.Controls
         public RoutinesViewUC()
         {
             DoubleBuffered = true;
+
+            // The popup also shows while another program is in front.
+            _routineInfoPopup.ShowAlways = true;
         }
         public RoutinesViewUC(IRoutineService routineService) : this()
         {
