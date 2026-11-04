@@ -17,6 +17,13 @@ namespace SmartRoutine.UI.Forms
     {
         private int _stepDelayMilliseconds = 1000;
 
+        /// <summary>Pause between two steps in milliseconds (default 1000).</summary>
+        public int StepDelayMilliseconds
+        {
+            get { return _stepDelayMilliseconds; }
+            set { _stepDelayMilliseconds = value; }
+        }
+
         private readonly Routine _routine;
         private readonly Func<RoutineStep, StepExecutionResult> _onStepExecute;
         private readonly Action<Routine> _onRoutineExecuted;
