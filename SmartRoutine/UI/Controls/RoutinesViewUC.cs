@@ -98,6 +98,7 @@ namespace SmartRoutine.UI.Controls
             // coordinates (title bar included), but IndexFromPoint expects the coordinates of the list.
             lstRoutines.InnerListBox.MouseMove += LstRoutines_MouseMove;
             lstRoutines.InnerListBox.MouseLeave += LstRoutines_MouseLeave;
+            lstRoutines.InnerListBox.MouseDoubleClick += LstRoutines_MouseDoubleClick;
         }
         private void InitializeButtonPanel()
         {
@@ -169,6 +170,22 @@ namespace SmartRoutine.UI.Controls
                 return;
 
             EditRoutineClicked?.Invoke(this, _selectedRoutine);
+        }
+
+        // A double click on a routine opens it in the editor, like the edit button. Only a click on
+        // an item counts (not on the empty room below the items); the first click has selected it.
+        private void LstRoutines_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left)
+                return;
+
+            int index = lstRoutines.InnerListBox.IndexFromPoint(e.Location);
+
+            if (index < 0 || index >= lstRoutines.Items.Count)
+                return;
+
+            lstRoutines.SelectedIndex = index;
+            BtnEditRoutine_Click(sender, e);
         }
 
         private void BtnDeleteRoutine_Click(object sender, EventArgs e)
