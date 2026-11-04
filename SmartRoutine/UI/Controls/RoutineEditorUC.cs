@@ -8,16 +8,13 @@ using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls.StepEditors;
-using SmartRoutine.UI.Forms;
 using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using ComboBox = System.Windows.Forms.ComboBox;
-using FlowLayoutPanel = System.Windows.Forms.FlowLayoutPanel;
 using Panel = System.Windows.Forms.Panel;
 using TableLayoutPanel = System.Windows.Forms.TableLayoutPanel;
 
