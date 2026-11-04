@@ -447,6 +447,104 @@ namespace SmartRoutine.Tests.UI
         }
 
 
+        // Duplicate / Renumber Tests
+
+        private static object InvokeStatic(string name, params object[] args)
+        {
+            MethodInfo method = typeof(RoutineEditorUC).GetMethod(
+                name,
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            return method.Invoke(null, args);
+        }
+
+        private static OpenUrlStep Step(string id, int order)
+        {
+            return new OpenUrlStep { Id = id, Name = "Step " + id, Order = order, Url = "https://example.com" };
+        }
+
+        [TestMethod]
+        public void RenumberSteps_SetsOrderToListPosition()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep> { Step("a", 7), Step("b", 3), Step("c", 3) };
+
+            InvokeStatic("RenumberSteps", steps);
+
+            Assert.AreEqual(0, steps[0].Order);
+            Assert.AreEqual(1, steps[1].Order);
+            Assert.AreEqual(2, steps[2].Order);
+        }
+
+        [TestMethod]
+        public void RenumberSteps_EmptyList_DoesNotThrow()
+        {
+            InvokeStatic("RenumberSteps", new System.Collections.Generic.List<RoutineStep>());
+        }
+
+        [TestMethod]
+        public void InsertDuplicateAfter_PutsCopyBehindOriginalWithNewIdAndName()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep> { Step("a", 0), Step("b", 1), Step("c", 2) };
+
+            var copy = (RoutineStep)InvokeStatic("InsertDuplicateAfter", steps, steps[1]);
+
+            Assert.IsNotNull(copy);
+            Assert.AreEqual(4, steps.Count);
+            Assert.AreSame(copy, steps[2]);
+            Assert.AreNotEqual("b", copy.Id);
+            Assert.AreEqual("Step b Kopie", copy.Name);
+            Assert.AreEqual("https://example.com", ((OpenUrlStep)copy).Url);
+
+            for (int i = 0; i < steps.Count; i++)
+                Assert.AreEqual(i, steps[i].Order);
+        }
+
+        [TestMethod]
+        public void InsertDuplicateAfter_LastStep_AppendsCopy()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep> { Step("a", 0), Step("b", 1) };
+
+            var copy = (RoutineStep)InvokeStatic("InsertDuplicateAfter", steps, steps[1]);
+
+            Assert.AreSame(copy, steps[2]);
+            Assert.AreEqual(2, copy.Order);
+        }
+
+        [TestMethod]
+        public void InsertDuplicateAfter_StepNotInList_ReturnsNullAndKeepsList()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep> { Step("a", 0) };
+
+            var copy = InvokeStatic("InsertDuplicateAfter", steps, Step("x", 5));
+
+            Assert.IsNull(copy);
+            Assert.AreEqual(1, steps.Count);
+        }
+
+        [TestMethod]
+        public void DuplicateButton_SavesRoutineWithCopyBehindSelectedStep()
+        {
+            _testRoutine.Steps.Add(Step("1", 0));
+            _testRoutine.Steps.Add(Step("2", 1));
+            _mockService.Setup(s => s.GetRoutine("test-id")).Returns(_testRoutine);
+
+            _editor.LoadRoutine(_testRoutine);
+
+            var lstSteps = GetPrivateField<TitledListBox>(_editor, "lstSteps");
+            lstSteps.SelectedIndex = 0;
+
+            GetPrivateField<Button>(_editor, "btnDuplicateStep").PerformClick();
+
+            _mockService.Verify(
+                s => s.SaveRoutine(It.Is<Routine>(r =>
+                    r.Steps.Count == 3 &&
+                    r.Steps[0].Id == "1" &&
+                    r.Steps[1].Name == "Step 1 Kopie" &&
+                    r.Steps[2].Id == "2" &&
+                    r.Steps[2].Order == 2)),
+                Times.Once);
+        }
+
         // BackButton Tests
 
 
