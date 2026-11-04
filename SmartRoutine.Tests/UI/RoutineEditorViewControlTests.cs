@@ -60,7 +60,7 @@ namespace SmartRoutine.Tests.UI
         {
             _editor.LoadRoutine(_testRoutine);
 
-            // Überprüfung über Reflection (da txtRoutineName private ist)
+            // Checked through reflection (txtRoutineName is private)
             var txtRoutineName = GetPrivateField<TextBox>(_editor, "txtRoutineName");
             Assert.AreEqual("Test Routine", txtRoutineName.Text);
         }
@@ -206,7 +206,7 @@ namespace SmartRoutine.Tests.UI
             btnAddStep.PerformClick();
 
             var rightTlp = GetPrivateField<TableLayoutPanel>(_editor, "rightTlp");
-            Assert.IsTrue(rightTlp.Visible); // Editor ist sichtbar
+            Assert.IsTrue(rightTlp.Visible); // the editor is visible
 
             var btnCancelStep = GetPrivateField<Button>(_editor, "btnCancelStep");
 
@@ -272,8 +272,8 @@ namespace SmartRoutine.Tests.UI
             var editorOptionsTable =
                 GetPrivateField<PropertyTable>(_editor, "editorOptionsTable");
 
-            // txtUrl gehört jetzt zum OpenUrlStepEditor (nicht mehr direktes Feld von
-            // RoutineEditorUC), daher Suche über den Control-Baum statt Reflection auf das Feld.
+            // txtUrl belongs to the OpenUrlStepEditor now (no longer a direct field of
+            // RoutineEditorUC), so it is searched in the control tree instead of by reflection on the field.
             var txtUrl = FindControlByName(editorOptionsTable, "txtUrl");
 
             Assert.IsTrue(editorOptionsTable.Visible);
@@ -283,10 +283,10 @@ namespace SmartRoutine.Tests.UI
         [TestMethod]
         public void AddStep_AfterSelectingNonUrlStep_ClearsStepTypeSelection()
         {
-            // Regressionstest: cmbStepType ist NICHT mehr per DataSource gebunden.
-            // Vorher sprang die Auswahl beim Klick auf "Schritt hinzufügen" wieder auf
-            // "Webseite öffnen" (Index 0) zurück, aber nur wenn zuvor ein Schritt eines
-            // ANDEREN Typs (z.B. Ordner öffnen) ausgewählt war.
+            // Regression test: cmbStepType is no longer bound by DataSource.
+            // Before, the selection jumped back to
+            // "Open website" (index 0) when "Add step" was clicked, but only if a step of
+            // ANOTHER type (for example open folder) had been selected.
             _testRoutine.Steps.Add(new OpenFolderStep
             {
                 Id = "folder-step",
@@ -300,7 +300,7 @@ namespace SmartRoutine.Tests.UI
             lstSteps.SelectedIndex = 0;
 
             var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
-            Assert.AreNotEqual(-1, cmbStepType.SelectedIndex, "Vorbedingung: Ordner-Step sollte einen Typ auswählen.");
+            Assert.AreNotEqual(-1, cmbStepType.SelectedIndex, "Precondition: the folder step should select a type.");
 
             var btnAddStep = GetPrivateField<Button>(_editor, "btnAddStep");
             btnAddStep.PerformClick();
@@ -548,7 +548,7 @@ namespace SmartRoutine.Tests.UI
         // BackButton Tests
 
 
-        // Hilfsmethode für Reflection
+        // Helper methods for reflection
 
         private T GetPrivateField<T>(object obj, string fieldName)
         {

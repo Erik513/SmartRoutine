@@ -60,9 +60,9 @@ namespace SmartRoutine.UI.Forms
         {
             base.OnShown(e);
 
-            // OnShown feuert auch erneut, wenn das Form nach ExecuteFullRoutine's
-            // Hide()/Show()-Wechsel wieder sichtbar wird - der Update-Check soll
-            // aber nur einmal pro Programmstart laufen.
+            // OnShown also fires again when the form becomes visible after the
+            // Hide()/Show() switch of ExecuteFullRoutine - the update check
+            // is to run only once per program start, though.
             if (_updateCheckStarted)
                 return;
 
@@ -215,9 +215,9 @@ namespace SmartRoutine.UI.Forms
 
         private void RefreshAfterHiddenExecutionForm()
         {
-            // Form wurde während der Routinenausführung per Hide()/Show() ausgeblendet.
-            // Die selbstgezeichnete, gecachte Titelleiste (TitleBarControl) bekommt dabei
-            // keinen automatischen Repaint, deshalb hier das ganze Form explizit invalidieren.
+            // The form was hidden with Hide()/Show() while the routine was run.
+            // The self-drawn, cached title bar (TitleBarControl) gets no automatic
+            // repaint then, so the whole form is invalidated explicitly here.
             Refresh();
         }
         private void ExecuteFullRoutineAuto(Routine routine)
@@ -316,7 +316,7 @@ namespace SmartRoutine.UI.Forms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Fehler beim Cleanup: {ex.Message}");
+                Console.WriteLine($"Error during cleanup: {ex.Message}");
             }
         }
 

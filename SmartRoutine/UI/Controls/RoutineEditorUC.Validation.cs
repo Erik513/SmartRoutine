@@ -27,7 +27,7 @@ namespace SmartRoutine.UI.Controls
         {
             string routineName = txtRoutineName.Text.Trim();
 
-            // Prüfen ob Name leer ist
+            // Check whether the name is empty
             if (string.IsNullOrWhiteSpace(routineName))
             {
                 if (!AutoConfirmDialogs)
@@ -45,7 +45,7 @@ namespace SmartRoutine.UI.Controls
                 return false;
             }
 
-            // Prüfen ob Name bereits existiert
+            // Check whether the name exists already
             var existingRoutines = _routineService.GetAllRoutines();
             bool nameExists = existingRoutines.Any(r =>
                 r.Name.Equals(routineName, StringComparison.OrdinalIgnoreCase) &&

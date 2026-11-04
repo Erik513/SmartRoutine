@@ -1,21 +1,22 @@
 # SmartRoutine
 
-SmartRoutine ist eine kleine Windows-Desktop-App zur Automatisierung wiederkehrender Arbeitsabläufe: Eine Routine wird einmal als Abfolge von Schritten definiert — Webseite öffnen, Ordner öffnen, Programm starten, Dokument öffnen — und lässt sich danach mit einem Klick starten.
+SmartRoutine is a small Windows desktop app for automating recurring workflows: a routine is defined once as a sequence of steps — open a website, open a folder, start a program, open a document — and can then be started with one click.
 
-![Routinenliste mit zwei Beispielroutinen](docs/screenshots/routines-list.png)
+![Routine list with two sample routines](docs/screenshots/routines-list.png)
 
-![Routineneditor mit allen vier Schritttypen, Ordner-Schritt ausgewählt](docs/screenshots/routine-editor.png)
+![Routine editor with all four step types, folder step selected](docs/screenshots/routine-editor.png)
 
-## Funktionen
+## Features
 
-- Routinen aus beliebig vielen Schritten (Webseite, Ordner, Programm, Dokument), per Drag & Drop sortierbar
-- Geführte oder automatische Ausführung
-- Automatische Updates über GitHub
+- Routines with any number of steps (website, folder, program, document), sortable by drag and drop
+- Guided or automatic run
+- Automatic updates through GitHub
+- English and German user interface; it starts in the language of Windows, and the language and the theme can be changed in the bar at the bottom of the main window
 
 ## Download
 
-Aktuelle Version von der [Releases-Seite](https://github.com/Erik513/SmartRoutine/releases): `SmartRoutine.exe` herunterladen und starten, kein Installer nötig. Updates werden danach automatisch erkannt.
+Get the latest version from the [Releases page](https://github.com/Erik513/SmartRoutine/releases): download `SmartRoutine.exe` and start it, no installer needed. Updates are detected automatically afterwards.
 
-## Bedienung
+## Usage
 
-Mit **+** eine Routine anlegen, mit **+ Schritt hinzufügen** Schritte ergänzen. Danach mit **▶** manuell durchgehen oder mit **⚡** automatisch ausführen.
+Create a routine with **+**, add steps with **+ Add step**. Then go through it manually with **▶** or run it automatically with **⚡**.

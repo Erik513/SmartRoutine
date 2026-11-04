@@ -1,24 +1,22 @@
-﻿
-
-namespace SmartRoutine.Logic.Interfaces
+﻿namespace SmartRoutine.Logic.Interfaces
 {
     public interface IUrlValidationService
     {
         /// <summary>
-        /// Validiert und repariert eine URL wenn möglich
+        /// Validates a URL and repairs it if possible.
         /// </summary>
-        /// <param name="url">Die zu validierende URL</param>
-        /// <param name="allowEmpty">Ob eine leere URL erlaubt ist</param>
-        /// <returns>Tuple mit (IstGültig, ReparierteUrl, Fehlermeldung)</returns>
+        /// <param name="url">The URL to validate.</param>
+        /// <param name="allowEmpty">Whether an empty URL is allowed.</param>
+        /// <returns>A tuple (IsValid, RepairedUrl, ErrorMessage); the message is in the language of the program.</returns>
         (bool IsValid, string RepairedUrl, string ErrorMessage) ValidateAndRepairUrl(string url, bool allowEmpty = false);
 
         /// <summary>
-        /// Prüft ob eine URL gültig ist
+        /// Checks whether a URL is valid.
         /// </summary>
         bool IsValidUrl(string url);
 
         /// <summary>
-        /// Versucht eine URL zu reparieren
+        /// Tries to repair a URL.
         /// </summary>
         string TryRepairUrl(string input);
     }

@@ -23,7 +23,7 @@ namespace SmartRoutine.UI.Controls
 {
     public partial class RoutineEditorUC : UserControl
     {
-        // Für Tests: Wenn true, werden MessageBoxen automatisch mit "Ja" beantwortet
+        // For tests: when true, message boxes are answered with "Yes" automatically
         public bool AutoConfirmDialogs { get; set; } = false;
 
         public event EventHandler BackToRoutinesClicked;
@@ -43,16 +43,16 @@ namespace SmartRoutine.UI.Controls
         // UI Controls
         private TableLayoutPanel mainTlp;
 
-        // Inhalt (links + rechts)
+        // Content (left + right)
         private TableLayoutPanel contentTlp;
 
-        // Linke Seite
+        // Left side
         private TableLayoutPanel leftTlp;
         private PropertyTable routineInfoTable;
         private LockableTextBox txtRoutineName;
         private TitledListBox lstSteps;
 
-        // Rechte Seite
+        // Right side
         private TableLayoutPanel rightTlp;
         private TableLayoutPanel rightTitleTlp;
         private Button btnExecuteStep;
@@ -72,7 +72,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel rightBtnsTlp;
         private Button btnSaveStep, btnCancelStep;
 
-        // Ein IStepTypeEditor pro StepType kapselt dessen Controls, Laden/Speichern und Validierung.
+        // One IStepTypeEditor per StepType wraps its controls, loading/saving and validation.
         private readonly Dictionary<StepType, IStepTypeEditor> _stepEditors;
         private IStepTypeEditor _activeStepEditor;
 
@@ -420,9 +420,9 @@ namespace SmartRoutine.UI.Controls
 
             SetEditorEnabled(false);
 
-            // Ohne diesen erzwungenen Repaint bleibt z.B. die zuvor im ComboBox
-            // angezeigte Auswahl und die alten Options-Controls optisch stehen,
-            // obwohl der Zustand darunter bereits korrekt zurückgesetzt ist.
+            // Without this forced repaint, for example the selection that was shown in the combo box before
+            // and the old option controls would stay on the screen,
+            // although the state underneath has been reset correctly.
             cmbStepType.Refresh();
             editorOptionsTable.PerformLayout();
             editorOptionsTable.Refresh();
@@ -849,9 +849,9 @@ namespace SmartRoutine.UI.Controls
             if (step == null)
                 return;
 
-            // Liste (inkl. Icon/Name) muss immer aktualisiert werden, auch wenn direkt
-            // im Anschluss ausgeführt wird (showSavedToast = false) und daher keine
-            // "gespeichert"-Meldung angezeigt werden soll.
+            // The list (with icon/name) must always be updated, even when the step is run
+            // right afterwards (showSavedToast = false) and therefore no
+            // "saved" message is to be shown.
             RoutineStep selectedStep = _editingStep;
 
             _isRefreshing = true;

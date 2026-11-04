@@ -390,9 +390,9 @@ namespace SmartRoutine.Tests.Data
             try
             {
                 var repository = new RoutineRepository(Path.Combine(folder, "meine routinen.db"));
-                repository.AddRoutine(new Routine { Id = "x", Name = "Mit Leerzeichen" });
+                repository.AddRoutine(new Routine { Id = "x", Name = "With spaces" });
 
-                Assert.AreEqual("Mit Leerzeichen", repository.GetRoutine("x").Name);
+                Assert.AreEqual("With spaces", repository.GetRoutine("x").Name);
             }
             finally
             {

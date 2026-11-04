@@ -105,7 +105,7 @@ namespace SmartRoutine.Tests
             var original = Url();
             var copy = (OpenUrlStep)RoutineStepFactory.CreateCopy(original);
 
-            copy.Name = "geändert";
+            copy.Name = "changed";
             copy.Url = "https://other.example";
 
             Assert.AreEqual("Url", original.Name);

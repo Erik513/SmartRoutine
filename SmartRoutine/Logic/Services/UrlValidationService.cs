@@ -8,7 +8,7 @@ namespace SmartRoutine.Logic.Services
 {
     public class UrlValidationService : IUrlValidationService
     {
-        // Unterstützte Protokolle
+        // Supported protocols
         private static readonly string[] SupportedSchemes =
         {
             "http",
@@ -20,7 +20,7 @@ namespace SmartRoutine.Logic.Services
             "data"
         };
 
-        // Bekannte Domain-Erweiterungen für automatische Erkennung
+        // Well-known domain endings for the automatic recognition
         private static readonly string[] CommonTlds =
         {
             ".com", ".org", ".net", ".de", ".uk", ".fr", ".it", ".es", ".nl",
@@ -30,7 +30,7 @@ namespace SmartRoutine.Logic.Services
 
         public (bool IsValid, string RepairedUrl, string ErrorMessage) ValidateAndRepairUrl(string url, bool allowEmpty = false)
         {
-            // Leere URLs sind optional erlaubt
+            // An empty URL is allowed if the caller says so
             if (string.IsNullOrWhiteSpace(url))
             {
                 if (allowEmpty)
@@ -41,20 +41,20 @@ namespace SmartRoutine.Logic.Services
 
             string trimmed = url.Trim();
 
-            // 1. Direkte Validierung
+            // 1. Direct validation
             if (IsValidUrl(trimmed))
                 return (true, trimmed, null);
 
-            // 2. Versuche zu reparieren
+            // 2. Try to repair it
             string repairedUrl = TryRepairUrl(trimmed);
 
-            // 3. Validiere die reparierte URL
+            // 3. Validate the repaired URL
             if (IsValidUrl(repairedUrl))
             {
                 return (true, repairedUrl, null);
             }
 
-            // 4. URL ist ungültig und konnte nicht repariert werden
+            // 4. The URL is invalid and could not be repaired
             string error = BuildErrorMessage(trimmed);
             return (false, url, error);
         }
@@ -118,7 +118,7 @@ namespace SmartRoutine.Logic.Services
             return trimmed;
         }
 
-        // ========== HILFSMETHODEN ==========
+        // ========== HELPER METHODS ==========
 
         private static string BuildErrorMessage(string url)
         {

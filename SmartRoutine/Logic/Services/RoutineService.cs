@@ -87,7 +87,7 @@ namespace SmartRoutine.Logic.Services
 
             for (int i = 0; i < reorderedRoutines.Count; i++)
             {
-                reorderedRoutines[i].Order = i; // nur Routine.Order
+                reorderedRoutines[i].Order = i; // only Routine.Order
             }
 
             foreach (var routine in reorderedRoutines)
@@ -199,7 +199,7 @@ namespace SmartRoutine.Logic.Services
 
             var steps = routine.Steps.ToList();
 
-            // VALIDIERUNG: Prüfe ob Indizes gültig sind
+            // Validation: both indexes must be in range
             if (oldIndex < 0 || oldIndex >= steps.Count) return;
             if (newIndex < 0 || newIndex >= steps.Count) return;
             if (oldIndex == newIndex) return;

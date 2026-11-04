@@ -33,7 +33,7 @@ namespace SmartRoutine.Data.Models
         public override StepType Type => StepType.OpenUrl;
 
         public string Url { get; set; } = string.Empty;
-        public bool OpenInExternalBrowser { get; set; } = true; // false = in App, true = externer Browser
+        public bool OpenInExternalBrowser { get; set; } = true; // false = open in the app, true = external browser
     }
 
     // OpenFolder Step

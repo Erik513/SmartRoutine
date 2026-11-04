@@ -96,8 +96,8 @@ namespace SmartRoutine.UI.Controls.StepEditors
                 return false;
             }
 
-            // Existenzprüfung: delegiert an RoutineService.ValidateStep, damit die
-            // Regel nur an einer Stelle gepflegt werden muss (auch für Ausführung ohne Editor).
+            // Existence check: delegated to RoutineService.ValidateStep, so that the
+            // rule is kept in one place only (also for running without the editor).
             var step = new OpenFolderStep { FolderPath = _txtFolderPath.Text };
 
             if (_routineService.ValidateStep(step, out string errorMessage))

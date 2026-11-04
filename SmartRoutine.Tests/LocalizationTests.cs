@@ -156,3 +156,67 @@ namespace SmartRoutine.Tests
         }
     }
 }
+
+namespace SmartRoutine.Tests
+{
+    // The source code is in English: German belongs into the table LocDe.cs (and the tests of the
+    // German texts) only. A German umlaut in a comment, a name or a text is a sign of a leftover.
+    [TestClass]
+    public class SourceLanguageTests
+    {
+        private static readonly string[] AllowedFiles =
+        {
+            "LocDe.cs",              // the German texts
+            "Resources.Designer.cs", // generated
+            "LocalizedTextTests.cs", // tests of the German texts
+            "LocalizationTests.cs",  // this file
+        };
+
+        [TestMethod]
+        public void NoGermanLettersInTheSourceCode()
+        {
+            string root = FindRepositoryRoot();
+            var found = new System.Collections.Generic.List<string>();
+            char separator = System.IO.Path.DirectorySeparatorChar;
+
+            foreach (string project in new[] { "SmartRoutine", "SmartRoutine.Tests" })
+            {
+                foreach (string file in System.IO.Directory.EnumerateFiles(System.IO.Path.Combine(root, project), "*.cs", System.IO.SearchOption.AllDirectories))
+                {
+                    if (file.Contains(separator + "obj" + separator) || file.Contains(separator + "bin" + separator))
+                        continue;
+
+                    if (System.Array.IndexOf(AllowedFiles, System.IO.Path.GetFileName(file)) >= 0)
+                        continue;
+
+                    string[] lines = System.IO.File.ReadAllLines(file);
+
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        if (lines[i].IndexOfAny("äöüÄÖÜß".ToCharArray()) >= 0)
+                            found.Add(System.IO.Path.GetFileName(file) + ":" + (i + 1));
+                    }
+                }
+            }
+
+            Assert.AreEqual(0, found.Count, "German letters in the code: " + string.Join(", ", found));
+        }
+
+        private static string FindRepositoryRoot()
+        {
+            string folder = System.AppContext.BaseDirectory;
+
+            while (folder != null)
+            {
+                if (System.IO.File.Exists(System.IO.Path.Combine(folder, "SmartRoutine.sln")))
+                    return folder;
+
+                folder = System.IO.Path.GetDirectoryName(folder);
+            }
+
+            Assert.Fail("The solution folder was not found.");
+
+            return null;
+        }
+    }
+}

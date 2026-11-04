@@ -43,7 +43,7 @@ namespace SmartRoutine.UI.Forms
             catch (Exception ex)
             {
                 // async void: an exception must never end the program because of an update check.
-                Console.WriteLine($"Update-Prüfung fehlgeschlagen: {ex.Message}");
+                Console.WriteLine($"Update check failed: {ex.Message}");
             }
         }
 

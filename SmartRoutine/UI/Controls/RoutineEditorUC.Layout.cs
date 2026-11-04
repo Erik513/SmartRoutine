@@ -152,11 +152,11 @@ namespace SmartRoutine.UI.Controls
             cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
             cmbStepType.Dock = DockStyle.Fill;
 
-            // Bewusst keine DataSource-Bindung: Ein per DataSource gebundenes ComboBox
-            // erzeugt einen CurrencyManager, dessen Position bei bestimmten WinForms-
-            // internen Ereignissen wieder auf 0 zurückspringen kann, selbst nachdem
-            // SelectedIndex explizit auf -1 gesetzt wurde. Mit einfacher Items-Befüllung
-            // gibt es diesen CurrencyManager gar nicht erst, SelectedIndex = -1 bleibt zuverlässig.
+            // No DataSource binding on purpose: a combo box bound by DataSource
+            // creates a CurrencyManager whose position can jump back to 0 on certain WinForms
+            // internal events, even after
+            // SelectedIndex has explicitly been set to -1. With plain filling of Items
+            // there is no CurrencyManager at all, and SelectedIndex = -1 stays reliable.
             cmbStepType.DisplayMember = "DisplayName";
 
             // Fills the list now and again each time the language changes (the texts of the actions).

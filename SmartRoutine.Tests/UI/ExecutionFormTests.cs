@@ -19,7 +19,7 @@ namespace SmartRoutine.Tests.UI
                 Name = "Test",
                 Steps = new List<RoutineStep>
                 {
-                    new OpenFolderStep { Name = "Ordner", Order = 0, Show = true, AutoStart = true, FolderPath = @"C:\gibt-es-nicht" }
+                    new OpenFolderStep { Name = "Folder", Order = 0, Show = true, AutoStart = true, FolderPath = @"C:\does-not-exist" }
                 }
             };
         }

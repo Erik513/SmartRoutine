@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace SmartRoutine.Tests
 {
-    // In-Memory Repository für Tests
+    // In-memory repository for the tests
     public class InMemoryRepository : IRoutineRepository
     {
         private readonly List<Routine> _routines = new List<Routine>();
@@ -69,7 +69,7 @@ namespace SmartRoutine.Tests
 
         // GET ROUTINE
 
-        [TestMethod] // Main-Function
+        [TestMethod] // main function
         public void GetRoutine_ReturnsCorrectRoutine()
         {
             var service = CreateService();
@@ -95,7 +95,7 @@ namespace SmartRoutine.Tests
 
         // GET ALL ROUTINES
 
-        [TestMethod] // Main-Function
+        [TestMethod] // main function
         public void GetAllRoutines_ReturnsSortedRoutines()
         {
             var service = CreateService();
@@ -125,7 +125,7 @@ namespace SmartRoutine.Tests
 
         // CREATE ROUTINE
 
-        [TestMethod] // Main-Function
+        [TestMethod] // main function
         public void CreateRoutine_AddsNewRoutine()
         {
             var service = CreateService();
@@ -168,7 +168,7 @@ namespace SmartRoutine.Tests
 
         // SAVE ROUTINE
 
-        [TestMethod] // Main-Function
+        [TestMethod] // main function
         public void SaveRoutine_WithNewRoutine_AddsRoutine()
         {
             var service = CreateService();
@@ -189,7 +189,7 @@ namespace SmartRoutine.Tests
         [TestMethod]
         public void SaveRoutine_WithNewRoutine_SetsCorrectOrder()
         {
-            // Testet ob neue Routine die richtige Order bekommt
+            // Tests that a new routine gets the right order
             var service = CreateService();
 
             var newRoutine1 = new Routine { Id = Guid.NewGuid().ToString(), Name = "First", Steps = new List<RoutineStep>() };
@@ -231,7 +231,7 @@ namespace SmartRoutine.Tests
 
         // REORDER ROUTINES
 
-        [TestMethod] // Main-Function
+        [TestMethod] // main function
         public void ReorderRoutines_WithValidList_UpdatesOrders()
         {
             var service = CreateService();
@@ -283,7 +283,7 @@ namespace SmartRoutine.Tests
 
         // DELETE ROUTINE
 
-        [TestMethod] // Main-Function
+        [TestMethod] // main function
         public void DeleteRoutine_RemovesRoutine()
         {
             var service = CreateService();
@@ -316,7 +316,7 @@ namespace SmartRoutine.Tests
 
         // ADD STEP
 
-        [TestMethod] // Main-Function
+        [TestMethod] // main function
         public void AddStep_AddsStepToRoutine()
         {
             var service = CreateService();
@@ -388,7 +388,7 @@ namespace SmartRoutine.Tests
 
         // UPDATE STEP
 
-        [TestMethod] // Main-Function
+        [TestMethod] // main function
         public void UpdateStep_ModifiesStep()
         {
             var service = CreateService();
@@ -496,7 +496,7 @@ namespace SmartRoutine.Tests
         {
             var service = CreateService();
 
-            // (sollte keine Exception werfen)
+            // (should not throw an exception)
             service.RemoveStep("non-existent-id", "step-id");
 
             var routines = service.GetAllRoutines();
@@ -586,7 +586,7 @@ namespace SmartRoutine.Tests
         public void ExecuteStep_OpenDocumentWithMissingFile_Throws()
         {
             var service = CreateService();
-            var step = new OpenDocumentStep { FilePath = @"C:\gibt-es-nicht\brief.docx" };
+            var step = new OpenDocumentStep { FilePath = @"C:\does-not-exist\brief.docx" };
 
             Assert.ThrowsExactly<FileNotFoundException>(() => service.ExecuteStep(step));
         }
