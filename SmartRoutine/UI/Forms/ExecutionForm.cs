@@ -219,9 +219,9 @@ namespace SmartRoutine.UI.Forms
             navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
             navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
 
-            _previousButton = CreateNavigationButton("⏮", "Vorheriger Schritt", OnPreviousButtonClick);
+            _previousButton = CreateNavigationButton(UIStyles.Buttons.Presets.SkipBack, "Vorheriger Schritt", OnPreviousButtonClick);
             _executeButton = CreateExecuteButton();
-            _nextButton = CreateNavigationButton("⏭", "Nächster Schritt", OnNextButtonClick);
+            _nextButton = CreateNavigationButton(UIStyles.Buttons.Presets.SkipForward, "Nächster Schritt", OnNextButtonClick);
 
             navigationPanel.Controls.Add(_previousButton, 0, 0);
             navigationPanel.Controls.Add(_executeButton, 1, 0);
@@ -230,13 +230,12 @@ namespace SmartRoutine.UI.Forms
             return navigationPanel;
         }
 
-        private Button CreateNavigationButton(string text, string tooltip, EventHandler clickHandler)
+        private Button CreateNavigationButton(UIButtonPreset preset, string tooltip, EventHandler clickHandler)
         {
-            Button button = UIStyles.Buttons.CreatePrimary(
-                text,
+            Button button = UIStyles.Buttons.CreateSymbol(
+                preset,
                 tooltip,
-                new Size(NavigationButtonSize, NavigationButtonSize),
-                true);
+                new Size(NavigationButtonSize, NavigationButtonSize));
 
             button.Dock = DockStyle.Fill;
             button.Margin = new Padding(3, 0, 3, 0);
@@ -247,11 +246,10 @@ namespace SmartRoutine.UI.Forms
 
         private Button CreateExecuteButton()
         {
-            Button button = UIStyles.Buttons.CreateGreen(
-                "▶",
+            Button button = UIStyles.Buttons.CreateSymbol(
+                UIStyles.Buttons.Presets.Play,
                 "Schritt ausführen",
-                new Size(NavigationButtonSize, NavigationButtonSize),
-                true);
+                new Size(NavigationButtonSize, NavigationButtonSize));
 
             button.Dock = DockStyle.Fill;
             button.Margin = new Padding(3, 0, 3, 0);
@@ -290,29 +288,21 @@ namespace SmartRoutine.UI.Forms
         {
             if (_session.CanGoNext)
             {
-                _nextButton.Text = "⏭";
-                _toolTip.SetToolTip(_nextButton, "Nächster Schritt");
+                _nextButton.Text = UIStyles.Symbols.SkipForward;
+                UIStyles.Buttons.UpdateTooltip(_nextButton, "Nächster Schritt");
                 _nextButton.Enabled = true;
                 return;
             }
 
-            _nextButton.Text = "✓";
-            _toolTip.SetToolTip(_nextButton, "Routine beenden");
+            _nextButton.Text = UIStyles.Symbols.Check;
+            UIStyles.Buttons.UpdateTooltip(_nextButton, "Routine beenden");
             _nextButton.Enabled = true;
         }
 
         private void UpdateExecuteButtonState()
         {
-            bool canExecuteManually = _session.CanExecuteCurrentStepManually;
-
-            _executeButton.Enabled = canExecuteManually;
-            _executeButton.BackColor = canExecuteManually
-                ? UIStyles.Colors.Green
-                : UIStyles.Colors.BackgroundLight;
-
-            _executeButton.ForeColor = canExecuteManually
-                ? UIStyles.Colors.White
-                : UIStyles.Colors.TextSecondary;
+            // The symbol button draws its disabled look itself.
+            _executeButton.Enabled = _session.CanExecuteCurrentStepManually;
         }
 
         private void LoadStepContent(RoutineStep step)
@@ -554,8 +544,6 @@ namespace SmartRoutine.UI.Forms
         private void UpdateExecuteButtonAsExecuted()
         {
             _executeButton.Enabled = true;
-            _executeButton.BackColor = UIStyles.Colors.Green;
-            _executeButton.ForeColor = UIStyles.Colors.White;
         }
 
         private void NavigateToPreviousStep()

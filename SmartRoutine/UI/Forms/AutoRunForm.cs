@@ -82,11 +82,10 @@ namespace SmartRoutine.UI.Forms
             _progressBar = UIStyles.ProgressBars.CreateGreen();
             _progressBar.Dock = DockStyle.Fill;
 
-            _cancelButton = UIStyles.Buttons.CreateStandard(
-                "✖",
+            _cancelButton = UIStyles.Buttons.CreateSymbol(
+                UIStyles.Buttons.Presets.Cancel,
                 "Abbrechen",
-                new Size(80, 30),
-                true);
+                new Size(80, 30));
 
             _cancelButton.Dock = DockStyle.Fill;
             _cancelButton.Click += OnCancelButtonClick;
@@ -150,7 +149,8 @@ namespace SmartRoutine.UI.Forms
                 MarkRoutineExecuted();
                 _statusLabel.Text = "Fertig.";
                 _stepLabel.Text = "Alle Schritte wurden ausgeführt.";
-                _cancelButton.Text = "Schließen";
+                _cancelButton.Text = UIStyles.Symbols.Check;
+                UIStyles.Buttons.UpdateTooltip(_cancelButton, "Schließen");
                 _cancelButton.Enabled = true;
                 _cancelButton.Click -= OnCancelButtonClick;
                 _cancelButton.Click += (s, e) =>
