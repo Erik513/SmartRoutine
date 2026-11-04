@@ -69,7 +69,8 @@ namespace SmartRoutine.Logic.Services
 
         public void MarkCurrentStepExecuted()
         {
-            _executedStepIds.Add(CurrentStep.Id);
+            if (CurrentStep != null)
+                _executedStepIds.Add(CurrentStep.Id);
         }
     }
 }
