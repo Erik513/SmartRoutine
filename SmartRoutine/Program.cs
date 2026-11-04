@@ -3,6 +3,7 @@ using ErikwnkCore;
 using ErikwnkWFUI.Styles;
 using SmartRoutine.Data;
 using SmartRoutine.Data.Interfaces;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.Logic.TestData;
@@ -39,7 +40,7 @@ namespace SmartRoutine
                     BringExistingInstanceToFront();
 
                     ErikwnkWFUI.Forms.MessageBox.Show(
-                        "SmartRoutine läuft bereits.",
+                        Loc.S("Program.AlreadyRunning"),
                         "SmartRoutine",
                         ErikwnkWFUI.Forms.MessageBoxButtons.OK,
                         ErikwnkWFUI.Forms.MessageBoxIcon.Info,
@@ -58,7 +59,7 @@ namespace SmartRoutine
                 {
                     // The start failed (the database is locked, damaged or not writable ...): say so
                     // instead of ending with a crash window of the system.
-                    ShowError("SmartRoutine konnte nicht gestartet werden.", ex);
+                    ShowError(Loc.S("Program.StartFailed"), ex);
                 }
             }
         }
@@ -127,7 +128,7 @@ namespace SmartRoutine
             {
                 SleepPreventer.AllowSleep();
 
-                ShowError("Es ist ein unerwarteter Fehler aufgetreten.", e.Exception);
+                ShowError(Loc.S("Program.UnexpectedError"), e.Exception);
             };
         }
     }

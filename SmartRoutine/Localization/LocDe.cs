@@ -149,6 +149,11 @@ namespace SmartRoutine.Localization
             ["AutoRun.Status.SaveFailed"] = "Die Routine wurde ausgeführt, aber nicht als ausgeführt gespeichert:\n{0}",
             ["AutoRun.UnnamedStep"] = "(ohne Namen)",
 
+            // ---- Program start
+            ["Program.AlreadyRunning"] = "SmartRoutine läuft bereits.",
+            ["Program.StartFailed"] = "SmartRoutine konnte nicht gestartet werden.",
+            ["Program.UnexpectedError"] = "Es ist ein unerwarteter Fehler aufgetreten.",
+
             // ---- Validation of a step (RoutineService)
             ["Validate.Step.Null"] = "Der Schritt darf nicht null sein.",
             ["Validate.Url.Empty"] = "Die URL ist leer.",

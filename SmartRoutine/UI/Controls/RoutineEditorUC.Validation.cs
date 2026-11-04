@@ -56,7 +56,7 @@ namespace SmartRoutine.UI.Controls
                 if (!AutoConfirmDialogs)
                 {
                     MessageBox.Show(
-                        $"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
+                        Loc.S("Editor.Validation.RoutineNameExists", routineName),
                         Loc.S("Editor.Validation.Title"),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning,

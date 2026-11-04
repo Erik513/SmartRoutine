@@ -385,5 +385,81 @@ namespace SmartRoutine.Tests.UI
 
             StringAssert.StartsWith(exception.Message, "The file doesn't exist:");
         }
+
+        // Walk through: after a switch to English no German text of the program is left on the screen.
+
+        private static void CollectTexts(Control control, HashSet<string> texts)
+        {
+            if (!string.IsNullOrWhiteSpace(control.Text))
+                texts.Add(control.Text.Trim());
+
+            foreach (Control child in control.Controls)
+                CollectTexts(child, texts);
+        }
+
+        // Texts that are German on purpose in the English table too (names, symbols) are not a leftover.
+        private static HashSet<string> GermanOnlyTexts()
+        {
+            var german = SmartRoutine.Localization.Loc.Table(ErikwnkCore.AppLanguage.German);
+            var english = SmartRoutine.Localization.Loc.Table(ErikwnkCore.AppLanguage.English);
+
+            return new HashSet<string>(german
+                .Where(p => english.ContainsKey(p.Key) && english[p.Key] != p.Value && !p.Value.Contains("{"))
+                .Select(p => p.Value.Trim()));
+        }
+
+        [TestMethod]
+        public void SwitchToEnglish_LeavesNoGermanTextOnTheEditor()
+        {
+            var routine = new Routine { Id = "r", Name = "R" };
+            routine.Steps.Add(new OpenUrlStep { Id = "1", Name = "A", Order = 0, Url = "https://a.example" });
+            routine.Steps.Add(new OpenFolderStep { Id = "2", Name = "B", Order = 1 });
+            routine.Steps.Add(new OpenApplicationStep { Id = "3", Name = "C", Order = 2 });
+            routine.Steps.Add(new OpenDocumentStep { Id = "4", Name = "D", Order = 3 });
+
+            using (RoutineEditorUC editor = CreateEditor())
+            {
+                editor.LoadRoutine(routine);
+
+                var list = Field<TitledListBox>(editor, "lstSteps");
+                var german = GermanOnlyTexts();
+
+                for (int i = 0; i < 4; i++)
+                {
+                    UIStyles.Language = UILanguage.German;
+                    list.SelectedIndex = i;
+
+                    // The walk finds the texts at all (otherwise "no German text left" would mean nothing).
+                    var germanTexts = new HashSet<string>();
+                    CollectTexts(editor, germanTexts);
+                    Assert.IsTrue(germanTexts.Any(german.Contains), "No German text found in German mode (step " + i + ").");
+
+                    UIStyles.Language = UILanguage.English;
+
+                    var texts = new HashSet<string>();
+                    CollectTexts(editor, texts);
+
+                    var leftovers = texts.Where(german.Contains).ToList();
+
+                    Assert.AreEqual(0, leftovers.Count, "German texts after the switch (step " + i + "): " + string.Join(" | ", leftovers));
+                }
+            }
+        }
+
+        [TestMethod]
+        public void SwitchToEnglish_LeavesNoGermanTextOnTheRoutineList()
+        {
+            using (RoutinesViewUC view = CreateView(out _, "Meine Routine 1"))
+            {
+                UIStyles.Language = UILanguage.English;
+
+                var texts = new HashSet<string>();
+                CollectTexts(view, texts);
+
+                var leftovers = texts.Where(GermanOnlyTexts().Contains).ToList();
+
+                Assert.AreEqual(0, leftovers.Count, "German texts after the switch: " + string.Join(" | ", leftovers));
+            }
+        }
     }
 }
