@@ -115,7 +115,7 @@ namespace SmartRoutine.UI.Controls
         {
             rightTitleTlp = UIStyles.TableLayoutPanels.CreateDark(2, 1);
             rightTitleTlp.Dock = DockStyle.Fill;
-            rightTitleTlp.BackColor = UIStyles.Colors.BackgroundMedium;
+            UIStyles.Colors.Follow(rightTitleTlp, () => rightTitleTlp.BackColor = UIStyles.Colors.BackgroundMedium);
 
             rightTitleTlp.ColumnStyles.Clear();
             rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -244,7 +244,7 @@ namespace SmartRoutine.UI.Controls
             footerPanel.Dock = DockStyle.Fill;
 
             var footerTlp = UIStyles.TableLayoutPanels.CreateDark(5, 1);
-            footerTlp.BackColor = UIStyles.Colors.BackgroundDarkElevated;
+            UIStyles.Colors.Follow(footerTlp, () => footerTlp.BackColor = UIStyles.Colors.BackgroundDarkElevated);
             footerTlp.Dock = DockStyle.Fill;
             footerTlp.Padding = new Padding(0);
 

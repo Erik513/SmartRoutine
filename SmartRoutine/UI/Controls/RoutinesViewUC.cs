@@ -49,7 +49,7 @@ namespace SmartRoutine.UI.Controls
             _routineService = routineService;
 
             this.Dock = DockStyle.Fill;
-            this.BackColor = UIStyles.Colors.BackgroundLight;
+            UIStyles.Colors.Follow(this, () => BackColor = UIStyles.Colors.BackgroundLight);
 
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
               ControlStyles.AllPaintingInWmPaint |
@@ -105,7 +105,7 @@ namespace SmartRoutine.UI.Controls
         private void InitializeButtonPanel()
         {
             buttonPanel = UIStyles.TableLayoutPanels.CreateDark(6, 1);
-            buttonPanel.BackColor = UIStyles.Colors.BackgroundDarkElevated;
+            UIStyles.Colors.Follow(buttonPanel, () => buttonPanel.BackColor = UIStyles.Colors.BackgroundDarkElevated);
             buttonPanel.Dock = DockStyle.Fill;
             buttonPanel.Padding = new Padding(0);
 

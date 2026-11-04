@@ -32,7 +32,7 @@ namespace SmartRoutine.UI.Forms
             : base(FormOptions.CreateStandard(
                 "SmartRoutine",
                 ContentAlignment.MiddleLeft,
-                UIColors.BackgroundDarkElevated,
+                null,
                 Properties.Resources.IconLogo))
             {
             if (routineService == null)
@@ -72,7 +72,6 @@ namespace SmartRoutine.UI.Forms
 
         private void ConfigureForm()
         {
-            BackColor = UIStyles.Colors.BackgroundDark;
             MinimumSize = MinimumWindowSize;
             Size = DefaultWindowSize;
             CenterToScreen();

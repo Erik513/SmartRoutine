@@ -90,7 +90,7 @@ namespace SmartRoutine.UI.Forms
         {
             MinimumSize = new Size(600, 450);
             Size = new Size(1200, 800);
-            BackColor = UIStyles.Colors.BackgroundDark;
+            UIStyles.Colors.Follow(this, () => BackColor = UIStyles.Colors.BackgroundDark);
             ShowIcon = true;
             CenterToScreen();
         }

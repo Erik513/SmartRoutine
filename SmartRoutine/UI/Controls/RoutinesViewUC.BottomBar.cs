@@ -25,6 +25,9 @@ namespace SmartRoutine.UI.Controls
             bar.Dock = DockStyle.Bottom;
             bar.Height = BottomBarHeight;
 
+            // Dark gray like the button panel above it (the standard strip is the darkest color of the theme).
+            UIStyles.Colors.Follow(bar, () => bar.BackColor = UIStyles.Colors.BackgroundDarkElevated);
+
             // The controls stand in the middle of the bar's height (anchored left only).
             TableLayoutPanel left = new TableLayoutPanel
             {
@@ -41,7 +44,7 @@ namespace SmartRoutine.UI.Controls
             left.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             left.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            Button themeButton = UIStyles.Buttons.CreateThemeTogglePrimary(new Size(BarControlHeight, BarControlHeight));
+            Button themeButton = UIStyles.Buttons.CreateThemeToggleStandard(new Size(BarControlHeight, BarControlHeight));
             themeButton.Anchor = AnchorStyles.Left;
             themeButton.Margin = new Padding(0, 0, 8, 0);
 

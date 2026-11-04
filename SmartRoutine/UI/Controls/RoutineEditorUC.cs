@@ -90,7 +90,7 @@ namespace SmartRoutine.UI.Controls
             _stepEditors = CreateStepEditors();
 
             this.Dock = DockStyle.Fill;
-            this.BackColor = UIStyles.Colors.BackgroundDark;
+            UIStyles.Colors.Follow(this, () => BackColor = UIStyles.Colors.BackgroundDark);
             this.DoubleBuffered = true;
 
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
