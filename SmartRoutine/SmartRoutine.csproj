@@ -14,9 +14,16 @@
     <Description>Automation of recurring workflows</Description>
     <Copyright>© 2026 Erik Wink</Copyright>
     <NeutralLanguage>en-US</NeutralLanguage>
-      <!-- The WebView2 package brings WPF assemblies (WindowsBase) of an older target that the .NET 8 reference pack also has;
+    <!-- The WebView2 package brings WPF assemblies (WindowsBase) of an older target that the .NET 8 reference pack also has;
          the conflict is harmless because the program uses only the WinForms control. -->
     <NoWarn>$(NoWarn);MSB3277</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- The symbols are inside the program (the log of errors then has line numbers); the XML documentation of the
+         libraries is not copied next to the exe on publish. -->
+    <DebugType>embedded</DebugType>
+    <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
   </PropertyGroup>
 
   <ItemGroup>
