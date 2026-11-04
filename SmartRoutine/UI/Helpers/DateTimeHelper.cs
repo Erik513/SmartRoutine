@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SmartRoutine.Localization;
+using System;
+using System.Globalization;
 
 namespace SmartRoutine.UI.Helpers
 {
@@ -6,45 +8,36 @@ namespace SmartRoutine.UI.Helpers
     {
         public static string GetRelativeTime(DateTime? dateTime)
         {
-            if (!dateTime.HasValue)
-                return "Noch nie gestartet";
-
-            TimeSpan difference = DateTime.Now - dateTime.Value;
-
-            if (difference.TotalSeconds < 60)
-                return "Gerade eben";
-
-            if (difference.TotalMinutes < 60)
-                return FormatTimeText(
-                    (int)difference.TotalMinutes,
-                    "Minute",
-                    "Minuten");
-
-            if (difference.TotalHours < 24)
-                return FormatTimeText(
-                    (int)difference.TotalHours,
-                    "Stunde",
-                    "Stunden");
-
-            if (difference.TotalDays < 7)
-                return FormatTimeText(
-                    (int)difference.TotalDays,
-                    "Tag",
-                    "Tagen");
-
-            return dateTime.Value.ToString("dd.MM.yyyy HH:mm");
+            return GetRelativeTime(dateTime, DateTime.Now);
         }
 
-        private static string FormatTimeText(
-            int value,
-            string singular,
-            string plural)
+        // "now" is a parameter so that the texts can be tested.
+        public static string GetRelativeTime(DateTime? dateTime, DateTime now)
         {
-            string unit = value == 1
-                ? singular
-                : plural;
+            if (!dateTime.HasValue)
+                return Loc.S("Time.Never");
 
-            return $"Vor {value} {unit}";
+            TimeSpan difference = now - dateTime.Value;
+
+            if (difference.TotalSeconds < 60)
+                return Loc.S("Time.JustNow");
+
+            if (difference.TotalMinutes < 60)
+                return FormatAgo((int)difference.TotalMinutes, "Time.MinuteAgo", "Time.MinutesAgo");
+
+            if (difference.TotalHours < 24)
+                return FormatAgo((int)difference.TotalHours, "Time.HourAgo", "Time.HoursAgo");
+
+            if (difference.TotalDays < 7)
+                return FormatAgo((int)difference.TotalDays, "Time.DayAgo", "Time.DaysAgo");
+
+            // The format of the date follows the language (the culture of the computer does not matter).
+            return dateTime.Value.ToString(Loc.S("Time.DateFormat"), CultureInfo.InvariantCulture);
+        }
+
+        private static string FormatAgo(int value, string singularKey, string pluralKey)
+        {
+            return value == 1 ? Loc.S(singularKey) : Loc.S(pluralKey, value);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
@@ -142,8 +143,8 @@ namespace SmartRoutine.UI.Forms
                 return;
 
             DialogResult result = MessageBox.Show(
-                $"Routine '{routine.Name}' wirklich löschen?",
-                "Bestätigen",
+                Loc.S("Main.DeleteRoutine.Text", routine.Name),
+                Loc.S("Common.Confirm"),
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 this,
@@ -225,10 +226,8 @@ namespace SmartRoutine.UI.Forms
                 return;
 
             DialogResult result = MessageBox.Show(
-                $"Möchten Sie die Routine '{routine.Name}' automatisch ausführen?\n\n" +
-                "Alle aktivierten Schritte werden nacheinander gestartet.\n" +
-                "Interne URL-Schritte werden dabei einmalig im externen Browser geöffnet.",
-                "Automatische Ausführung starten",
+                Loc.S("Main.AutoRun.Text", routine.Name),
+                Loc.S("Main.AutoRun.Title"),
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question,
                 this,
@@ -267,8 +266,8 @@ namespace SmartRoutine.UI.Forms
             if (routine == null || routine.Steps.Count == 0)
             {
                 ShowInfoMessage(
-                    "Diese Routine enthält keine Schritte.",
-                    "Info");
+                    Loc.S("Main.NoSteps.Text"),
+                    Loc.S("Common.Info"));
 
                 return false;
             }
@@ -278,8 +277,8 @@ namespace SmartRoutine.UI.Forms
             if (!session.HasExecutableSteps)
             {
                 ShowInfoMessage(
-                    "Alle Schritte dieser Routine sind derzeit deaktiviert.",
-                    "Routine nicht ausführbar");
+                    Loc.S("Main.AllDisabled.Text"),
+                    Loc.S("Main.AllDisabled.Title"));
 
                 return false;
             }
