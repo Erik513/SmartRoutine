@@ -357,10 +357,7 @@ namespace SmartRoutine.UI.Controls
             lstSteps.SelectedIndex = -1;
             _isRefreshing = false;
 
-            rightTlp.Visible = false;
-            ClearEditor();
-            btnDuplicateStep.Enabled = false;
-            btnDeleteStep.Enabled = false;
+            HideStepEditor();
         }
         private void ClearEditor()
         {
@@ -502,22 +499,11 @@ namespace SmartRoutine.UI.Controls
 
             if (selectedStep == null)
             {
-                if (_editingStep != null && HasEditorChanges())
-                {
-                    if (!ConfirmSaveStepChangesIfNeeded())
-                    {
-                        RestoreCurrentEditingStepSelection();
-                        return;
-                    }
-                }
+                if (!ConfirmLeavingEditedStep())
+                    return;
 
                 _isRefreshing = true;
-
-                rightTlp.Visible = false;
-                ClearEditor();
-                btnDuplicateStep.Enabled = false;
-                btnDeleteStep.Enabled = false;
-
+                HideStepEditor();
                 _isRefreshing = false;
 
                 return;
@@ -526,17 +512,31 @@ namespace SmartRoutine.UI.Controls
             if (_editingStep != null && selectedStep.Id == _editingStep.Id)
                 return;
 
-            if (_editingStep != null && HasEditorChanges())
-            {
-                if (!ConfirmSaveStepChangesIfNeeded())
-                {
-                    RestoreCurrentEditingStepSelection();
-                    return;
-                }
-            }
+            if (!ConfirmLeavingEditedStep())
+                return;
+
             OpenEditorForStep(selectedStep);
             btnDuplicateStep.Enabled = true;
             btnDeleteStep.Enabled = true;
+        }
+
+        // Asks about unsaved changes of the step in the editor before the editor is left.
+        // False when the user cancels; the selection of the editing step is restored then.
+        private bool ConfirmLeavingEditedStep()
+        {
+            if (_editingStep == null || ConfirmSaveStepChangesIfNeeded())
+                return true;
+
+            RestoreCurrentEditingStepSelection();
+
+            return false;
+        }
+
+        // Hides the step editor and empties it (this also disables the duplicate and delete buttons).
+        private void HideStepEditor()
+        {
+            rightTlp.Visible = false;
+            ClearEditor();
         }
 
         private void LstSteps_ItemsReordered(object sender, EventArgs e)
@@ -656,13 +656,9 @@ namespace SmartRoutine.UI.Controls
 
             _isRefreshing = true;
 
-            rightTlp.Visible = false;
-            ClearEditor();
+            HideStepEditor();
 
             RefreshStepsList(silent: true, keepSelection: false);
-
-            btnDeleteStep.Enabled = false;
-            btnDuplicateStep.Enabled = false;
 
             _isRefreshing = false;
 
