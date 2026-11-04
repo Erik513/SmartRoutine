@@ -1,4 +1,4 @@
-﻿using ErikwnkWFUI;
+using ErikwnkWFUI;
 using ErikwnkWFUI.Forms;
 using SmartRoutine.Data.Models;
 using SmartRoutine.Logic.Services;
@@ -9,39 +9,42 @@ using System.Windows.Forms;
 
 namespace SmartRoutine.UI.Forms
 {
-    public partial class AutoRunForm : AppForm
+    /// <summary>
+    /// Runs all steps of a routine one after the other and shows how far it has come
+    /// (a <see cref="ProgressForm"/> of the library; the user can cancel).
+    /// </summary>
+    public partial class AutoRunForm : ProgressForm
     {
+        private const int StepDelayMilliseconds = 1000;
+
         private readonly Routine _routine;
         private readonly Func<RoutineStep, StepExecutionResult> _onStepExecute;
         private readonly Action<Routine> _onRoutineExecuted;
+        private readonly List<string> _failedSteps = new List<string>();
 
         private List<RoutineStep> _steps;
         private int _currentIndex;
-
-        private Label _statusLabel;
-        private Label _stepLabel;
-        private ProgressBar _progressBar;
-        private readonly System.Collections.Generic.List<string> _failedSteps = new System.Collections.Generic.List<string>();
-        private Button _cancelButton;
-
-        private bool _cancelRequested;
-
-        private const int StepDelayMilliseconds = 1000;
+        private Timer _stepTimer;
 
         public AutoRunForm(
             Routine routine,
             Func<RoutineStep, StepExecutionResult> onStepExecute,
             Action<Routine> onRoutineExecuted)
-            : base(FormOptions.CreateDialog(
-                routine != null ? $"Auto-Ausführung: {routine.Name}" : "Auto-Ausführung",
-                ContentAlignment.MiddleLeft,
-                UIStyles.Colors.BackgroundDarkElevated))
+            : base(
+                FormOptions.CreateDialog(
+                    routine != null ? $"Auto-Ausführung: {routine.Name}" : "Auto-Ausführung",
+                    ContentAlignment.MiddleLeft,
+                    UIStyles.Colors.BackgroundDarkElevated),
+                "Routine wird ausgeführt...",
+                true)
         {
             _routine = routine;
             _onStepExecute = onStepExecute;
             _onRoutineExecuted = onRoutineExecuted;
 
-            InitializeForm();
+            BarColors = UIStyles.Colors.Sets.Green;
+            CancelButtonText = "Abbrechen";
+            TopMost = true;
         }
 
         protected override void OnShown(EventArgs e)
@@ -50,86 +53,14 @@ namespace SmartRoutine.UI.Forms
             BeginInvoke(new Action(RunSteps));
         }
 
-        private void InitializeForm()
-        {
-            StartPosition = FormStartPosition.CenterParent;
-            Size = new Size(500, 220);
-            MinimumSize = Size;
-            MaximumSize = Size;
-            BackColor = UIStyles.Colors.BackgroundDark;
-            TopMost = true;
-
-            TableLayoutPanel layout = UIStyles.TableLayoutPanels.CreateStandard(1, 4);
-            layout.Dock = DockStyle.Fill;
-            layout.Padding = new Padding(20);
-
-            layout.RowStyles.Clear();
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 35));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 35));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 35));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));
-
-            _statusLabel = UIStyles.Labels.CreateTitle("Routine wird ausgeführt...");
-            // CreateTitle is transparent now; the dark background was its old default.
-            _statusLabel.BackColor = UIStyles.Colors.BackgroundDark;
-            _statusLabel.Dock = DockStyle.Fill;
-            _statusLabel.TextAlign = ContentAlignment.MiddleCenter;
-
-            _stepLabel = UIStyles.Labels.CreateStandard("");
-            _stepLabel.Dock = DockStyle.Fill;
-            _stepLabel.TextAlign = ContentAlignment.MiddleCenter;
-            _stepLabel.AutoEllipsis = true;
-
-            _progressBar = UIStyles.ProgressBars.CreateGreen();
-            _progressBar.Dock = DockStyle.Fill;
-
-            _cancelButton = UIStyles.Buttons.CreateSymbol(
-                UIStyles.Buttons.Presets.Cancel,
-                "Abbrechen",
-                new Size(80, 30));
-
-            _cancelButton.Dock = DockStyle.Fill;
-            _cancelButton.Click += OnCancelButtonClick;
-
-            TableLayoutPanel buttonPanel =
-            UIStyles.TableLayoutPanels.CreateStandard(2, 1);
-
-            buttonPanel.Dock = DockStyle.Fill;
-            buttonPanel.BackColor = Color.Transparent;
-
-            buttonPanel.RowStyles.Clear();
-            buttonPanel.ColumnStyles.Clear();
-
-            buttonPanel.RowStyles.Add(
-                new RowStyle(SizeType.Percent, 100));
-
-            buttonPanel.ColumnStyles.Add(
-                new ColumnStyle(SizeType.Percent, 100));
-
-            buttonPanel.ColumnStyles.Add(
-                new ColumnStyle(SizeType.Absolute, 120));
-
-            buttonPanel.Controls.Add(_cancelButton, 1, 0);
-
-            layout.Controls.Add(_statusLabel, 0, 0);
-            layout.Controls.Add(_stepLabel, 0, 1);
-            layout.Controls.Add(_progressBar, 0, 2);
-            layout.Controls.Add(buttonPanel, 0, 3);
-
-            ContentPanel.Controls.Clear();
-            ContentPanel.Controls.Add(layout);
-        }
         private void RunSteps()
         {
             _steps = RoutineStepFactory.CreateAutoRunSteps(_routine);
             _currentIndex = 0;
 
-            _progressBar.Maximum = _steps.Count;
-            _progressBar.Value = 0;
-
             if (_steps.Count == 0)
             {
-                _statusLabel.Text = "Keine ausführbaren Schritte.";
+                Fail("Keine ausführbaren Schritte.");
                 return;
             }
 
@@ -138,7 +69,10 @@ namespace SmartRoutine.UI.Forms
 
         private void RunNextStep()
         {
-            if (_cancelRequested)
+            if (IsDisposed)
+                return;
+
+            if (IsCancelled)
             {
                 DialogResult = DialogResult.Cancel;
                 Close();
@@ -147,34 +81,13 @@ namespace SmartRoutine.UI.Forms
 
             if (_currentIndex >= _steps.Count)
             {
-                MarkRoutineExecuted();
-                if (_failedSteps.Count == 0)
-                {
-                    _statusLabel.Text = "Fertig.";
-                    _stepLabel.Text = "Alle Schritte wurden ausgeführt.";
-                }
-                else
-                {
-                    _statusLabel.Text = "Fertig, aber mit Fehlern.";
-                    _stepLabel.Text = "Nicht ausgeführt: " + string.Join(", ", _failedSteps);
-                }
-                _cancelButton.Text = UIStyles.Symbols.Check;
-                UIStyles.Buttons.UpdateTooltip(_cancelButton, "Schließen");
-                _cancelButton.Enabled = true;
-                _cancelButton.Click -= OnCancelButtonClick;
-                _cancelButton.Click += (s, e) =>
-                {
-                    DialogResult = DialogResult.OK;
-                    Close();
-                };
-
+                Finish();
                 return;
             }
 
             RoutineStep step = _steps[_currentIndex];
 
-            _stepLabel.Text =
-                $"{_currentIndex + 1}/{_steps.Count}: {step.Name}";
+            Status = $"{_currentIndex + 1}/{_steps.Count}: {step.Name}";
 
             try
             {
@@ -188,17 +101,28 @@ namespace SmartRoutine.UI.Forms
             }
 
             _currentIndex++;
-            _progressBar.Value = Math.Min(_currentIndex, _progressBar.Maximum);
+            Report(_currentIndex * 100 / _steps.Count);
 
-            Timer timer = new Timer();
-            timer.Interval = StepDelayMilliseconds;
-            timer.Tick += (s, e) =>
+            StopStepTimer();
+
+            _stepTimer = new Timer();
+            _stepTimer.Interval = StepDelayMilliseconds;
+            _stepTimer.Tick += (s, e) =>
             {
-                timer.Stop();
-                timer.Dispose();
+                StopStepTimer();
                 RunNextStep();
             };
-            timer.Start();
+            _stepTimer.Start();
+        }
+
+        private void Finish()
+        {
+            MarkRoutineExecuted();
+
+            if (_failedSteps.Count == 0)
+                Succeed("Alle Schritte wurden ausgeführt.");
+            else
+                Fail("Nicht ausgeführt: " + string.Join(", ", _failedSteps));
         }
 
         private void MarkRoutineExecuted()
@@ -211,31 +135,20 @@ namespace SmartRoutine.UI.Forms
             if (_onRoutineExecuted != null)
                 _onRoutineExecuted(_routine);
         }
-        private void OnCancelButtonClick(object sender, EventArgs e)
-        {
-            _cancelRequested = true;
-            _cancelButton.Enabled = false;
-            _statusLabel.Text = "Wird abgebrochen...";
-        }
 
-        private void CloseAfterDelay()
+        private void StopStepTimer()
         {
-            Timer timer = new Timer();
-            timer.Interval = 700;
-            timer.Tick += (s, e) =>
-            {
-                timer.Stop();
-                timer.Dispose();
+            if (_stepTimer == null)
+                return;
 
-                DialogResult = DialogResult.OK;
-                Close();
-            };
-            timer.Start();
+            _stepTimer.Stop();
+            _stepTimer.Dispose();
+            _stepTimer = null;
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            _cancelRequested = true;
+            StopStepTimer();
 
             base.OnFormClosing(e);
         }
