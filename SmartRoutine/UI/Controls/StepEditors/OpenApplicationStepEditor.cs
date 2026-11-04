@@ -32,7 +32,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _txtAppPath = UIStyles.TextBoxes.CreateBorderless();
             _txtAppPath.Name = "txtAppPath";
 
-            var btnBrowse = UIStyles.Buttons.CreateSymbol(UIStyles.Symbols.Folder, "Programm auswählen", new Size(50, 30), UIStyles.Colors.Sets.Yellow);
+            var btnBrowse = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Browse, "Programm auswählen", new Size(50, 30));
 
             btnBrowse.Click += (s, e) =>
             {

@@ -31,7 +31,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _txtFolderPath = UIStyles.TextBoxes.CreateBorderless();
             _txtFolderPath.Name = "txtFolderPath";
 
-            var btnBrowse = UIStyles.Buttons.CreateSymbol(UIStyles.Symbols.Folder, "Ordner auswählen", new Size(50, 30), UIStyles.Colors.Sets.Yellow);
+            var btnBrowse = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Browse, "Ordner auswählen", new Size(50, 30));
 
             btnBrowse.Click += (s, e) =>
             {

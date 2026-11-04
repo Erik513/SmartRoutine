@@ -118,27 +118,27 @@ namespace SmartRoutine.UI.Controls
 
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnNewRoutine = UIStyles.Buttons.CreateGreen("+", "Neue Routine erstellen", new Size(30, 30), true);
+            btnNewRoutine = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Add, "Neue Routine erstellen");
             btnNewRoutine.Dock = DockStyle.Fill;
             btnNewRoutine.Margin = new Padding(5);
             btnNewRoutine.Click += BtnNewRoutine_Click;
 
-            btnEditRoutine = UIStyles.Buttons.CreatePrimary("✎", "Routine bearbeiten", new Size(30, 30), true);
+            btnEditRoutine = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Edit, "Routine bearbeiten");
             btnEditRoutine.Dock = DockStyle.Fill;
             btnEditRoutine.Margin = new Padding(5);
             btnEditRoutine.Click += BtnEditRoutine_Click;
 
-            btnDeleteRoutine = UIStyles.Buttons.CreateRed("🗑", "Routine löschen", new Size(30, 30), true);
+            btnDeleteRoutine = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Delete, "Routine löschen");
             btnDeleteRoutine.Dock = DockStyle.Fill;
             btnDeleteRoutine.Margin = new Padding(5);
             btnDeleteRoutine.Click += BtnDeleteRoutine_Click;
 
-            btnStartRoutine = UIStyles.Buttons.CreateGreen("▶", "Routine starten", new Size(30, 30), true);
+            btnStartRoutine = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Play, "Routine starten");
             btnStartRoutine.Dock = DockStyle.Fill;
             btnStartRoutine.Margin = new Padding(5, 5, 0, 5);
             btnStartRoutine.Click += BtnStartRoutine_Click;
 
-            btnStartRoutineAuto = UIStyles.Buttons.CreateGreen("⚡", "Routine mit Auto-Ausführung starten", new Size(30, 30), true);
+            btnStartRoutineAuto = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Lightning, "Routine mit Auto-Ausführung starten");
             btnStartRoutineAuto.Dock = DockStyle.Fill;
             btnStartRoutineAuto.Margin = new Padding(0, 5, 5, 5);
             btnStartRoutineAuto.Click += BtnStartRoutineAuto_Click;

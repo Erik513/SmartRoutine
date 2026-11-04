@@ -53,7 +53,7 @@ namespace SmartRoutine.UI.Controls
         // Linke Seite
         private TableLayoutPanel leftTlp;
         private PropertyTable routineInfoTable;
-        private TextBox txtRoutineName;
+        private LockableTextBox txtRoutineName;
         private TitledListBox lstSteps;
 
         // Rechte Seite
@@ -169,10 +169,10 @@ namespace SmartRoutine.UI.Controls
 
             routineInfoTable = new PropertyTable();
 
-            txtRoutineName = UIStyles.TextBoxes.CreateBorderless();
+            txtRoutineName = UIStyles.TextBoxes.CreateLockable();
             txtRoutineName.Dock = DockStyle.Fill;
             txtRoutineName.MaxLength = 40;
-            txtRoutineName.Leave += TxtRoutineName_Leave;
+            txtRoutineName.EditAccepted += TxtRoutineName_EditAccepted;
             
             routineInfoTable.AddRow("Routinenname", PropertyColumn.Percent(txtRoutineName, 100));
 
@@ -350,17 +350,17 @@ namespace SmartRoutine.UI.Controls
 
             rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾", "Speichern", new Size(100, 35), true);
+            btnSaveStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Save, "Speichern", new Size(100, 35));
             btnSaveStep.Dock = DockStyle.Fill;
             btnSaveStep.Margin = new Padding(5);
             btnSaveStep.Click += BtnSaveStep_Click;
 
-            btnCancelStep = UIStyles.Buttons.CreatePrimary("✖", "Abbrechen", new Size(100, 35), true);
+            btnCancelStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Cancel, "Abbrechen", new Size(100, 35));
             btnCancelStep.Dock = DockStyle.Fill;
             btnCancelStep.Margin = new Padding(5);
             btnCancelStep.Click += BtnCancelStep_Click;
 
-            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Schritt ausführen", new Size(100, 35), true);
+            btnExecuteStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Play, "Schritt ausführen", new Size(100, 35));
             btnExecuteStep.Dock = DockStyle.Fill;
             btnExecuteStep.Margin = new Padding(5);
             btnExecuteStep.Click += BtnExecuteStep_Click;
@@ -409,24 +409,24 @@ namespace SmartRoutine.UI.Controls
         }
         private void InitializeFooterButtons()
         {
-            btnDuplicateStep = UIStyles.Buttons.CreatePrimary("⧉", "Schritt duplizieren", new Size(155, 35), true);
+            btnDuplicateStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Copy, "Schritt duplizieren", new Size(155, 35));
             btnDuplicateStep.Dock = DockStyle.Fill;
             btnDuplicateStep.Margin = new Padding(10, 10, 5, 10);
             btnDuplicateStep.Enabled = false;
             btnDuplicateStep.Click += BtnDuplicateStep_Click;
 
-            btnAddStep = UIStyles.Buttons.CreateGreen("+", "Schritt hinzufügen", new Size(155, 35), true);
+            btnAddStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Add, "Schritt hinzufügen", new Size(155, 35));
             btnAddStep.Dock = DockStyle.Fill;
             btnAddStep.Margin = new Padding(10, 10, 5, 10);
             btnAddStep.Click += BtnAddStep_Click;
 
-            btnDeleteStep = UIStyles.Buttons.CreateRed("🗑", "Schritt löschen", new Size(155, 35), true);
+            btnDeleteStep = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Delete, "Schritt löschen", new Size(155, 35));
             btnDeleteStep.Dock = DockStyle.Fill;
             btnDeleteStep.Margin = new Padding(5, 10, 10, 10);
             btnDeleteStep.Enabled = false;
             btnDeleteStep.Click += BtnDeleteStep_Click;
 
-            btnBack = UIStyles.Buttons.CreatePrimary("←", "Zurück zur Hauptansicht", new Size(155, 35), true);
+            btnBack = UIStyles.Buttons.CreateSymbol(UIStyles.Buttons.Presets.Back, "Zurück zur Hauptansicht", new Size(155, 35));
             btnBack.Dock = DockStyle.Fill;
             btnBack.Margin = new Padding(10);
             btnBack.Click += BtnBack_Click;
@@ -456,6 +456,9 @@ namespace SmartRoutine.UI.Controls
             
             FlowLayoutPanel autostartPanel = UIStyles.FlowLayoutPanels.CreateTransparent();
             autostartPanel.Dock = DockStyle.Left;
+            autostartPanel.AutoSize = true;
+            autostartPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            autostartPanel.WrapContents = false;
             Label lblAutoStart = UIStyles.Labels.CreateStandard("Start");
             lblAutoStart.Margin = new Padding(0, 4, 5, 0);
             lblAutoStart.AutoSize = true;
@@ -465,6 +468,9 @@ namespace SmartRoutine.UI.Controls
 
             FlowLayoutPanel autocontinuePanel = UIStyles.FlowLayoutPanels.CreateTransparent();
             autocontinuePanel.Dock = DockStyle.Left;
+            autocontinuePanel.AutoSize = true;
+            autocontinuePanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            autocontinuePanel.WrapContents = false;
             Label lblAutoContinue = UIStyles.Labels.CreateStandard("Weiter");
             lblAutoContinue.Margin = new Padding(0, 4, 5, 0);
             lblAutoContinue.AutoSize = true;
@@ -556,7 +562,9 @@ namespace SmartRoutine.UI.Controls
             return null;
         }
 
-        private void TxtRoutineName_Leave(object sender, EventArgs e)
+        // The name is locked against accidental changes: it is saved when the user accepts an edit
+        // (check mark or Enter), not when the box loses the focus.
+        private void TxtRoutineName_EditAccepted(object sender, EventArgs e)
         {
             if (_currentRoutine == null)
                 return;
@@ -567,7 +575,10 @@ namespace SmartRoutine.UI.Controls
                 return;
 
             if (!ValidateRoutineName())
+            {
+                txtRoutineName.BeginEdit();
                 return;
+            }
 
             SaveCurrentRoutine();
             SaveChanges?.Invoke(this, _currentRoutine);
@@ -580,6 +591,13 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine = RoutineCloneService.DeepCopy(routine ?? new Routine());
 
             txtRoutineName.Text = _currentRoutine.Name;
+
+            // A new routine opens with the name box unlocked so the name can be typed at once;
+            // an existing one is locked until the user unlocks it.
+            txtRoutineName.IsLocked = !isNewRoutine;
+            if (isNewRoutine)
+                txtRoutineName.BeginEdit();
+
             lblLastExecution.Text =
                 _currentRoutine.LastExecutionAt.HasValue
                     ? $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
