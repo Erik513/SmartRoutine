@@ -39,6 +39,8 @@ namespace SmartRoutine.UI.Controls.StepEditors
             {
                 using (var dialog = new FolderBrowserDialog())
                 {
+                    BrowsePath.Prepare(dialog, _txtFolderPath.Text);
+
                     if (dialog.ShowDialog() == DialogResult.OK)
                         _txtFolderPath.Text = dialog.SelectedPath;
                 }

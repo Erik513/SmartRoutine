@@ -149,6 +149,11 @@ namespace SmartRoutine.Localization
             ["AutoRun.Status.SaveFailed"] = "The routine ran, but it couldn't be marked as run:\n{0}",
             ["AutoRun.UnnamedStep"] = "(unnamed)",
 
+            // ---- Check of the steps before a run
+            ["Main.PreCheck.Title"] = "Problems in this routine",
+            ["Main.PreCheck.Text"] = "Some steps of this routine can't be run:\n\n{0}\n\nStart anyway?",
+            ["Main.PreCheck.More"] = "… and {0} more",
+
             // ---- Program start
             ["Program.AlreadyRunning"] = "SmartRoutine is already running.",
             ["Program.StartFailed"] = "SmartRoutine couldn't start.",

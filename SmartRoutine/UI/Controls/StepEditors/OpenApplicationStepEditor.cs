@@ -41,6 +41,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
                 using (var dialog = new OpenFileDialog())
                 {
                     dialog.Filter = Loc.S("StepEditor.App.Filter");
+                    BrowsePath.Prepare(dialog, _txtAppPath.Text);
 
                     if (dialog.ShowDialog() == DialogResult.OK)
                         _txtAppPath.Text = dialog.FileName;

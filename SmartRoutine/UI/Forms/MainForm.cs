@@ -4,6 +4,8 @@ using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 using ErikwnkWFUI;
@@ -159,7 +161,7 @@ namespace SmartRoutine.UI.Forms
 
         private void ExecuteFullRoutine(Routine routine)
         {
-            if (!CanExecuteRoutine(routine))
+            if (!CanExecuteRoutine(routine) || !ConfirmStepsCanRun(routine))
                 return;
 
             bool previousShowInTaskbar = ShowInTaskbar;
@@ -222,7 +224,7 @@ namespace SmartRoutine.UI.Forms
         }
         private void ExecuteFullRoutineAuto(Routine routine)
         {
-            if (!CanExecuteRoutine(routine))
+            if (!CanExecuteRoutine(routine) || !ConfirmStepsCanRun(routine))
                 return;
 
             DialogResult result = MessageBox.Show(
@@ -259,6 +261,33 @@ namespace SmartRoutine.UI.Forms
             MarkRoutineAsExecuted(routine);
 
             _routinesView.LoadRoutines();
+        }
+
+        private const int MaxProblemsShown = 8;
+
+        // Checks all steps that would be run. With problems the user sees them in one list and decides
+        // whether to start anyway (a step that cannot be run is reported during the run as well).
+        private bool ConfirmStepsCanRun(Routine routine)
+        {
+            List<string> problems = RoutinePreCheck.FindProblems(routine, _routineService);
+
+            if (problems.Count == 0)
+                return true;
+
+            List<string> lines = problems.Take(MaxProblemsShown).Select(p => "• " + p).ToList();
+
+            if (problems.Count > MaxProblemsShown)
+                lines.Add(Loc.S("Main.PreCheck.More", problems.Count - MaxProblemsShown));
+
+            DialogResult result = MessageBox.Show(
+                Loc.S("Main.PreCheck.Text", string.Join("\n", lines)),
+                Loc.S("Main.PreCheck.Title"),
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                this,
+                FormSize.Medium);
+
+            return result == DialogResult.Yes;
         }
 
         private bool CanExecuteRoutine(Routine routine)

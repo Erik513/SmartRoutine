@@ -40,6 +40,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
                 {
                     dialog.Filter = Loc.S("StepEditor.Document.Filter");
                     dialog.Title = Loc.S("StepEditor.Document.Browse");
+                    BrowsePath.Prepare(dialog, _txtDocumentPath.Text);
 
                     if (dialog.ShowDialog() == DialogResult.OK)
                         _txtDocumentPath.Text = dialog.FileName;
