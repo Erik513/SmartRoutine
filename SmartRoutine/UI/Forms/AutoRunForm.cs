@@ -15,7 +15,7 @@ namespace SmartRoutine.UI.Forms
     /// </summary>
     public partial class AutoRunForm : ProgressForm
     {
-        private const int StepDelayMilliseconds = 1000;
+        private int _stepDelayMilliseconds = 1000;
 
         private readonly Routine _routine;
         private readonly Func<RoutineStep, StepExecutionResult> _onStepExecute;
@@ -94,10 +94,11 @@ namespace SmartRoutine.UI.Forms
                 if (_onStepExecute != null)
                     _onStepExecute(step);
             }
-            catch
+            catch (Exception ex)
             {
                 // The run goes on with the next step; the failed ones are listed at the end.
-                _failedSteps.Add(step.Name);
+                string name = string.IsNullOrWhiteSpace(step.Name) ? "(ohne Namen)" : step.Name;
+                _failedSteps.Add($"{name} ({ex.Message})");
             }
 
             _currentIndex++;
@@ -106,7 +107,7 @@ namespace SmartRoutine.UI.Forms
             StopStepTimer();
 
             _stepTimer = new Timer();
-            _stepTimer.Interval = StepDelayMilliseconds;
+            _stepTimer.Interval = Math.Max(1, _stepDelayMilliseconds);
             _stepTimer.Tick += (s, e) =>
             {
                 StopStepTimer();
@@ -117,12 +118,24 @@ namespace SmartRoutine.UI.Forms
 
         private void Finish()
         {
-            MarkRoutineExecuted();
+            if (_failedSteps.Count > 0)
+            {
+                // A routine with failed steps does not count as executed.
+                Fail("Nicht ausgeführt:\n" + string.Join("\n", _failedSteps));
+                return;
+            }
 
-            if (_failedSteps.Count == 0)
-                Succeed("Alle Schritte wurden ausgeführt.");
-            else
-                Fail("Nicht ausgeführt: " + string.Join(", ", _failedSteps));
+            try
+            {
+                MarkRoutineExecuted();
+            }
+            catch (Exception ex)
+            {
+                Fail("Die Routine wurde ausgeführt, aber nicht als ausgeführt gespeichert:\n" + ex.Message);
+                return;
+            }
+
+            Succeed("Alle Schritte wurden ausgeführt.");
         }
 
         private void MarkRoutineExecuted()
