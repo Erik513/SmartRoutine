@@ -65,36 +65,19 @@ namespace SmartRoutine.Logic.Services
 
             string trimmed = url.Trim();
 
-            // Schnelle Präfix-Checks
+            // Quick prefix checks ("scheme://"; mailto: has no //)
             foreach (string scheme in SupportedSchemes)
             {
                 if (trimmed.StartsWith($"{scheme}://", StringComparison.OrdinalIgnoreCase))
                     return true;
             }
 
-            // Auch mailto: ohne // ist gültig
             if (trimmed.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // URI-Parsing für genaue Validierung
-            try
-            {
-                if (Uri.TryCreate(trimmed, UriKind.Absolute, out Uri uri))
-                {
-                    foreach (string scheme in SupportedSchemes)
-                    {
-                        if (uri.Scheme.Equals(scheme, StringComparison.OrdinalIgnoreCase))
-                            return true;
-                    }
-                    return SupportedSchemes.Any(s => uri.Scheme.Equals(s, StringComparison.OrdinalIgnoreCase));
-                }
-            }
-            catch
-            {
-                return false;
-            }
-
-            return false;
+            // Exact check by parsing
+            return Uri.TryCreate(trimmed, UriKind.Absolute, out Uri uri)
+                && SupportedSchemes.Any(s => uri.Scheme.Equals(s, StringComparison.OrdinalIgnoreCase));
         }
 
         public string TryRepairUrl(string input)
@@ -102,45 +85,33 @@ namespace SmartRoutine.Logic.Services
             if (string.IsNullOrWhiteSpace(input))
                 return input;
 
-            string trimmed = input.Trim();
+            // 1. Remove unwanted characters at the start/end
+            string trimmed = input.Trim('\'', '"', '<', '>', ' ', '\t', '\n', '\r');
 
-            // 1. Entferne unerwünschte Zeichen am Anfang/Ende
-            trimmed = trimmed.Trim('\'', '"', '<', '>', ' ', '\t', '\n', '\r');
-
-            // 2. Wenn es bereits eine gültige URL ist, zurückgeben
+            // 2. Already a valid URL
             if (IsValidUrl(trimmed))
                 return trimmed;
 
-            // 3. Prüfe ob es eine E-Mail-Adresse ist
+            // 3. An e-mail address
             if (IsValidEmail(trimmed))
                 return $"mailto:{trimmed}";
 
-            // 4. Prüfe ob ein Protokoll fehlt
+            // 4. A typo in the protocol ("htps://", "http//" ...) - before the domain check, which
+            //    would take "http//example.com" for a domain and put https:// in front of it
+            if (HasMalformedProtocol(trimmed))
+                return CorrectProtocolTypos(trimmed);
+
+            // 5. The protocol is missing
             if (!HasProtocol(trimmed))
             {
-                // 4a. Prüfe ob es wie eine Domain aussieht
                 if (LooksLikeDomain(trimmed))
-                {
                     return $"https://{trimmed}";
-                }
 
-                // 4b. Prüfe ob es eine IP-Adresse ist
                 if (LooksLikeIpAddress(trimmed))
-                {
                     return $"http://{trimmed}";
-                }
 
-                // 4c. Prüfe ob es ein lokaler Pfad ist
                 if (LooksLikeLocalPath(trimmed))
-                {
                     return $"file:///{trimmed.Replace("\\", "/")}";
-                }
-            }
-
-            // 5. Prüfe ob Protokoll korrigiert werden muss
-            if (HasMalformedProtocol(trimmed))
-            {
-                trimmed = CorrectProtocolTypos(trimmed);
             }
 
             return trimmed;
@@ -223,64 +194,38 @@ namespace SmartRoutine.Logic.Services
             return false;
         }
 
+        // Typo -> correct start. The order matters: the first typo that matches wins.
+        private static readonly (string Typo, string Fixed)[] ProtocolTypos =
+        {
+            ("htttp://", "http://"),
+            ("htps://", "https://"),
+            ("http//", "http://"),
+            ("https//", "https://"),
+            ("ttp://", "http://"),
+            ("tps://", "https://"),
+            ("htp://", "http://"),
+            ("http:", "http://")
+        };
+
         private static bool HasMalformedProtocol(string url)
         {
-            string[] malformedProtocols =
-            {
-                "htttp://", "htps://", "http//", "https//",
-                "ttp://", "tps://", "htp://", "http:"
-            };
-
-            foreach (string malformed in malformedProtocols)
-            {
-                if (url.StartsWith(malformed, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            return false;
+            return ProtocolTypos.Any(t => url.StartsWith(t.Typo, StringComparison.OrdinalIgnoreCase));
         }
 
         private static string CorrectProtocolTypos(string url)
         {
-            string lowerUrl = url.ToLower();
-
-            if (lowerUrl.StartsWith("htttp://"))
-                return "http://" + url.Substring("htttp://".Length);
-            if (lowerUrl.StartsWith("htps://"))
-                return "https://" + url.Substring("htps://".Length);
-            if (lowerUrl.StartsWith("http//"))
-                return "http://" + url.Substring("http//".Length);
-            if (lowerUrl.StartsWith("https//"))
-                return "https://" + url.Substring("https//".Length);
-            if (lowerUrl.StartsWith("ttp://"))
-                return "http://" + url.Substring("ttp://".Length);
-            if (lowerUrl.StartsWith("tps://"))
-                return "https://" + url.Substring("tps://".Length);
-            if (lowerUrl.StartsWith("htp://"))
-                return "http://" + url.Substring("htp://".Length);
-            if (lowerUrl.StartsWith("http:"))
-                return "http://" + url.Substring("http:".Length);
+            foreach (var (typo, fixedStart) in ProtocolTypos)
+            {
+                if (url.StartsWith(typo, StringComparison.OrdinalIgnoreCase))
+                    return fixedStart + url.Substring(typo.Length);
+            }
 
             return url;
         }
 
-        private static string AddWwwPrefix(string url)
-        {
-            int protocolEnd = url.IndexOf("://") + 3;
-            return url.Insert(protocolEnd, "www.");
-        }
-
         private static bool IsValidEmail(string text)
         {
-            try
-            {
-                string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-                return Regex.IsMatch(text, pattern);
-            }
-            catch
-            {
-                return false;
-            }
+            return Regex.IsMatch(text, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
         }
     }
 }
