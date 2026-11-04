@@ -95,11 +95,9 @@ namespace SmartRoutine.UI.Controls
 
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
             lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
-            // The hover popup works on the inner list: TitledListBox raises its mouse events in its own
-            // coordinates (title bar included), but IndexFromPoint expects the coordinates of the list.
-            lstRoutines.InnerListBox.MouseMove += LstRoutines_MouseMove;
-            lstRoutines.InnerListBox.MouseLeave += LstRoutines_MouseLeave;
-            lstRoutines.InnerListBox.MouseDoubleClick += LstRoutines_MouseDoubleClick;
+            lstRoutines.MouseMove += LstRoutines_MouseMove;
+            lstRoutines.MouseLeave += LstRoutines_MouseLeave;
+            lstRoutines.MouseDoubleClick += LstRoutines_MouseDoubleClick;
         }
         private void InitializeButtonPanel()
         {
@@ -171,7 +169,7 @@ namespace SmartRoutine.UI.Controls
             if (e.Button != MouseButtons.Left)
                 return;
 
-            int index = lstRoutines.InnerListBox.IndexFromPoint(e.Location);
+            int index = lstRoutines.IndexFromPoint(e.Location);
 
             if (index < 0 || index >= lstRoutines.Items.Count)
                 return;
@@ -373,7 +371,7 @@ namespace SmartRoutine.UI.Controls
 
         private void LstRoutines_MouseMove(object sender, MouseEventArgs e)
         {
-            int index = lstRoutines.InnerListBox.IndexFromPoint(e.Location);
+            int index = lstRoutines.IndexFromPoint(e.Location);
 
             if (index < 0 || index >= lstRoutines.Items.Count)
             {
@@ -410,7 +408,7 @@ namespace SmartRoutine.UI.Controls
                 .ToList();
 
             _routineInfoPopup.ShowAtMouseDelayed(
-                lstRoutines.InnerListBox,
+                lstRoutines,
                 Control.MousePosition,
                 new InfoPopupSection(
                     "Letzte Ausführung",

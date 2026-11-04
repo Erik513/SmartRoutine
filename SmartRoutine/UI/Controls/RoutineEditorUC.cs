@@ -35,7 +35,6 @@ namespace SmartRoutine.UI.Controls
         private RoutineStep _editingStep;
         private RoutineStep _editorSnapshotStep;
         private StepType? _currentEditorStepType;
-        private ToolTip _errorToolTip = UIStyles.ToolTips.CreateToolTip();
         private bool _isRefreshing = false;
         private bool _isLoadingStep = false;
         private bool _suppressStepChangeConfirmation;
@@ -109,7 +108,6 @@ namespace SmartRoutine.UI.Controls
                 new OpenUrlStepEditor(
                     _urlValidationService,
                     (message, showMessageBox) => ShowValidationMessage(message, showMessageBox),
-                    _errorToolTip,
                     () => UpdateAutoContinueAvailability()),
 
                 new OpenFolderStepEditor(
