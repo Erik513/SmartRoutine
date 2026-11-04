@@ -456,9 +456,10 @@ namespace SmartRoutine.UI.Controls
             
             FlowLayoutPanel autostartPanel = UIStyles.FlowLayoutPanels.CreateTransparent();
             autostartPanel.Dock = DockStyle.Left;
-            autostartPanel.AutoSize = true;
-            autostartPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             autostartPanel.WrapContents = false;
+            // PropertyTable takes the row height from the control's height when the row is added,
+            // so give it the real height now (AutoSize would only apply after the first layout).
+            autostartPanel.Height = 30;
             Label lblAutoStart = UIStyles.Labels.CreateStandard("Start");
             lblAutoStart.Margin = new Padding(0, 4, 5, 0);
             lblAutoStart.AutoSize = true;
@@ -468,9 +469,10 @@ namespace SmartRoutine.UI.Controls
 
             FlowLayoutPanel autocontinuePanel = UIStyles.FlowLayoutPanels.CreateTransparent();
             autocontinuePanel.Dock = DockStyle.Left;
-            autocontinuePanel.AutoSize = true;
-            autocontinuePanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             autocontinuePanel.WrapContents = false;
+            // PropertyTable takes the row height from the control's height when the row is added,
+            // so give it the real height now (AutoSize would only apply after the first layout).
+            autocontinuePanel.Height = 30;
             Label lblAutoContinue = UIStyles.Labels.CreateStandard("Weiter");
             lblAutoContinue.Margin = new Padding(0, 4, 5, 0);
             lblAutoContinue.AutoSize = true;
