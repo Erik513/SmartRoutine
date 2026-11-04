@@ -1,5 +1,6 @@
 ﻿using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
+using SmartRoutine.Localization;
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -26,7 +27,7 @@ namespace SmartRoutine.UI.Forms
             }
             catch
             {
-                ShowToastWhenReady("WebView konnte nicht geöffnet werden.");
+                ShowToastWhenReady(Loc.S("Execution.WebViewFailed"));
             }
         }
 

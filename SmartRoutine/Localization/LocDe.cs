@@ -118,6 +118,36 @@ namespace SmartRoutine.Localization
             ["StepEditor.Document.Browse"] = "Dokument auswählen",
             ["StepEditor.Document.Filter"] = "Alle Dateien (*.*)|*.*",
             ["StepEditor.Document.Validation.Empty"] = "Bitte wählen Sie eine Datei aus.",
+
+            // ---- Execution window (step by step)
+            ["Execution.Title"] = "Routine: {0}",
+            ["Execution.TitleNoRoutine"] = "Routine",
+            ["Execution.Button.Previous"] = "Vorheriger Schritt",
+            ["Execution.Button.Next"] = "Nächster Schritt",
+            ["Execution.Button.Finish"] = "Routine beenden",
+            ["Execution.Button.Run"] = "Schritt ausführen",
+            ["Execution.Error.Title"] = "Ausführung fehlgeschlagen",
+            ["Execution.Error.Text"] = "Der Schritt '{0}' konnte nicht ausgeführt werden:\n\n{1}",
+            ["Execution.Countdown"] = "Weiter in {0} Sekunden...",
+            ["Execution.CountdownOne"] = "Weiter in 1 Sekunde...",
+            ["Execution.Info.Title"] = "Beschreibung",
+            ["Execution.Info.None"] = "Keine Beschreibung",
+            ["Execution.Done.Url"] = "✓ URL geöffnet: {0}",
+            ["Execution.Done.Folder"] = "✓ Ordner geöffnet: {0}",
+            ["Execution.Done.Application"] = "✓ Gestartet: {0}",
+            ["Execution.Done.Document"] = "✓ Geöffnet: {0}",
+            ["Execution.Done.Other"] = "✓ {0} ausgeführt",
+            ["Execution.WebViewFailed"] = "WebView konnte nicht geöffnet werden.",
+
+            // ---- Automatic run
+            ["AutoRun.Title"] = "Auto-Ausführung: {0}",
+            ["AutoRun.TitleNoRoutine"] = "Auto-Ausführung",
+            ["AutoRun.Status.Running"] = "Routine wird ausgeführt...",
+            ["AutoRun.Status.NoSteps"] = "Keine ausführbaren Schritte.",
+            ["AutoRun.Status.Done"] = "Alle Schritte wurden ausgeführt.",
+            ["AutoRun.Status.Failed"] = "Nicht ausgeführt:\n{0}",
+            ["AutoRun.Status.SaveFailed"] = "Die Routine wurde ausgeführt, aber nicht als ausgeführt gespeichert:\n{0}",
+            ["AutoRun.UnnamedStep"] = "(ohne Namen)",
         };
     }
 }

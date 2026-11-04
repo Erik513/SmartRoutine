@@ -118,6 +118,36 @@ namespace SmartRoutine.Localization
             ["StepEditor.Document.Browse"] = "Choose document",
             ["StepEditor.Document.Filter"] = "All files (*.*)|*.*",
             ["StepEditor.Document.Validation.Empty"] = "Please choose a file.",
+
+            // ---- Execution window (step by step)
+            ["Execution.Title"] = "Routine: {0}",
+            ["Execution.TitleNoRoutine"] = "Routine",
+            ["Execution.Button.Previous"] = "Previous step",
+            ["Execution.Button.Next"] = "Next step",
+            ["Execution.Button.Finish"] = "Finish routine",
+            ["Execution.Button.Run"] = "Run step",
+            ["Execution.Error.Title"] = "Couldn't run step",
+            ["Execution.Error.Text"] = "Couldn't run step '{0}':\n\n{1}",
+            ["Execution.Countdown"] = "Continuing in {0} seconds...",
+            ["Execution.CountdownOne"] = "Continuing in 1 second...",
+            ["Execution.Info.Title"] = "Description",
+            ["Execution.Info.None"] = "No description",
+            ["Execution.Done.Url"] = "✓ Opened URL: {0}",
+            ["Execution.Done.Folder"] = "✓ Opened folder: {0}",
+            ["Execution.Done.Application"] = "✓ Started: {0}",
+            ["Execution.Done.Document"] = "✓ Opened: {0}",
+            ["Execution.Done.Other"] = "✓ {0} completed",
+            ["Execution.WebViewFailed"] = "Couldn't open the built-in browser.",
+
+            // ---- Automatic run
+            ["AutoRun.Title"] = "Auto run: {0}",
+            ["AutoRun.TitleNoRoutine"] = "Auto run",
+            ["AutoRun.Status.Running"] = "Running routine...",
+            ["AutoRun.Status.NoSteps"] = "There are no steps to run.",
+            ["AutoRun.Status.Done"] = "All steps completed.",
+            ["AutoRun.Status.Failed"] = "These steps couldn't be run:\n{0}",
+            ["AutoRun.Status.SaveFailed"] = "The routine ran, but it couldn't be marked as run:\n{0}",
+            ["AutoRun.UnnamedStep"] = "(unnamed)",
         };
     }
 }

@@ -231,5 +231,95 @@ namespace SmartRoutine.Tests.UI
 
             Assert.AreEqual("Open news copy", copy.Name);
         }
+
+        // Execution window and automatic run
+
+        private static Routine ManualRoutine()
+        {
+            return new Routine
+            {
+                Name = "Morning",
+                Steps = new List<RoutineStep>
+                {
+                    new OpenUrlStep { Id = "1", Name = "One", Order = 0, Show = true, AutoStart = false, Url = "https://a.example" },
+                    new OpenUrlStep { Id = "2", Name = "Two", Order = 1, Show = true, AutoStart = false, Url = "https://b.example" }
+                }
+            };
+        }
+
+        private static string SuccessMessage(RoutineStep step)
+        {
+            return (string)typeof(SmartRoutine.UI.Forms.ExecutionForm)
+                .GetMethod("GetSuccessMessage", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { step });
+        }
+
+        [TestMethod]
+        public void Execution_SuccessMessages_AreWrittenForTheLanguage()
+        {
+            UIStyles.Language = UILanguage.German;
+            Assert.AreEqual("✓ Ordner geöffnet: C:/Daten", SuccessMessage(new OpenFolderStep { FolderPath = "C:/Daten" }));
+            Assert.AreEqual("✓ Gestartet: app.exe", SuccessMessage(new OpenApplicationStep { ApplicationPath = "C:/x/app.exe" }));
+
+            UIStyles.Language = UILanguage.English;
+            Assert.AreEqual("✓ Opened folder: C:/Daten", SuccessMessage(new OpenFolderStep { FolderPath = "C:/Daten" }));
+            Assert.AreEqual("✓ Started: app.exe", SuccessMessage(new OpenApplicationStep { ApplicationPath = "C:/x/app.exe" }));
+            Assert.AreEqual("✓ Opened URL: https://x.example", SuccessMessage(new OpenUrlStep { Url = "https://x.example" }));
+            Assert.AreEqual("✓ Opened: brief.docx", SuccessMessage(new OpenDocumentStep { FilePath = "C:/brief.docx" }));
+            Assert.AreEqual("✓ Other completed", SuccessMessage(new UnknownStep { Name = "Other" }));
+        }
+
+        private class UnknownStep : RoutineStep
+        {
+            public override StepType Type => StepType.OpenUrl;
+        }
+
+        [TestMethod]
+        public void Execution_WindowTitleAndButtons_AreEnglishWhenTheLanguageIs()
+        {
+            UIStyles.Language = UILanguage.English;
+
+            using (var form = new SmartRoutine.UI.Forms.ExecutionForm(ManualRoutine(), step => SmartRoutine.Logic.Services.StepExecutionResult.None()))
+            {
+                StringAssert.Contains(form.Text, "Routine: Morning");
+            }
+        }
+
+        [TestMethod]
+        public void AutoRun_TitleAndStatus_AreEnglishWhenTheLanguageIs()
+        {
+            UIStyles.Language = UILanguage.English;
+
+            using (var form = new SmartRoutine.UI.Forms.AutoRunForm(ManualRoutine(), null, null))
+            {
+                StringAssert.Contains(form.Text, "Auto run: Morning");
+                Assert.AreEqual("Running routine...", form.Status);
+                Assert.AreEqual("Cancel", form.CancelButtonText);
+            }
+        }
+
+        [TestMethod]
+        public void AutoRun_Result_IsEnglishWhenTheLanguageIs()
+        {
+            UIStyles.Language = UILanguage.English;
+            var routine = ManualRoutine();
+
+            using (var form = new SmartRoutine.UI.Forms.AutoRunForm(routine, step => throw new InvalidOperationException("broken"), null))
+            {
+                form.StepDelayMilliseconds = 1;
+                form.Show();
+
+                DateTime end = DateTime.Now.AddSeconds(10);
+
+                while (form.State == ErikwnkWFUI.Forms.ProgressState.Running && DateTime.Now < end)
+                {
+                    Application.DoEvents();
+                    System.Threading.Thread.Sleep(5);
+                }
+
+                StringAssert.StartsWith(form.Status, "These steps couldn't be run:");
+                StringAssert.Contains(form.Status, "One (broken)");
+            }
+        }
     }
 }

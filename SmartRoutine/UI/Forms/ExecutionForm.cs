@@ -4,6 +4,7 @@ using ErikwnkWFUI.Styles;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Services;
 using System;
 using System.Drawing;
@@ -63,7 +64,7 @@ namespace SmartRoutine.UI.Forms
             RoutineStep step,
             Func<RoutineStep, StepExecutionResult> onExecute)
             : base(FormOptions.CreateStandard(
-                routine != null ? $"Routine: {routine.Name}" : "Routine",
+                routine != null ? Loc.S("Execution.Title", routine.Name) : Loc.S("Execution.TitleNoRoutine"),
                 ContentAlignment.MiddleCenter,
                 UIColors.BackgroundDarkElevated,
                 Properties.Resources.IconLogo))
@@ -226,9 +227,9 @@ namespace SmartRoutine.UI.Forms
             navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
             navigationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, NavigationButtonSize));
 
-            _previousButton = CreateNavigationButton(UIStyles.Buttons.Presets.SkipBack, "Vorheriger Schritt", OnPreviousButtonClick);
-            _executeButton = CreateNavigationButton(UIStyles.Buttons.Presets.Play, "Schritt ausführen", OnExecuteButtonClick);
-            _nextButton = CreateNavigationButton(UIStyles.Buttons.Presets.SkipForward, "Nächster Schritt", OnNextButtonClick);
+            _previousButton = CreateNavigationButton(UIStyles.Buttons.Presets.SkipBack, Loc.S("Execution.Button.Previous"), OnPreviousButtonClick);
+            _executeButton = CreateNavigationButton(UIStyles.Buttons.Presets.Play, Loc.S("Execution.Button.Run"), OnExecuteButtonClick);
+            _nextButton = CreateNavigationButton(UIStyles.Buttons.Presets.SkipForward, Loc.S("Execution.Button.Next"), OnNextButtonClick);
 
             navigationPanel.Controls.Add(_previousButton, 0, 0);
             navigationPanel.Controls.Add(_executeButton, 1, 0);
@@ -283,7 +284,7 @@ namespace SmartRoutine.UI.Forms
             bool canGoNext = _session.CanGoNext;
 
             _nextButton.Text = canGoNext ? UIStyles.Symbols.SkipForward : UIStyles.Symbols.Check;
-            UIStyles.Buttons.UpdateTooltip(_nextButton, canGoNext ? "Nächster Schritt" : "Routine beenden");
+            UIStyles.Buttons.UpdateTooltip(_nextButton, Loc.S(canGoNext ? "Execution.Button.Next" : "Execution.Button.Finish"));
             _nextButton.Enabled = true;
         }
 
@@ -389,7 +390,7 @@ namespace SmartRoutine.UI.Forms
         private void ReportExecutionFailure(RoutineStep step, Exception ex)
         {
             _pendingErrorMessage =
-                $"Der Schritt '{step?.Name}' konnte nicht ausgeführt werden:\n\n{ex.Message}";
+                Loc.S("Execution.Error.Text", step?.Name, ex.Message);
 
             // Shown at once when the window is up; when the step ran while the window was still being
             // built (an auto-start step), OnShown shows it.
@@ -407,7 +408,7 @@ namespace SmartRoutine.UI.Forms
 
             ErikwnkWFUI.Forms.MessageBox.Show(
                 message,
-                "Ausführung fehlgeschlagen",
+                Loc.S("Execution.Error.Title"),
                 ErikwnkWFUI.Forms.MessageBoxButtons.OK,
                 ErikwnkWFUI.Forms.MessageBoxIcon.Warning,
                 this,
@@ -468,7 +469,9 @@ namespace SmartRoutine.UI.Forms
         private void UpdateAutoContinueText()
         {
             _stepNameLabel.Text =
-                $"Weiter in {_autoContinueSecondsLeft} Sekunden...";
+                _autoContinueSecondsLeft == 1
+                    ? Loc.S("Execution.CountdownOne")
+                    : Loc.S("Execution.Countdown", _autoContinueSecondsLeft);
         }
 
         private void StopAutoContinueCountdown()
@@ -523,8 +526,8 @@ namespace SmartRoutine.UI.Forms
             string description = _session.CurrentStep.Description;
 
             _infoPopup.SetContent(
-                "Beschreibung",
-                string.IsNullOrWhiteSpace(description) ? "Keine Beschreibung" : description);
+                Loc.S("Execution.Info.Title"),
+                string.IsNullOrWhiteSpace(description) ? Loc.S("Execution.Info.None") : description);
             _infoPopup.ShowNextTo(_infoLabel);
         }
 
@@ -560,21 +563,21 @@ namespace SmartRoutine.UI.Forms
         {
             OpenUrlStep urlStep = step as OpenUrlStep;
             if (urlStep != null)
-                return $"✓ URL geöffnet: {urlStep.Url}";
+                return Loc.S("Execution.Done.Url", urlStep.Url);
 
             OpenFolderStep folderStep = step as OpenFolderStep;
             if (folderStep != null)
-                return $"✓ Ordner geöffnet: {folderStep.FolderPath}";
+                return Loc.S("Execution.Done.Folder", folderStep.FolderPath);
 
             OpenApplicationStep appStep = step as OpenApplicationStep;
             if (appStep != null)
-                return $"✓ Gestartet: {Path.GetFileName(appStep.ApplicationPath)}";
+                return Loc.S("Execution.Done.Application", Path.GetFileName(appStep.ApplicationPath));
 
             OpenDocumentStep documentStep = step as OpenDocumentStep;
             if (documentStep != null)
-                return $"✓ Geöffnet: {Path.GetFileName(documentStep.FilePath)}";
+                return Loc.S("Execution.Done.Document", Path.GetFileName(documentStep.FilePath));
 
-            return $"✓ {step.Name} ausgeführt";
+            return Loc.S("Execution.Done.Other", step.Name);
         }
 
         private void OnInfoLabelMouseEnter(object sender, EventArgs e)

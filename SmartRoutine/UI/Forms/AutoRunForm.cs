@@ -1,6 +1,7 @@
 using ErikwnkWFUI;
 using ErikwnkWFUI.Forms;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Services;
 using System;
 using System.Collections.Generic;
@@ -39,10 +40,10 @@ namespace SmartRoutine.UI.Forms
             Action<Routine> onRoutineExecuted)
             : base(
                 FormOptions.CreateDialog(
-                    routine != null ? $"Auto-Ausführung: {routine.Name}" : "Auto-Ausführung",
+                    routine != null ? Loc.S("AutoRun.Title", routine.Name) : Loc.S("AutoRun.TitleNoRoutine"),
                     ContentAlignment.MiddleLeft,
                     UIStyles.Colors.BackgroundDarkElevated),
-                "Routine wird ausgeführt...",
+                Loc.S("AutoRun.Status.Running"),
                 true)
         {
             _routine = routine;
@@ -50,7 +51,7 @@ namespace SmartRoutine.UI.Forms
             _onRoutineExecuted = onRoutineExecuted;
 
             BarColors = UIStyles.Colors.Sets.Green;
-            CancelButtonText = "Abbrechen";
+            CancelButtonText = Loc.S("Common.Cancel");
             TopMost = true;
         }
 
@@ -67,7 +68,7 @@ namespace SmartRoutine.UI.Forms
 
             if (_steps.Count == 0)
             {
-                Fail("Keine ausführbaren Schritte.");
+                Fail(Loc.S("AutoRun.Status.NoSteps"));
                 return;
             }
 
@@ -104,7 +105,7 @@ namespace SmartRoutine.UI.Forms
             catch (Exception ex)
             {
                 // The run goes on with the next step; the failed ones are listed at the end.
-                string name = string.IsNullOrWhiteSpace(step.Name) ? "(ohne Namen)" : step.Name;
+                string name = string.IsNullOrWhiteSpace(step.Name) ? Loc.S("AutoRun.UnnamedStep") : step.Name;
                 _failedSteps.Add($"{name} ({ex.Message})");
             }
 
@@ -128,7 +129,7 @@ namespace SmartRoutine.UI.Forms
             if (_failedSteps.Count > 0)
             {
                 // A routine with failed steps does not count as executed.
-                Fail("Nicht ausgeführt:\n" + string.Join("\n", _failedSteps));
+                Fail(Loc.S("AutoRun.Status.Failed", string.Join("\n", _failedSteps)));
                 return;
             }
 
@@ -138,11 +139,11 @@ namespace SmartRoutine.UI.Forms
             }
             catch (Exception ex)
             {
-                Fail("Die Routine wurde ausgeführt, aber nicht als ausgeführt gespeichert:\n" + ex.Message);
+                Fail(Loc.S("AutoRun.Status.SaveFailed", ex.Message));
                 return;
             }
 
-            Succeed("Alle Schritte wurden ausgeführt.");
+            Succeed(Loc.S("AutoRun.Status.Done"));
         }
 
         private void MarkRoutineExecuted()
