@@ -4,8 +4,6 @@ using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
 using System;
 using System.Drawing;
-using System.Net.Http;
-using System.Reflection;
 using System.Windows.Forms;
 using ErikwnkWFUI;
 using ErikwnkWFUI.Forms;
@@ -23,9 +21,6 @@ namespace SmartRoutine.UI.Forms
         private static readonly Size DefaultWindowSize = new Size(1024, 768);
         private static readonly Size MinimumWindowSize = new Size(800, 600);
 
-        private const string UpdateRepositoryOwner = "Erik513";
-        private const string UpdateRepositoryName = "SmartRoutine";
-        private static readonly TimeSpan UpdateCheckTimeout = TimeSpan.FromSeconds(5);
 
         private readonly IRoutineService _routineService;
 
@@ -56,6 +51,7 @@ namespace SmartRoutine.UI.Forms
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             CleanupBeforeClose();
+            DisposeUpdateResources();
             base.OnFormClosing(e);
         }
 
@@ -72,32 +68,6 @@ namespace SmartRoutine.UI.Forms
             _updateCheckStarted = true;
 
             CheckForUpdatesAsync();
-        }
-
-        private async void CheckForUpdatesAsync()
-        {
-            // async void: an exception here (no network, GitHub down ...) would end the program, and an
-            // update check must never do that.
-            try
-            {
-                using (HttpClient checkHttpClient = new HttpClient())
-                using (HttpClient downloadHttpClient = new HttpClient())
-                {
-                    AppUpdater updater = new AppUpdater(
-                        UpdateRepositoryOwner,
-                        UpdateRepositoryName,
-                        checkHttpClient,
-                        downloadHttpClient);
-
-                    Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
-
-                    await updater.CheckForUpdateAsync(currentVersion, UpdateCheckTimeout, this);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Update-Prüfung fehlgeschlagen: {ex.Message}");
-            }
         }
 
         private void ConfigureForm()
@@ -142,6 +112,9 @@ namespace SmartRoutine.UI.Forms
 
             ContentPanel.Controls.Add(_routinesView);
             ContentPanel.Controls.Add(_editorView);
+
+            // Added last: an edge-docked bar is laid out before the views that fill the rest.
+            ContentPanel.Controls.Add(CreateBottomBar());
         }
 
         private void ShowRoutinesView()

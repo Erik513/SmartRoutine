@@ -27,7 +27,10 @@ namespace SmartRoutine
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            // German on the first start; after that the choice of the user (theme, accent color, language)
+            // from the bar at the bottom of the main window is loaded and kept.
             UIStyles.Language = UILanguage.German;
+            UIStyles.RememberAppearance();
 
             using (SingleInstanceGuard guard = new SingleInstanceGuard(SingleInstanceMutexName))
             {
