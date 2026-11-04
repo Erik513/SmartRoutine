@@ -29,17 +29,15 @@ namespace SmartRoutine.UI.Controls
             UIStyles.Colors.Follow(bar, () => bar.BackColor = UIStyles.Colors.BackgroundDarkElevated);
 
             // The controls stand in the middle of the bar's height (anchored left only).
-            TableLayoutPanel left = new TableLayoutPanel
-            {
-                Dock = DockStyle.Left,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                ColumnCount = 2,
-                RowCount = 1,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0),
-                Padding = new Padding(10, 0, 0, 0)
-            };
+            TableLayoutPanel left = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
+            left.Dock = DockStyle.Left;
+            left.AutoSize = true;
+            left.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            left.BackColor = Color.Transparent;
+            left.Margin = new Padding(0);
+            left.Padding = new Padding(10, 0, 0, 0);
+            left.RowStyles.Clear();
+            left.ColumnStyles.Clear();
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             left.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             left.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
