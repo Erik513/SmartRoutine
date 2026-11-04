@@ -1340,7 +1340,7 @@ namespace SmartRoutine.UI.Controls
                         FormSize.Small);
                 }
 
-                txtRoutineName.Focus();
+                txtRoutineName.BeginEdit();
                 return false;
             }
 
@@ -1363,8 +1363,7 @@ namespace SmartRoutine.UI.Controls
                         FormSize.Medium);
                 }
 
-                txtRoutineName.Focus();
-                txtRoutineName.SelectAll();
+                txtRoutineName.BeginEdit();
                 return false;
             }
 

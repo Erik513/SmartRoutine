@@ -325,6 +325,76 @@ namespace SmartRoutine.Tests.UI
         }
 
 
+        // Routine name lock
+
+        [TestMethod]
+        public void LoadRoutine_NewRoutine_NameBoxIsUnlocked()
+        {
+            _editor.LoadRoutine(_testRoutine, true);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            Assert.IsFalse(txtRoutineName.IsLocked);
+        }
+
+        [TestMethod]
+        public void LoadRoutine_ExistingRoutine_NameBoxIsLocked()
+        {
+            _editor.LoadRoutine(_testRoutine, false);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            Assert.IsTrue(txtRoutineName.IsLocked);
+        }
+
+        [TestMethod]
+        public void AcceptingChangedName_SavesRoutineAndLocksBox()
+        {
+            _editor.AutoConfirmDialogs = true;
+            _mockService.Setup(s => s.GetAllRoutines()).Returns(new System.Collections.Generic.List<Routine>());
+            _editor.LoadRoutine(_testRoutine, false);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            txtRoutineName.BeginEdit();
+            txtRoutineName.Text = "Neuer Name";
+            txtRoutineName.AcceptEdit();
+
+            _mockService.Verify(s => s.SaveRoutine(It.Is<Routine>(r => r.Name == "Neuer Name")), Times.Once);
+            Assert.IsTrue(txtRoutineName.IsLocked);
+        }
+
+        [TestMethod]
+        public void AcceptingEmptyName_DoesNotSaveAndKeepsBoxUnlocked()
+        {
+            _editor.AutoConfirmDialogs = true;
+            _mockService.Setup(s => s.GetAllRoutines()).Returns(new System.Collections.Generic.List<Routine>());
+            _editor.LoadRoutine(_testRoutine, false);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            txtRoutineName.BeginEdit();
+            txtRoutineName.Text = "   ";
+            txtRoutineName.AcceptEdit();
+
+            _mockService.Verify(s => s.SaveRoutine(It.IsAny<Routine>()), Times.Never);
+            Assert.IsFalse(txtRoutineName.IsLocked);
+        }
+
+        [TestMethod]
+        public void AcceptingDuplicateName_DoesNotSave()
+        {
+            _editor.AutoConfirmDialogs = true;
+            _mockService.Setup(s => s.GetAllRoutines()).Returns(new System.Collections.Generic.List<Routine>
+            {
+                new Routine { Id = "other", Name = "Doppelt" }
+            });
+            _editor.LoadRoutine(_testRoutine, false);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            txtRoutineName.BeginEdit();
+            txtRoutineName.Text = "doppelt";
+            txtRoutineName.AcceptEdit();
+
+            _mockService.Verify(s => s.SaveRoutine(It.IsAny<Routine>()), Times.Never);
+        }
+
         // ReorderSteps Tests
 
         [TestMethod]
