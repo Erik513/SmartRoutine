@@ -172,5 +172,35 @@ namespace SmartRoutine.Tests.UI
                 Assert.IsNotNull(form);
             }
         }
+
+        [TestMethod]
+        public void IsFinished_FalseUntilTheLastStepIsEnded()
+        {
+            using (ExecutionForm form = new ExecutionForm(CreateManualRoutine(), step => StepExecutionResult.None()))
+            {
+                Assert.IsFalse(form.IsFinished);
+
+                Click(Field<Button>(form, "_executeButton"));
+                Click(Field<Button>(form, "_nextButton"));
+
+                Assert.IsFalse(form.IsFinished);
+
+                Click(Field<Button>(form, "_nextButton"));
+
+                Assert.IsTrue(form.IsFinished);
+            }
+        }
+
+        [TestMethod]
+        public void IsFinished_StaysFalseWhenTheFormIsJustClosed()
+        {
+            using (ExecutionForm form = new ExecutionForm(CreateManualRoutine(), step => StepExecutionResult.None()))
+            {
+                Click(Field<Button>(form, "_executeButton"));
+                form.Close();
+
+                Assert.IsFalse(form.IsFinished);
+            }
+        }
     }
 }

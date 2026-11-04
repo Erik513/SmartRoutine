@@ -76,18 +76,27 @@ namespace SmartRoutine.UI.Forms
 
         private async void CheckForUpdatesAsync()
         {
-            using (HttpClient checkHttpClient = new HttpClient())
-            using (HttpClient downloadHttpClient = new HttpClient())
+            // async void: an exception here (no network, GitHub down ...) would end the program, and an
+            // update check must never do that.
+            try
             {
-                AppUpdater updater = new AppUpdater(
-                    UpdateRepositoryOwner,
-                    UpdateRepositoryName,
-                    checkHttpClient,
-                    downloadHttpClient);
+                using (HttpClient checkHttpClient = new HttpClient())
+                using (HttpClient downloadHttpClient = new HttpClient())
+                {
+                    AppUpdater updater = new AppUpdater(
+                        UpdateRepositoryOwner,
+                        UpdateRepositoryName,
+                        checkHttpClient,
+                        downloadHttpClient);
 
-                Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+                    Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
 
-                await updater.CheckForUpdateAsync(currentVersion, UpdateCheckTimeout, this);
+                    await updater.CheckForUpdateAsync(currentVersion, UpdateCheckTimeout, this);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Update-Prüfung fehlgeschlagen: {ex.Message}");
             }
         }
 
@@ -183,8 +192,6 @@ namespace SmartRoutine.UI.Forms
             if (!CanExecuteRoutine(routine))
                 return;
 
-            MarkRoutineAsExecuted(routine);
-
             bool previousShowInTaskbar = ShowInTaskbar;
             bool previousVisible = Visible;
 
@@ -202,15 +209,25 @@ namespace SmartRoutine.UI.Forms
             form.BeforeCloseRequested += (s, e) =>
                 RestoreAfterExecution(previousShowInTaskbar, previousVisible);
 
+            bool finished;
+
             try
             {
                 form.ShowDialog();
             }
             finally
             {
+                finished = form.IsFinished;
                 form.Dispose();
 
                 RestoreAfterExecution(previousShowInTaskbar, previousVisible);
+            }
+
+            // Only a routine that was gone through to its end counts as executed.
+            if (finished)
+            {
+                MarkRoutineAsExecuted(routine);
+                _routinesView.LoadRoutines();
             }
         }
 

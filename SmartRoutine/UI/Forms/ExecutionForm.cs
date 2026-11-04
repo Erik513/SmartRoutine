@@ -16,6 +16,9 @@ namespace SmartRoutine.UI.Forms
     {
         public event EventHandler BeforeCloseRequested;
 
+        /// <summary>True when the user went through to the end and ended the routine on the last step.</summary>
+        public bool IsFinished { get; private set; }
+
         private const int FooterHeight = 60;
         private const int FooterInfoColumnWidth = 35;
         private const int FooterCounterColumnWidth = 65;
@@ -598,6 +601,8 @@ namespace SmartRoutine.UI.Forms
                 return;
             }
 
+            // The button on the last step ends the routine: only this counts as "executed".
+            IsFinished = true;
             Close();
         }
 
