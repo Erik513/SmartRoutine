@@ -148,6 +148,24 @@ namespace SmartRoutine.Localization
             ["AutoRun.Status.Failed"] = "Nicht ausgeführt:\n{0}",
             ["AutoRun.Status.SaveFailed"] = "Die Routine wurde ausgeführt, aber nicht als ausgeführt gespeichert:\n{0}",
             ["AutoRun.UnnamedStep"] = "(ohne Namen)",
+
+            // ---- Validation of a step (RoutineService)
+            ["Validate.Step.Null"] = "Der Schritt darf nicht null sein.",
+            ["Validate.Url.Empty"] = "Die URL ist leer.",
+            ["Validate.Url.Invalid"] = "Die URL '{0}' ist ungültig.",
+            ["Validate.Folder.Empty"] = "Der Ordnerpfad ist leer.",
+            ["Validate.Folder.Missing"] = "Der Ordner existiert nicht:\n{0}",
+            ["Validate.App.Empty"] = "Der Programmpfad ist leer.",
+            ["Validate.App.Missing"] = "Die Anwendung existiert nicht:\n{0}",
+            ["Validate.Document.Empty"] = "Der Dateipfad ist leer.",
+            ["Validate.Document.Missing"] = "Die Datei existiert nicht:\n{0}",
+
+            // ---- Validation of a URL (UrlValidationService)
+            ["Url.Error.Spaces"] = "URLs sollten keine Leerzeichen enthalten.",
+            ["Url.Error.Email"] = "Das sieht nach einer E-Mail-Adresse aus. Verwenden Sie das Format „mailto:email@example.com“.",
+            ["Url.Error.WindowsPath"] = "Das sieht nach einem Windows-Dateipfad aus. Verwenden Sie das Format „file:///C:/Pfad/zur/Datei“.",
+            ["Url.Error.Other"] = "Der eingegebene Text ist keine gültige URL.\n\nEingetragen: {0}\n\nBeispiele für gültige URLs:\n• https://example.com\n• http://192.168.1.1\n• mailto:user@example.com\n• file:///C:/Users/Name/file.txt",
+            ["Url.Error.Empty"] = "Die URL darf nicht leer sein.",
         };
     }
 }

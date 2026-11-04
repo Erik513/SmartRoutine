@@ -1,4 +1,5 @@
 ﻿using SmartRoutine.Logic.Interfaces;
+using SmartRoutine.Localization;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -35,7 +36,7 @@ namespace SmartRoutine.Logic.Services
                 if (allowEmpty)
                     return (true, url, null);
                 else
-                    return (false, url, "Die URL darf nicht leer sein.");
+                    return (false, url, Loc.S("Url.Error.Empty"));
             }
 
             string trimmed = url.Trim();
@@ -122,20 +123,15 @@ namespace SmartRoutine.Logic.Services
         private static string BuildErrorMessage(string url)
         {
             if (url.Contains(" "))
-                return "URLs sollten keine Leerzeichen enthalten.";
+                return Loc.S("Url.Error.Spaces");
 
             if (url.Contains("@") && !url.Contains("mailto:"))
-                return "Das sieht nach einer E-Mail-Adresse aus. Verwende das Format „mailto:email@example.com“.";
+                return Loc.S("Url.Error.Email");
 
             if (url.Contains("\\") && !url.StartsWith("file://"))
-                return "Das sieht nach einem Windows-Dateipfad aus. Verwende das Format „file:///C:/Pfad/zur/Datei“.";
+                return Loc.S("Url.Error.WindowsPath");
 
-            return $"Der eingegebene Text ist keine gültige URL.\n\nEingetragen: {url}\n\n" +
-                   "Beispiele für gültige URLs:\n" +
-                   "• https://example.com\n" +
-                   "• http://192.168.1.1\n" +
-                   "• mailto:user@example.com\n" +
-                   "• file:///C:/Users/Name/file.txt";
+            return Loc.S("Url.Error.Other", url);
         }
 
         private static bool HasProtocol(string url)

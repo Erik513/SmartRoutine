@@ -1,5 +1,6 @@
 ﻿using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -286,7 +287,7 @@ namespace SmartRoutine.Logic.Services
             // A missing file is an error the caller reports: before, nothing happened and the
             // execution form still said "opened".
             if (!File.Exists(step.FilePath))
-                throw new FileNotFoundException("Die Datei existiert nicht.", step.FilePath);
+                throw new FileNotFoundException(Loc.S("Validate.Document.Missing", step.FilePath), step.FilePath);
 
             StartWithShell(step.FilePath);
         }
@@ -299,7 +300,7 @@ namespace SmartRoutine.Logic.Services
 
             if (step == null)
             {
-                errorMessage = "Der Schritt darf nicht null sein.";
+                errorMessage = Loc.S("Validate.Step.Null");
                 return false;
             }
 
@@ -309,13 +310,13 @@ namespace SmartRoutine.Logic.Services
 
                     if (string.IsNullOrWhiteSpace(urlStep.Url))
                     {
-                        errorMessage = "Die URL ist leer.";
+                        errorMessage = Loc.S("Validate.Url.Empty");
                         return false;
                     }
 
                     if (!Uri.IsWellFormedUriString(urlStep.Url, UriKind.Absolute))
                     {
-                        errorMessage = $"Die URL '{urlStep.Url}' ist ungültig.";
+                        errorMessage = Loc.S("Validate.Url.Invalid", urlStep.Url);
                         return false;
                     }
 
@@ -325,14 +326,14 @@ namespace SmartRoutine.Logic.Services
 
                     if (string.IsNullOrWhiteSpace(folderStep.FolderPath))
                     {
-                        errorMessage = "Der Ordnerpfad ist leer.";
+                        errorMessage = Loc.S("Validate.Folder.Empty");
                         return false;
                     }
 
                     if (!Directory.Exists(folderStep.FolderPath))
                     {
                         errorMessage =
-                            $"Der Ordner existiert nicht:\n{folderStep.FolderPath}";
+                            Loc.S("Validate.Folder.Missing", folderStep.FolderPath);
 
                         return false;
                     }
@@ -343,14 +344,14 @@ namespace SmartRoutine.Logic.Services
 
                     if (string.IsNullOrWhiteSpace(appStep.ApplicationPath))
                     {
-                        errorMessage = "Der Programmpfad ist leer.";
+                        errorMessage = Loc.S("Validate.App.Empty");
                         return false;
                     }
 
                     if (!File.Exists(appStep.ApplicationPath))
                     {
                         errorMessage =
-                            $"Die Anwendung existiert nicht:\n{appStep.ApplicationPath}";
+                            Loc.S("Validate.App.Missing", appStep.ApplicationPath);
 
                         return false;
                     }
@@ -361,14 +362,14 @@ namespace SmartRoutine.Logic.Services
 
                     if (string.IsNullOrWhiteSpace(docStep.FilePath))
                     {
-                        errorMessage = "Der Dateipfad ist leer.";
+                        errorMessage = Loc.S("Validate.Document.Empty");
                         return false;
                     }
 
                     if (!File.Exists(docStep.FilePath))
                     {
                         errorMessage =
-                            $"Die Datei existiert nicht:\n{docStep.FilePath}";
+                            Loc.S("Validate.Document.Missing", docStep.FilePath);
 
                         return false;
                     }

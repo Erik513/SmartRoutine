@@ -148,6 +148,24 @@ namespace SmartRoutine.Localization
             ["AutoRun.Status.Failed"] = "These steps couldn't be run:\n{0}",
             ["AutoRun.Status.SaveFailed"] = "The routine ran, but it couldn't be marked as run:\n{0}",
             ["AutoRun.UnnamedStep"] = "(unnamed)",
+
+            // ---- Validation of a step (RoutineService)
+            ["Validate.Step.Null"] = "The step is missing.",
+            ["Validate.Url.Empty"] = "The URL is empty.",
+            ["Validate.Url.Invalid"] = "The URL '{0}' isn't valid.",
+            ["Validate.Folder.Empty"] = "The folder path is empty.",
+            ["Validate.Folder.Missing"] = "The folder doesn't exist:\n{0}",
+            ["Validate.App.Empty"] = "The program path is empty.",
+            ["Validate.App.Missing"] = "The program doesn't exist:\n{0}",
+            ["Validate.Document.Empty"] = "The file path is empty.",
+            ["Validate.Document.Missing"] = "The file doesn't exist:\n{0}",
+
+            // ---- Validation of a URL (UrlValidationService)
+            ["Url.Error.Spaces"] = "URLs can't contain spaces.",
+            ["Url.Error.Email"] = "This looks like an email address. Use the format \"mailto:email@example.com\".",
+            ["Url.Error.WindowsPath"] = "This looks like a Windows file path. Use the format \"file:///C:/path/to/file\".",
+            ["Url.Error.Other"] = "The text you entered isn't a valid URL.\n\nEntered: {0}\n\nExamples of valid URLs:\n• https://example.com\n• http://192.168.1.1\n• mailto:user@example.com\n• file:///C:/Users/Name/file.txt",
+            ["Url.Error.Empty"] = "The URL can't be empty.",
         };
     }
 }

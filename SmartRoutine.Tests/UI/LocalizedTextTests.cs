@@ -321,5 +321,69 @@ namespace SmartRoutine.Tests.UI
                 StringAssert.Contains(form.Status, "One (broken)");
             }
         }
+
+        // Messages of the services
+
+        private static string Validation(RoutineStep step)
+        {
+            var service = new SmartRoutine.Logic.Services.RoutineService(new InMemoryRepository());
+            service.ValidateStep(step, out string message);
+
+            return message;
+        }
+
+        [TestMethod]
+        public void StepValidation_Messages_FollowTheLanguage()
+        {
+            UIStyles.Language = UILanguage.German;
+            Assert.AreEqual("Die URL ist leer.", Validation(new OpenUrlStep { Url = "" }));
+            Assert.AreEqual("Der Ordnerpfad ist leer.", Validation(new OpenFolderStep { FolderPath = "" }));
+
+            UIStyles.Language = UILanguage.English;
+            Assert.AreEqual("The URL is empty.", Validation(new OpenUrlStep { Url = "" }));
+            Assert.AreEqual("The folder path is empty.", Validation(new OpenFolderStep { FolderPath = "" }));
+            Assert.AreEqual("The program path is empty.", Validation(new OpenApplicationStep { ApplicationPath = "" }));
+            Assert.AreEqual("The file path is empty.", Validation(new OpenDocumentStep { FilePath = "" }));
+            Assert.AreEqual("The step is missing.", Validation(null));
+            Assert.AreEqual("The URL 'nonsense' isn't valid.", Validation(new OpenUrlStep { Url = "nonsense" }));
+        }
+
+        [TestMethod]
+        public void StepValidation_MissingPaths_NameThePathInEnglish()
+        {
+            UIStyles.Language = UILanguage.English;
+            string message = Validation(new OpenFolderStep { FolderPath = "C:/does-not-exist-12345" });
+
+            StringAssert.StartsWith(message, "The folder doesn't exist:");
+            StringAssert.Contains(message, "C:/does-not-exist-12345");
+        }
+
+        [TestMethod]
+        public void UrlValidation_Messages_FollowTheLanguage()
+        {
+            var service = new SmartRoutine.Logic.Services.UrlValidationService();
+
+            UIStyles.Language = UILanguage.German;
+            StringAssert.Contains(service.ValidateAndRepairUrl("foo bar").ErrorMessage, "Leerzeichen");
+            Assert.AreEqual("Die URL darf nicht leer sein.", service.ValidateAndRepairUrl("").ErrorMessage);
+
+            UIStyles.Language = UILanguage.English;
+            Assert.AreEqual("URLs can't contain spaces.", service.ValidateAndRepairUrl("foo bar").ErrorMessage);
+            Assert.AreEqual("The URL can't be empty.", service.ValidateAndRepairUrl("").ErrorMessage);
+            StringAssert.StartsWith(service.ValidateAndRepairUrl("abc").ErrorMessage, "The text you entered isn't a valid URL.");
+            StringAssert.Contains(service.ValidateAndRepairUrl("abc").ErrorMessage, "Entered: abc");
+        }
+
+        [TestMethod]
+        public void MissingDocument_ExceptionMessage_IsEnglishWhenTheLanguageIs()
+        {
+            UIStyles.Language = UILanguage.English;
+            var service = new SmartRoutine.Logic.Services.RoutineService(new InMemoryRepository());
+
+            var exception = Assert.ThrowsExactly<System.IO.FileNotFoundException>(
+                () => service.ExecuteStep(new OpenDocumentStep { FilePath = "C:/missing/brief.docx" }));
+
+            StringAssert.StartsWith(exception.Message, "The file doesn't exist:");
+        }
     }
 }
