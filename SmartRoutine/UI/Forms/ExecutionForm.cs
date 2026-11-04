@@ -38,7 +38,6 @@ namespace SmartRoutine.UI.Forms
         private Button _nextButton;
         private Button _executeButton;
 
-        private ToolTip _toolTip;
         private InfoPopupForm _infoPopup;
         private string _pendingToastMessage;
 
@@ -74,7 +73,6 @@ namespace SmartRoutine.UI.Forms
         {
             ConfigureForm();
 
-            _toolTip = UIStyles.ToolTips.CreateToolTip();
             _infoPopup = UIStyles.InfoPopups.CreateStandard();
         }
 
@@ -160,22 +158,21 @@ namespace SmartRoutine.UI.Forms
             return layout;
         }
 
+        // The info symbol of the library; it shows the step details in a popup while the mouse is over it
+        // (no tooltip: the popup says it, and a click does nothing, so it is a label and not a button).
         private Label CreateInfoLabel()
         {
-            Label label = UIStyles.Labels.CreateStandard("ⓘ");
+            Label label = UIStyles.Labels.CreateStandard(UIStyles.Symbols.Info);
 
             label.Dock = DockStyle.Fill;
             label.ForeColor = UIStyles.Colors.TextSecondary;
-            label.Font = UIStyles.Fonts.Icon;
+            label.Font = new Font(UIStyles.Symbols.GetFontName(UIStyles.Symbols.Info), 14f);
             label.TextAlign = ContentAlignment.MiddleCenter;
-            label.BackColor = Color.Transparent;
             label.Cursor = Cursors.Help;
             label.Margin = new Padding(0);
 
             label.MouseEnter += OnInfoLabelMouseEnter;
             label.MouseLeave += OnInfoLabelMouseLeave;
-
-            _toolTip.SetToolTip(label, "Schritt-Details anzeigen");
 
             return label;
         }
