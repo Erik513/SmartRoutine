@@ -73,12 +73,23 @@ namespace SmartRoutine
             return new RoutineService(routineRepository);
         }
 
+        // True while an error dialog is open: errors that come meanwhile (the same error again and again,
+        // for example from a paint handler) are only written to the log, not shown one on top of the other.
+        private static bool _showingError;
+
         private static void ShowError(string message, Exception ex)
         {
+            ErrorLog.Write(message, ex);
+
+            if (_showingError)
+                return;
+
+            _showingError = true;
+
             try
             {
                 ErikwnkWFUI.Forms.MessageBox.Show(
-                    message + "\n\n" + ex.Message,
+                    message + "\n\n" + ex.Message + "\n\n" + Loc.S("Program.LogHint", ErrorLog.FilePath),
                     "SmartRoutine",
                     ErikwnkWFUI.Forms.MessageBoxButtons.OK,
                     ErikwnkWFUI.Forms.MessageBoxIcon.Error,
@@ -87,6 +98,10 @@ namespace SmartRoutine
             catch
             {
                 // Nothing more can be done when even the notice fails.
+            }
+            finally
+            {
+                _showingError = false;
             }
         }
 
@@ -116,10 +131,12 @@ namespace SmartRoutine
 
         private static void RegisterGlobalExceptionHandling()
         {
-            // The program ends after an unhandled exception: the computer may sleep again then.
-            AppDomain.CurrentDomain.UnhandledException += delegate
+            // The program ends after an unhandled exception: the computer may sleep again then, and the error
+            // is written to the log (there is nothing else left to show it).
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
                 SleepPreventer.AllowSleep();
+                ErrorLog.Write("Unhandled exception (the program ends)", e.ExceptionObject as Exception);
             };
 
             // An exception in an event handler no longer disappears silently: the user is told, the

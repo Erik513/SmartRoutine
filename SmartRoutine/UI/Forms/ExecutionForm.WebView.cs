@@ -1,6 +1,7 @@
 ﻿using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using SmartRoutine.Localization;
+using SmartRoutine.Logic.Services;
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -25,8 +26,9 @@ namespace SmartRoutine.UI.Forms
                 ShowWebViewControl();
                 _webView.CoreWebView2.Navigate(url);
             }
-            catch
+            catch (Exception ex)
             {
+                ErrorLog.Write("The internal browser could not be opened: " + url, ex);
                 ShowToastWhenReady(Loc.S("Execution.WebViewFailed"));
             }
         }
@@ -54,16 +56,26 @@ namespace SmartRoutine.UI.Forms
         }
         private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
         {
+            // The page never gets a window of its own.
             e.Handled = true;
 
-            if (string.IsNullOrWhiteSpace(e.Uri))
+            // Only web and mail links go to Windows: a page must not start a program with a link.
+            if (!ExternalLinkPolicy.IsAllowed(e.Uri))
                 return;
 
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            try
             {
-                FileName = e.Uri,
-                UseShellExecute = true
-            });
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = e.Uri,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                // Event handler of the browser: an exception here must not reach the message loop.
+                ErrorLog.Write("A link of a web page could not be opened: " + e.Uri, ex);
+            }
         }
 
         private void ShowWebViewControl()

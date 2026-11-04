@@ -158,6 +158,7 @@ namespace SmartRoutine.Localization
             ["Program.AlreadyRunning"] = "SmartRoutine läuft bereits.",
             ["Program.StartFailed"] = "SmartRoutine konnte nicht gestartet werden.",
             ["Program.UnexpectedError"] = "Es ist ein unerwarteter Fehler aufgetreten.",
+            ["Program.LogHint"] = "Details stehen in der Datei:\n{0}",
 
             // ---- Validation of a step (RoutineService)
             ["Validate.Step.Null"] = "Der Schritt darf nicht null sein.",
