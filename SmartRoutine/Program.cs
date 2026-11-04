@@ -23,6 +23,12 @@ namespace SmartRoutine
         [STAThread]
         private static void Main()
         {
+            // Before the first window of the program, also the "already running" notice.
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            UIStyles.Language = UILanguage.German;
+
             using (SingleInstanceGuard guard = new SingleInstanceGuard(SingleInstanceMutexName))
             {
                 if (!guard.IsFirstInstance)
@@ -39,20 +45,44 @@ namespace SmartRoutine
                     return;
                 }
 
-                RegisterGlobalExceptionCleanup();
+                RegisterGlobalExceptionHandling();
 
-                UIStyles.Language = UILanguage.German;
+                try
+                {
+                    Application.Run(new MainForm(CreateRoutineService()));
+                }
+                catch (Exception ex)
+                {
+                    // The start failed (the database is locked, damaged or not writable ...): say so
+                    // instead of ending with a crash window of the system.
+                    ShowError("SmartRoutine konnte nicht gestartet werden.", ex);
+                }
+            }
+        }
 
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
+        private static IRoutineService CreateRoutineService()
+        {
+            IRoutineRepository routineRepository = AppSettings.UseTestData
+                ? (IRoutineRepository)new InMemoryRoutineRepository(new TestDataFactory().GetTestRoutines())
+                : new RoutineRepository();
 
-                IRoutineRepository routineRepository = AppSettings.UseTestData
-                    ? (IRoutineRepository)new InMemoryRoutineRepository(new TestDataFactory().GetTestRoutines())
-                    : new RoutineRepository();
+            return new RoutineService(routineRepository);
+        }
 
-                IRoutineService routineService = new RoutineService(routineRepository);
-
-                Application.Run(new MainForm(routineService));
+        private static void ShowError(string message, Exception ex)
+        {
+            try
+            {
+                ErikwnkWFUI.Forms.MessageBox.Show(
+                    message + "\n\n" + ex.Message,
+                    "SmartRoutine",
+                    ErikwnkWFUI.Forms.MessageBoxButtons.OK,
+                    ErikwnkWFUI.Forms.MessageBoxIcon.Error,
+                    size: ErikwnkWFUI.Forms.FormSize.Medium);
+            }
+            catch
+            {
+                // Nothing more can be done when even the notice fails.
             }
         }
 
@@ -80,16 +110,21 @@ namespace SmartRoutine
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        private static void RegisterGlobalExceptionCleanup()
+        private static void RegisterGlobalExceptionHandling()
         {
+            // The program ends after an unhandled exception: the computer may sleep again then.
             AppDomain.CurrentDomain.UnhandledException += delegate
             {
                 SleepPreventer.AllowSleep();
             };
 
-            Application.ThreadException += delegate
+            // An exception in an event handler no longer disappears silently: the user is told, the
+            // program goes on.
+            Application.ThreadException += (sender, e) =>
             {
                 SleepPreventer.AllowSleep();
+
+                ShowError("Es ist ein unerwarteter Fehler aufgetreten.", e.Exception);
             };
         }
     }
