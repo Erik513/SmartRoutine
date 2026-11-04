@@ -29,24 +29,31 @@ namespace SmartRoutine.Tests.UI
         }
 
         [TestMethod]
-        public void BottomBar_IsAtTheBottomAndHoldsThemeButtonAndLanguageChoice()
+        public void BottomBar_IsOnlyOnTheRoutineListNotInTheEditor()
         {
             using (MainForm form = CreateForm())
             {
-                var bar = (VersionPanel)typeof(MainForm)
-                    .GetField("_versionPanel", BindingFlags.NonPublic | BindingFlags.Instance)
+                var routinesView = (Control)typeof(MainForm)
+                    .GetField("_routinesView", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .GetValue(form);
+                var editorView = (Control)typeof(MainForm)
+                    .GetField("_editorView", BindingFlags.NonPublic | BindingFlags.Instance)
                     .GetValue(form);
 
-                Assert.IsNotNull(bar);
-                Assert.AreEqual(DockStyle.Bottom, bar.Dock);
-                Assert.IsTrue(form.ContentPanel.Controls.Contains(bar));
-                Assert.IsFalse(bar.UpdateAvailable);
-
-                var left = (Control)bar.Controls[0];
-                Assert.AreEqual(2, left.Controls.Count);
-                Assert.IsInstanceOfType(left.Controls[0], typeof(Button));
-                Assert.IsInstanceOfType(left.Controls[1], typeof(System.Windows.Forms.ComboBox));
+                Assert.IsTrue(ContainsVersionPanel(routinesView));
+                Assert.IsFalse(ContainsVersionPanel(editorView));
             }
+        }
+
+        private static bool ContainsVersionPanel(Control root)
+        {
+            foreach (Control child in root.Controls)
+            {
+                if (child is VersionPanel || ContainsVersionPanel(child))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

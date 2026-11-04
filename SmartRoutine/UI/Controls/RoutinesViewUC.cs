@@ -231,6 +231,7 @@ namespace SmartRoutine.UI.Controls
             mainLayout.Controls.Add(buttonPanel, 0, 1);
 
             Controls.Add(mainLayout);
+            Controls.Add(CreateBottomBar());
 
             Resize += (s, e) => CenterControls(mainLayout);
 
@@ -257,13 +258,13 @@ namespace SmartRoutine.UI.Controls
         private void CenterControls(TableLayoutPanel layout)
         {
             int newWidth = Math.Max(300, Width - 160);
-            int newHeight = Math.Max(300, Height - 160);
+            int newHeight = Math.Max(300, Height - BottomBarHeight - 160);
 
             layout.Size = new Size(newWidth, newHeight);
 
             layout.Location = new Point(
                 (Width - layout.Width) / 2,
-                (Height - layout.Height) / 2);
+                (Height - BottomBarHeight - layout.Height) / 2);
         }
 
         public void LoadRoutines()

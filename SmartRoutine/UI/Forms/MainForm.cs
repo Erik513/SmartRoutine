@@ -112,9 +112,6 @@ namespace SmartRoutine.UI.Forms
 
             ContentPanel.Controls.Add(_routinesView);
             ContentPanel.Controls.Add(_editorView);
-
-            // Added last: an edge-docked bar is laid out before the views that fill the rest.
-            ContentPanel.Controls.Add(CreateBottomBar());
         }
 
         private void ShowRoutinesView()

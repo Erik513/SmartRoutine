@@ -195,5 +195,23 @@ namespace SmartRoutine.Tests.UI
             _service.Verify(s => s.CreateRoutine("Meine Routine 5"), Times.Once);
             Assert.AreSame(created, raised);
         }
+
+        // Bottom bar
+
+        [TestMethod]
+        public void BottomBar_IsAtTheBottomAndHoldsThemeButtonAndLanguageChoice()
+        {
+            var bar = _view.VersionBar;
+
+            Assert.IsNotNull(bar);
+            Assert.AreEqual(DockStyle.Bottom, bar.Dock);
+            Assert.IsTrue(_view.Controls.Contains(bar));
+            Assert.IsFalse(bar.UpdateAvailable);
+
+            var left = bar.Controls[0];
+            Assert.AreEqual(2, left.Controls.Count);
+            Assert.IsInstanceOfType(left.Controls[0], typeof(Button));
+            Assert.IsInstanceOfType(left.Controls[1], typeof(System.Windows.Forms.ComboBox));
+        }
     }
 }
