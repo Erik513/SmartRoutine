@@ -545,14 +545,41 @@ namespace SmartRoutine.UI.Controls
 
             var reorderedSteps = lstSteps.Items.Cast<RoutineStep>().ToList();
 
-            for (int i = 0; i < reorderedSteps.Count; i++)
-            {
-                reorderedSteps[i].Order = i;
-            }
+            RenumberSteps(reorderedSteps);
             _currentRoutine.Steps = reorderedSteps;
             _routineService.SaveRoutine(_currentRoutine);
             lstSteps.Invalidate();
             lstSteps.Update();
+        }
+
+        // The order of a step is its position in the list.
+        private static void RenumberSteps(List<RoutineStep> steps)
+        {
+            for (int i = 0; i < steps.Count; i++)
+                steps[i].Order = i;
+        }
+
+        // Puts a copy of the step right behind it (new id, name + " Kopie") and renumbers the list.
+        // Returns the copy, or null when the step is not in the list.
+        private static RoutineStep InsertDuplicateAfter(List<RoutineStep> orderedSteps, RoutineStep original)
+        {
+            int originalIndex = orderedSteps.FindIndex(s => s.Id == original.Id);
+
+            if (originalIndex < 0)
+                return null;
+
+            RoutineStep duplicate = RoutineStepFactory.CreateCopy(original);
+
+            if (duplicate == null)
+                return null;
+
+            duplicate.Id = Guid.NewGuid().ToString();
+            duplicate.Name = original.Name + " Kopie";
+
+            orderedSteps.Insert(originalIndex + 1, duplicate);
+            RenumberSteps(orderedSteps);
+
+            return duplicate;
         }
 
         private void BtnDuplicateStep_Click(object sender, EventArgs e)
@@ -575,27 +602,14 @@ namespace SmartRoutine.UI.Controls
             if (selectedStep == null)
                 return;
 
-            RoutineStep duplicatedStep = RoutineStepFactory.CreateCopy(selectedStep);
-
-            if (duplicatedStep == null)
-                return;
-
-            duplicatedStep.Id = Guid.NewGuid().ToString();
-            duplicatedStep.Name = selectedStep.Name + " Kopie";
-
             List<RoutineStep> orderedSteps = _currentRoutine.Steps
                 .OrderBy(s => s.Order)
                 .ToList();
 
-            int originalIndex = orderedSteps.FindIndex(s => s.Id == selectedStep.Id);
+            RoutineStep duplicatedStep = InsertDuplicateAfter(orderedSteps, selectedStep);
 
-            if (originalIndex < 0)
+            if (duplicatedStep == null)
                 return;
-
-            orderedSteps.Insert(originalIndex + 1, duplicatedStep);
-
-            for (int i = 0; i < orderedSteps.Count; i++)
-                orderedSteps[i].Order = i;
 
             _currentRoutine.Steps = orderedSteps;
 
