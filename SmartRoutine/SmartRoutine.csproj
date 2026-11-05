@@ -8,7 +8,7 @@
     <AssemblyName>SmartRoutine</AssemblyName>
     <StartupObject>SmartRoutine.Program</StartupObject>
     <ApplicationIcon>Properties\Resources\AppIcon.ico</ApplicationIcon>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>SmartRoutine</Product>
     <AssemblyTitle>SmartRoutine</AssemblyTitle>
     <Description>Automation of recurring workflows</Description>
