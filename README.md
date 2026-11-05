@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/30855614/README.md)
+
 # SmartRoutine
 
 SmartRoutine is a small Windows desktop app for automating recurring workflows: a routine is defined once as a sequence of steps — open a website, open a folder, start a program, open a document — and can then be started with one click.
