@@ -21,12 +21,9 @@ namespace SmartRoutine.UI.Controls
 
         private VersionPanel CreateBottomBar()
         {
-            VersionPanel bar = UIStyles.VersionPanels.CreateStandard();
+            VersionPanel bar = UIStyles.VersionPanels.CreateElevated();
             bar.Dock = DockStyle.Bottom;
             bar.Height = BottomBarHeight;
-
-            // Dark gray like the button panel above it (the standard strip is the darkest color of the theme).
-            UIStyles.Colors.Follow(bar, () => bar.BackColor = UIStyles.Colors.BackgroundDarkElevated);
 
             // The controls stand in the middle of the bar's height (anchored left only).
             TableLayoutPanel left = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
@@ -50,7 +47,8 @@ namespace SmartRoutine.UI.Controls
             languageBox.Width = 120;
             languageBox.Anchor = AnchorStyles.Left;
             languageBox.Margin = new Padding(0);
-            ComboDropUp.Enable(languageBox);
+            // Opens above the box when the list would not fit below (the bar is at the bottom of the window).
+            ((ErikwnkWFUI.Controls.ComboBox)languageBox).DropDownDirection = DropDownDirection.Auto;
 
             left.Controls.Add(themeButton, 0, 0);
             left.Controls.Add(languageBox, 1, 0);

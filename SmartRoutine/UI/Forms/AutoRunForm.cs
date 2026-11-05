@@ -51,6 +51,7 @@ namespace SmartRoutine.UI.Forms
             _onRoutineExecuted = onRoutineExecuted;
 
             BarColors = UIStyles.Colors.Sets.Green;
+            ButtonPrimary = true;
             CancelButtonText = Loc.S("Common.Cancel");
             TopMost = true;
         }
