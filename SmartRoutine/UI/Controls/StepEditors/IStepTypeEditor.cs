@@ -1,32 +1,32 @@
-using CustomWFUI.Controls;
+using ErikwnkWFUI.Controls;
 using SmartRoutine.Data.Models;
 
 namespace SmartRoutine.UI.Controls.StepEditors
 {
-    // Kapselt UI-Aufbau, Laden, Erzeugen und Validieren für genau einen StepType.
-    // Jede Implementierung besitzt ihre eigenen Controls und weiß nichts von RoutineEditorUC.
+    // Wraps building the controls, loading, creating and validating for exactly one StepType.
+    // Each implementation owns its controls and knows nothing about RoutineEditorUC.
     internal interface IStepTypeEditor
     {
         StepType Type { get; }
 
-        // Baut die typspezifischen Controls und fügt sie der übergebenen Optionen-Tabelle hinzu.
-        void BuildControls(StyledPropertyTable optionsTable);
+        // Builds the controls that are specific to the type and adds them to the given options table.
+        void BuildControls(PropertyTable optionsTable);
 
-        // Lädt die Werte eines vorhandenen Steps in die Controls.
+        // Loads the values of an existing step into the controls.
         void LoadFrom(RoutineStep step);
 
-        // Normalisiert einen Step für den Änderungsvergleich (z.B. Trim, Default-Werte).
+        // Normalizes a step for the comparison of changes (for example trim, default values).
         void NormalizeForComparison(RoutineStep step);
 
-        // Baut einen neuen, typspezifischen Step aus den aktuellen Control-Werten.
-        // Gemeinsame Felder (Name, Description, ...) werden vom Aufrufer ergänzt.
-        // Liefert null, wenn aus den aktuellen Eingaben kein gültiger Step gebaut werden kann.
+        // Builds a new step of this type from the current values of the controls.
+        // The common fields (Name, Description, ...) are added by the caller.
+        // Returns null when no valid step can be built from the current input.
         RoutineStep CreateStep();
 
-        // Validiert die typspezifischen Felder; zeigt bei Bedarf eine Meldung und setzt den Fokus.
+        // Validates the fields of this type; shows a message if needed and sets the focus.
         bool Validate(bool showMessageBox);
 
-        // Aktualisiert die Verfügbarkeit von "Automatisch weiter" (nur für OpenUrl relevant).
+        // Updates whether "continue automatically" is available (only relevant for OpenUrl).
         void UpdateAutoContinueAvailability(ToggleSwitch autoContinueToggle);
     }
 }

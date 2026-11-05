@@ -1,5 +1,6 @@
 ﻿using SmartRoutine.Data.Interfaces;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -25,12 +26,7 @@ namespace SmartRoutine.Logic.Services
                 .ToList();
 
             foreach (var routine in routines)
-            {
-                if (routine.Steps != null && routine.Steps.Any())
-                {
-                    routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
-                }
-            }
+                SortSteps(routine);
 
             return routines;
         }
@@ -39,26 +35,39 @@ namespace SmartRoutine.Logic.Services
         {
             var routine = _repository.GetRoutine(id);
 
-            if (routine != null && routine.Steps != null && routine.Steps.Any())
-            {
-                routine.Steps = routine.Steps
-                    .OrderBy(s => s.Order)
-                    .ToList();
-            }
+            SortSteps(routine);
 
             return routine;
         }
 
-        public Routine CreateRoutine(string name)
+        private static void SortSteps(Routine routine)
+        {
+            if (routine != null && routine.Steps != null && routine.Steps.Any())
+                routine.Steps = routine.Steps.OrderBy(s => s.Order).ToList();
+        }
+
+        // The steps get the order of their position in the list.
+        private static void RenumberSteps(List<RoutineStep> steps)
+        {
+            for (int i = 0; i < steps.Count; i++)
+                steps[i].Order = i;
+        }
+
+        // A new routine goes to the end of the list.
+        private int GetNextRoutineOrder()
         {
             var routines = _repository.LoadRoutines();
-            int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
 
+            return routines.Count > 0 ? routines.Max(r => r.Order) + 1 : 0;
+        }
+
+        public Routine CreateRoutine(string name)
+        {
             var routine = new Routine
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = name,
-                Order = maxOrder + 1,
+                Order = GetNextRoutineOrder(),
                 CreatedAt = DateTime.Now,
                 Steps = new List<RoutineStep>()
             };
@@ -78,7 +87,7 @@ namespace SmartRoutine.Logic.Services
 
             for (int i = 0; i < reorderedRoutines.Count; i++)
             {
-                reorderedRoutines[i].Order = i; // nur Routine.Order
+                reorderedRoutines[i].Order = i; // only Routine.Order
             }
 
             foreach (var routine in reorderedRoutines)
@@ -106,24 +115,20 @@ namespace SmartRoutine.Logic.Services
                 return;
             }
 
-            var routines = _repository.LoadRoutines();
-            int maxOrder = routines.Count > 0 ? routines.Max(r => r.Order) : -1;
-
-            routine.Order = maxOrder + 1;
+            routine.Order = GetNextRoutineOrder();
             routine.CreatedAt = DateTime.Now;
 
             _repository.AddRoutine(routine);
         }
 
-        private void NormalizeStepOrders(Routine routine)
+        private static void NormalizeStepOrders(Routine routine)
         {
             if (routine.Steps == null)
                 routine.Steps = new List<RoutineStep>();
 
             var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
 
-            for (int i = 0; i < orderedSteps.Count; i++)
-                orderedSteps[i].Order = i;
+            RenumberSteps(orderedSteps);
 
             routine.Steps = orderedSteps;
         }
@@ -154,10 +159,8 @@ namespace SmartRoutine.Logic.Services
         public void UpdateStep(string routineId, RoutineStep step)
         {
             var routine = GetRoutine(routineId);
-            if (routine == null)
-            {
+            if (routine == null || step == null)
                 return;
-            }
 
             var index = routine.Steps.ToList().FindIndex(s => s.Id == step.Id);
             if (index >= 0)
@@ -180,38 +183,10 @@ namespace SmartRoutine.Logic.Services
 
             var orderedSteps = routine.Steps.OrderBy(s => s.Order).ToList();
 
-            for (int i = 0; i < orderedSteps.Count; i++)
-            {
-                orderedSteps[i].Order = i;
-            }
+            RenumberSteps(orderedSteps);
 
             routine.Steps = orderedSteps;
             routine.UpdatedAt = DateTime.Now;
-
-            _repository.UpdateRoutine(routine);
-        }
-
-
-        public void ReorderSteps(string routineId, int oldIndex, int newIndex)
-        {
-            var routine = GetRoutine(routineId);
-            if (routine == null) return;
-
-            var steps = routine.Steps.ToList();
-
-            // VALIDIERUNG: Prüfe ob Indizes gültig sind
-            if (oldIndex < 0 || oldIndex >= steps.Count) return;
-            if (newIndex < 0 || newIndex >= steps.Count) return;
-            if (oldIndex == newIndex) return;
-
-            var step = steps[oldIndex];
-            steps.RemoveAt(oldIndex);
-            steps.Insert(newIndex, step);
-
-            for (int i = 0; i < steps.Count; i++)
-                steps[i].Order = i;
-
-            routine.Steps = steps;
 
             _repository.UpdateRoutine(routine);
         }
@@ -247,11 +222,7 @@ namespace SmartRoutine.Logic.Services
         {
             if (step.OpenInExternalBrowser)
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = step.Url,
-                    UseShellExecute = true
-                });
+                StartWithShell(step.Url);
 
                 return StepExecutionResult.None();
             }
@@ -259,13 +230,19 @@ namespace SmartRoutine.Logic.Services
             return StepExecutionResult.OpenInternalUrl(step.Url);
         }
 
-        private void ExecuteOpenFolder(OpenFolderStep step)
+        // Opens a URL, folder or file with the program Windows has for it.
+        private static void StartWithShell(string target)
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = step.FolderPath,
+                FileName = target,
                 UseShellExecute = true
             });
+        }
+
+        private void ExecuteOpenFolder(OpenFolderStep step)
+        {
+            StartWithShell(step.FolderPath);
         }
 
         private void ExecuteOpenApplication(OpenApplicationStep step)
@@ -283,14 +260,12 @@ namespace SmartRoutine.Logic.Services
 
         private void ExecuteOpenDocument(OpenDocumentStep step)
         {
-            if (System.IO.File.Exists(step.FilePath))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = step.FilePath,
-                    UseShellExecute = true
-                });
-            }
+            // A missing file is an error the caller reports: before, nothing happened and the
+            // execution form still said "opened".
+            if (!File.Exists(step.FilePath))
+                throw new FileNotFoundException(Loc.S("Validate.Document.Missing", step.FilePath), step.FilePath);
+
+            StartWithShell(step.FilePath);
         }
 
         public bool ValidateStep(
@@ -301,7 +276,7 @@ namespace SmartRoutine.Logic.Services
 
             if (step == null)
             {
-                errorMessage = "Der Schritt darf nicht null sein.";
+                errorMessage = Loc.S("Validate.Step.Null");
                 return false;
             }
 
@@ -311,13 +286,13 @@ namespace SmartRoutine.Logic.Services
 
                     if (string.IsNullOrWhiteSpace(urlStep.Url))
                     {
-                        errorMessage = "Die URL ist leer.";
+                        errorMessage = Loc.S("Validate.Url.Empty");
                         return false;
                     }
 
                     if (!Uri.IsWellFormedUriString(urlStep.Url, UriKind.Absolute))
                     {
-                        errorMessage = $"Die URL '{urlStep.Url}' ist ungültig.";
+                        errorMessage = Loc.S("Validate.Url.Invalid", urlStep.Url);
                         return false;
                     }
 
@@ -327,14 +302,14 @@ namespace SmartRoutine.Logic.Services
 
                     if (string.IsNullOrWhiteSpace(folderStep.FolderPath))
                     {
-                        errorMessage = "Der Ordnerpfad ist leer.";
+                        errorMessage = Loc.S("Validate.Folder.Empty");
                         return false;
                     }
 
                     if (!Directory.Exists(folderStep.FolderPath))
                     {
                         errorMessage =
-                            $"Der Ordner existiert nicht:\n{folderStep.FolderPath}";
+                            Loc.S("Validate.Folder.Missing", folderStep.FolderPath);
 
                         return false;
                     }
@@ -345,14 +320,14 @@ namespace SmartRoutine.Logic.Services
 
                     if (string.IsNullOrWhiteSpace(appStep.ApplicationPath))
                     {
-                        errorMessage = "Der Programmpfad ist leer.";
+                        errorMessage = Loc.S("Validate.App.Empty");
                         return false;
                     }
 
                     if (!File.Exists(appStep.ApplicationPath))
                     {
                         errorMessage =
-                            $"Die Anwendung existiert nicht:\n{appStep.ApplicationPath}";
+                            Loc.S("Validate.App.Missing", appStep.ApplicationPath);
 
                         return false;
                     }
@@ -363,14 +338,14 @@ namespace SmartRoutine.Logic.Services
 
                     if (string.IsNullOrWhiteSpace(docStep.FilePath))
                     {
-                        errorMessage = "Der Dateipfad ist leer.";
+                        errorMessage = Loc.S("Validate.Document.Empty");
                         return false;
                     }
 
                     if (!File.Exists(docStep.FilePath))
                     {
                         errorMessage =
-                            $"Die Datei existiert nicht:\n{docStep.FilePath}";
+                            Loc.S("Validate.Document.Missing", docStep.FilePath);
 
                         return false;
                     }

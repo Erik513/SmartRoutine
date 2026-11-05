@@ -29,90 +29,66 @@ namespace SmartRoutine.Logic.Services
             return CreateStepCopy(step, false);
         }
 
+        // Copies a step with all its fields. For an auto run the step starts and continues by itself
+        // (and a URL opens in the external browser).
         private static RoutineStep CreateStepCopy(
                     RoutineStep step,
                     bool forceAutoRun)
         {
-            if (step == null)
-                return null;
+            RoutineStep copy;
 
-            if (step is OpenUrlStep)
+            switch (step)
             {
-                OpenUrlStep urlStep = (OpenUrlStep)step;
+                case null:
+                    return null;
 
-                return new OpenUrlStep
-                {
-                    Id = urlStep.Id,
-                    Order = urlStep.Order,
-                    Name = urlStep.Name,
-                    Description = urlStep.Description,
-                    Show = urlStep.Show,
-                    AutoStart = forceAutoRun ? true : urlStep.AutoStart,
-                    Url = urlStep.Url,
-                    OpenInExternalBrowser = forceAutoRun
-                        ? true
-                        : urlStep.OpenInExternalBrowser,
-                    AutoContinue = forceAutoRun ? true : urlStep.AutoContinue
-                };
+                case OpenUrlStep urlStep:
+                    copy = new OpenUrlStep
+                    {
+                        Url = urlStep.Url,
+                        OpenInExternalBrowser = forceAutoRun || urlStep.OpenInExternalBrowser
+                    };
+                    break;
+
+                case OpenFolderStep folderStep:
+                    copy = new OpenFolderStep
+                    {
+                        FolderPath = folderStep.FolderPath,
+                        OpenInNewWindow = folderStep.OpenInNewWindow
+                    };
+                    break;
+
+                case OpenApplicationStep appStep:
+                    copy = new OpenApplicationStep
+                    {
+                        ApplicationPath = appStep.ApplicationPath,
+                        Arguments = appStep.Arguments,
+                        RunAsAdmin = appStep.RunAsAdmin,
+                        WorkingDirectory = appStep.WorkingDirectory
+                    };
+                    break;
+
+                case OpenDocumentStep docStep:
+                    copy = new OpenDocumentStep
+                    {
+                        FilePath = docStep.FilePath,
+                        OpenWithAssociatedApp = docStep.OpenWithAssociatedApp
+                    };
+                    break;
+
+                default:
+                    return null;
             }
 
-            if (step is OpenFolderStep)
-            {
-                OpenFolderStep folderStep = (OpenFolderStep)step;
+            copy.Id = step.Id;
+            copy.Order = step.Order;
+            copy.Name = step.Name;
+            copy.Description = step.Description;
+            copy.Show = step.Show;
+            copy.AutoStart = forceAutoRun || step.AutoStart;
+            copy.AutoContinue = forceAutoRun || step.AutoContinue;
 
-                return new OpenFolderStep
-                {
-                    Id = folderStep.Id,
-                    Order = folderStep.Order,
-                    Name = folderStep.Name,
-                    Description = folderStep.Description,
-                    Show = folderStep.Show,
-                    AutoStart = forceAutoRun ? true : folderStep.AutoStart,
-                    FolderPath = folderStep.FolderPath,
-                    OpenInNewWindow = folderStep.OpenInNewWindow,
-                    AutoContinue = forceAutoRun ? true : folderStep.AutoContinue
-                };
-            }
-
-            if (step is OpenApplicationStep)
-            {
-                OpenApplicationStep appStep = (OpenApplicationStep)step;
-
-                return new OpenApplicationStep
-                {
-                    Id = appStep.Id,
-                    Order = appStep.Order,
-                    Name = appStep.Name,
-                    Description = appStep.Description,
-                    Show = appStep.Show,
-                    AutoStart = forceAutoRun ? true : appStep.AutoStart,
-                    ApplicationPath = appStep.ApplicationPath,
-                    Arguments = appStep.Arguments,
-                    RunAsAdmin = appStep.RunAsAdmin,
-                    WorkingDirectory = appStep.WorkingDirectory,
-                    AutoContinue = forceAutoRun ? true : appStep.AutoContinue
-                };
-            }
-
-            if (step is OpenDocumentStep)
-            {
-                OpenDocumentStep docStep = (OpenDocumentStep)step;
-
-                return new OpenDocumentStep
-                {
-                    Id = docStep.Id,
-                    Order = docStep.Order,
-                    Name = docStep.Name,
-                    Description = docStep.Description,
-                    Show = docStep.Show,
-                    AutoStart = forceAutoRun ? true : docStep.AutoStart,
-                    FilePath = docStep.FilePath,
-                    OpenWithAssociatedApp = docStep.OpenWithAssociatedApp,
-                    AutoContinue = forceAutoRun ? true : docStep.AutoContinue
-                };
-            }
-
-            return null;
+            return copy;
         }
     }
 }

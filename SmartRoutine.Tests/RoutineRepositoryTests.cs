@@ -316,5 +316,92 @@ namespace SmartRoutine.Tests.Data
             Assert.IsNull(
                 _repository.GetRoutine(routine.Id));
         }
+
+        [TestMethod]
+        public void AllStepTypes_SurviveSavingAndLoading()
+        {
+            _repository.AddRoutine(new Routine
+            {
+                Id = "all",
+                Steps = new List<RoutineStep>
+                {
+                    new OpenUrlStep { Id = "u", Url = "https://a.example", OpenInExternalBrowser = false },
+                    new OpenFolderStep { Id = "f", FolderPath = @"C:\Daten", OpenInNewWindow = false },
+                    new OpenApplicationStep { Id = "a", ApplicationPath = @"C:\a.exe", Arguments = "-x", RunAsAdmin = true, WorkingDirectory = @"C:\" },
+                    new OpenDocumentStep { Id = "d", FilePath = @"C:\a.docx", OpenWithAssociatedApp = false }
+                }
+            });
+
+            var steps = _repository.GetRoutine("all").Steps;
+
+            Assert.AreEqual(4, steps.Count);
+            Assert.AreEqual(false, ((OpenUrlStep)steps[0]).OpenInExternalBrowser);
+            Assert.AreEqual(@"C:\Daten", ((OpenFolderStep)steps[1]).FolderPath);
+            Assert.AreEqual("-x", ((OpenApplicationStep)steps[2]).Arguments);
+            Assert.IsTrue(((OpenApplicationStep)steps[2]).RunAsAdmin);
+            Assert.AreEqual(@"C:\a.docx", ((OpenDocumentStep)steps[3]).FilePath);
+        }
+
+        [TestMethod]
+        public void DateFields_AreSaved()
+        {
+            var executed = new DateTime(2024, 5, 6, 7, 8, 9);
+            _repository.AddRoutine(new Routine { Id = "d", LastExecutionAt = executed });
+
+            Assert.AreEqual(executed, _repository.GetRoutine("d").LastExecutionAt);
+        }
+
+        [TestMethod]
+        public void UpdateRoutine_UnknownRoutine_IsNotCreated()
+        {
+            _repository.UpdateRoutine(new Routine { Id = "ghost", Name = "Geist" });
+
+            Assert.IsNull(_repository.GetRoutine("ghost"));
+            Assert.AreEqual(0, _repository.LoadRoutines().Count);
+        }
+
+        [TestMethod]
+        public void DeleteRoutine_UnknownId_DoesNotThrow()
+        {
+            _repository.AddRoutine(new Routine { Id = "kept" });
+
+            _repository.DeleteRoutine("ghost");
+
+            Assert.AreEqual(1, _repository.LoadRoutines().Count);
+        }
+
+        [TestMethod]
+        public void AddRoutine_WithTheSameIdTwice_Throws()
+        {
+            _repository.AddRoutine(new Routine { Id = "twice" });
+
+            Assert.ThrowsExactly<LiteDB.LiteException>(() =>
+                _repository.AddRoutine(new Routine { Id = "twice" }));
+        }
+
+        [TestMethod]
+        public void LoadRoutines_EmptyDatabase_ReturnsEmptyList()
+        {
+            Assert.AreEqual(0, _repository.LoadRoutines().Count);
+        }
+
+        [TestMethod]
+        public void DatabasePath_WithSpaces_Works()
+        {
+            string folder = Path.Combine(Path.GetTempPath(), "SmartRoutine Test " + Guid.NewGuid());
+            Directory.CreateDirectory(folder);
+
+            try
+            {
+                var repository = new RoutineRepository(Path.Combine(folder, "meine routinen.db"));
+                repository.AddRoutine(new Routine { Id = "x", Name = "With spaces" });
+
+                Assert.AreEqual("With spaces", repository.GetRoutine("x").Name);
+            }
+            finally
+            {
+                Directory.Delete(folder, true);
+            }
+        }
     }
 }

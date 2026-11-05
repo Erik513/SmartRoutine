@@ -6,6 +6,9 @@
     <IsPackable>false</IsPackable>
     <RootNamespace>SmartRoutine.Tests</RootNamespace>
     <AssemblyName>SmartRoutine.Tests</AssemblyName>
+      <!-- The WebView2 package brings WPF assemblies (WindowsBase) of an older target that the .NET 8 reference pack also has;
+         the conflict is harmless because the program uses only the WinForms control. -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,17 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="CustomWFUI">
-      <HintPath>..\lib\CustomWFUI\CustomWFUI.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\lib\GitHubSelfUpdater\*.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\SmartRoutine\SmartRoutine.csproj" />
+    <ProjectReference Include="..\..\ErikwnkWFUI\ErikwnkWFUI\ErikwnkWFUI.csproj" />
   </ItemGroup>
 
 </Project>

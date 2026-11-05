@@ -1,40 +1,41 @@
 ﻿using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Drawing;
-using System.Net.Http;
-using System.Reflection;
 using System.Windows.Forms;
-using CustomWFUI;
-using CustomWFUI.Forms;
-using CustomWFUI.Styles;
-using CustomWFUI.Helpers;
+using ErikwnkWFUI;
+using ErikwnkWFUI.Forms;
+using ErikwnkWFUI.Styles;
+using ErikwnkCore;
+using MessageBox = ErikwnkWFUI.Forms.MessageBox;
+using MessageBoxButtons = ErikwnkWFUI.Forms.MessageBoxButtons;
+using MessageBoxIcon = ErikwnkWFUI.Forms.MessageBoxIcon;
+using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace SmartRoutine.UI.Forms
 {
-    public partial class MainForm : StyledForm
+    public partial class MainForm : AppForm
     {
         private static readonly Size DefaultWindowSize = new Size(1024, 768);
         private static readonly Size MinimumWindowSize = new Size(800, 600);
 
-        private const string UpdateRepositoryOwner = "Erik513";
-        private const string UpdateRepositoryName = "SmartRoutine";
-        private static readonly TimeSpan UpdateCheckTimeout = TimeSpan.FromSeconds(5);
 
         private readonly IRoutineService _routineService;
 
         private RoutinesViewUC _routinesView;
         private RoutineEditorUC _editorView;
-        private Routine _currentRoutine;
         private bool _updateCheckStarted;
 
         public MainForm(IRoutineService routineService)
-            : base(StyledFormOptions.CreateStandard(
+            : base(FormOptions.CreateStandard(
                 "SmartRoutine",
                 ContentAlignment.MiddleLeft,
-                UIColors.BackgroundDarkElevated,
+                null,
                 Properties.Resources.IconLogo))
             {
             if (routineService == null)
@@ -53,6 +54,7 @@ namespace SmartRoutine.UI.Forms
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             CleanupBeforeClose();
+            DisposeUpdateResources();
             base.OnFormClosing(e);
         }
 
@@ -60,9 +62,9 @@ namespace SmartRoutine.UI.Forms
         {
             base.OnShown(e);
 
-            // OnShown feuert auch erneut, wenn das Form nach ExecuteFullRoutine's
-            // Hide()/Show()-Wechsel wieder sichtbar wird - der Update-Check soll
-            // aber nur einmal pro Programmstart laufen.
+            // OnShown also fires again when the form becomes visible after the
+            // Hide()/Show() switch of ExecuteFullRoutine - the update check
+            // is to run only once per program start, though.
             if (_updateCheckStarted)
                 return;
 
@@ -71,26 +73,8 @@ namespace SmartRoutine.UI.Forms
             CheckForUpdatesAsync();
         }
 
-        private async void CheckForUpdatesAsync()
-        {
-            using (HttpClient checkHttpClient = new HttpClient())
-            using (HttpClient downloadHttpClient = new HttpClient())
-            {
-                AppUpdater updater = new AppUpdater(
-                    UpdateRepositoryOwner,
-                    UpdateRepositoryName,
-                    checkHttpClient,
-                    downloadHttpClient);
-
-                Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
-
-                await updater.CheckForUpdateAsync(currentVersion, UpdateCheckTimeout, this);
-            }
-        }
-
         private void ConfigureForm()
         {
-            BackColor = UIStyles.Colors.BackgroundDark;
             MinimumSize = MinimumWindowSize;
             Size = DefaultWindowSize;
             CenterToScreen();
@@ -141,8 +125,6 @@ namespace SmartRoutine.UI.Forms
 
         private void ShowEditorView(Routine routine, bool isNewRoutine)
         {
-            _currentRoutine = routine;
-
             _routinesView.Hide();
             _editorView.Show();
             _editorView.LoadRoutine(routine, isNewRoutine);
@@ -154,19 +136,7 @@ namespace SmartRoutine.UI.Forms
                 return;
 
             _routineService.SaveRoutine(routine);
-            RefreshCurrentRoutineIfNeeded(routine);
             _routinesView.LoadRoutines();
-        }
-
-        private void RefreshCurrentRoutineIfNeeded(Routine routine)
-        {
-            if (_currentRoutine == null)
-                return;
-
-            if (_currentRoutine.Id != routine.Id)
-                return;
-
-            _currentRoutine = _routineService.GetRoutine(routine.Id);
         }
 
         private void DeleteRoutine(Routine routine)
@@ -174,13 +144,13 @@ namespace SmartRoutine.UI.Forms
             if (routine == null)
                 return;
 
-            DialogResult result = CustomMessageBox.Show(
-                $"Routine '{routine.Name}' wirklich löschen?",
-                "Bestätigen",
-                CustomMessageBoxButtons.YesNo,
-                CustomMessageBoxIcon.Warning,
+            DialogResult result = MessageBox.Show(
+                Loc.S("Main.DeleteRoutine.Text", routine.Name),
+                Loc.S("Common.Confirm"),
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
                 this,
-                CustomMessageBoxSize.Small);
+                FormSize.Small);
 
             if (result != DialogResult.Yes)
                 return;
@@ -191,10 +161,8 @@ namespace SmartRoutine.UI.Forms
 
         private void ExecuteFullRoutine(Routine routine)
         {
-            if (!CanExecuteRoutine(routine))
+            if (!CanExecuteRoutine(routine) || !ConfirmStepsCanRun(routine))
                 return;
-
-            MarkRoutineAsExecuted(routine);
 
             bool previousShowInTaskbar = ShowInTaskbar;
             bool previousVisible = Visible;
@@ -211,15 +179,9 @@ namespace SmartRoutine.UI.Forms
             };
 
             form.BeforeCloseRequested += (s, e) =>
-            {
-                ShowInTaskbar = previousShowInTaskbar;
+                RestoreAfterExecution(previousShowInTaskbar, previousVisible);
 
-                if (previousVisible)
-                    Show();
-
-                Activate();
-                RefreshAfterHiddenExecutionForm();
-            };
+            bool finished;
 
             try
             {
@@ -227,39 +189,51 @@ namespace SmartRoutine.UI.Forms
             }
             finally
             {
+                finished = form.IsFinished;
                 form.Dispose();
 
-                ShowInTaskbar = previousShowInTaskbar;
-
-                if (previousVisible && !Visible)
-                    Show();
-
-                Activate();
-                RefreshAfterHiddenExecutionForm();
+                RestoreAfterExecution(previousShowInTaskbar, previousVisible);
             }
+
+            // Only a routine that was gone through to its end counts as executed.
+            if (finished)
+            {
+                MarkRoutineAsExecuted(routine);
+                _routinesView.LoadRoutines();
+            }
+        }
+
+        // Brings the main window back the way it was before the execution form hid it.
+        private void RestoreAfterExecution(bool showInTaskbar, bool wasVisible)
+        {
+            ShowInTaskbar = showInTaskbar;
+
+            if (wasVisible && !Visible)
+                Show();
+
+            Activate();
+            RefreshAfterHiddenExecutionForm();
         }
 
         private void RefreshAfterHiddenExecutionForm()
         {
-            // Form wurde während der Routinenausführung per Hide()/Show() ausgeblendet.
-            // Die selbstgezeichnete, gecachte Titelleiste (TitleBarControl) bekommt dabei
-            // keinen automatischen Repaint, deshalb hier das ganze Form explizit invalidieren.
+            // The form was hidden with Hide()/Show() while the routine was run.
+            // The self-drawn, cached title bar (TitleBarControl) gets no automatic
+            // repaint then, so the whole form is invalidated explicitly here.
             Refresh();
         }
         private void ExecuteFullRoutineAuto(Routine routine)
         {
-            if (!CanExecuteRoutine(routine))
+            if (!CanExecuteRoutine(routine) || !ConfirmStepsCanRun(routine))
                 return;
 
-            DialogResult result = CustomMessageBox.Show(
-                $"Möchten Sie die Routine '{routine.Name}' automatisch ausführen?\n\n" +
-                "Alle aktivierten Schritte werden nacheinander gestartet.\n" +
-                "Interne URL-Schritte werden dabei einmalig im externen Browser geöffnet.",
-                "Automatische Ausführung starten",
-                CustomMessageBoxButtons.YesNo,
-                CustomMessageBoxIcon.Question,
+            DialogResult result = MessageBox.Show(
+                Loc.S("Main.AutoRun.Text", routine.Name),
+                Loc.S("Main.AutoRun.Title"),
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question,
                 this,
-                CustomMessageBoxSize.Medium);
+                FormSize.Medium);
 
             if (result != DialogResult.Yes)
                 return;
@@ -284,11 +258,36 @@ namespace SmartRoutine.UI.Forms
             if (routine == null)
                 return;
 
-            routine.LastExecutionAt = DateTime.Now;
-
-            _routineService.SaveRoutine(routine);
+            MarkRoutineAsExecuted(routine);
 
             _routinesView.LoadRoutines();
+        }
+
+        private const int MaxProblemsShown = 8;
+
+        // Checks all steps that would be run. With problems the user sees them in one list and decides
+        // whether to start anyway (a step that cannot be run is reported during the run as well).
+        private bool ConfirmStepsCanRun(Routine routine)
+        {
+            List<string> problems = RoutinePreCheck.FindProblems(routine, _routineService);
+
+            if (problems.Count == 0)
+                return true;
+
+            List<string> lines = problems.Take(MaxProblemsShown).Select(p => "• " + p).ToList();
+
+            if (problems.Count > MaxProblemsShown)
+                lines.Add(Loc.S("Main.PreCheck.More", problems.Count - MaxProblemsShown));
+
+            DialogResult result = MessageBox.Show(
+                Loc.S("Main.PreCheck.Text", string.Join("\n", lines)),
+                Loc.S("Main.PreCheck.Title"),
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                this,
+                FormSize.Medium);
+
+            return result == DialogResult.Yes;
         }
 
         private bool CanExecuteRoutine(Routine routine)
@@ -296,8 +295,8 @@ namespace SmartRoutine.UI.Forms
             if (routine == null || routine.Steps.Count == 0)
             {
                 ShowInfoMessage(
-                    "Diese Routine enthält keine Schritte.",
-                    "Info");
+                    Loc.S("Main.NoSteps.Text"),
+                    Loc.S("Common.Info"));
 
                 return false;
             }
@@ -307,8 +306,8 @@ namespace SmartRoutine.UI.Forms
             if (!session.HasExecutableSteps)
             {
                 ShowInfoMessage(
-                    "Alle Schritte dieser Routine sind derzeit deaktiviert.",
-                    "Routine nicht ausführbar");
+                    Loc.S("Main.AllDisabled.Text"),
+                    Loc.S("Main.AllDisabled.Title"));
 
                 return false;
             }
@@ -329,13 +328,13 @@ namespace SmartRoutine.UI.Forms
 
         private void ShowInfoMessage(string message, string title)
         {
-            CustomMessageBox.Show(
+            MessageBox.Show(
                 message,
                 title,
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Info,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Info,
                 this,
-                CustomMessageBoxSize.Small);
+                FormSize.Small);
         }
 
         private void CleanupBeforeClose()
@@ -346,7 +345,7 @@ namespace SmartRoutine.UI.Forms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Fehler beim Cleanup: {ex.Message}");
+                Console.WriteLine($"Error during cleanup: {ex.Message}");
             }
         }
 

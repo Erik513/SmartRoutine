@@ -1,24 +1,29 @@
-﻿using CustomWFUI;
-using CustomWFUI.Controls;
-using CustomWFUI.Forms;
+﻿using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
+using ErikwnkWFUI.Forms;
+using MessageBox = ErikwnkWFUI.Forms.MessageBox;
+using MessageBoxButtons = ErikwnkWFUI.Forms.MessageBoxButtons;
+using MessageBoxIcon = ErikwnkWFUI.Forms.MessageBoxIcon;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.Logic.Services;
 using SmartRoutine.UI.Controls.StepEditors;
-using SmartRoutine.UI.Forms;
 using SmartRoutine.UI.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using ComboBox = System.Windows.Forms.ComboBox;
+using Panel = System.Windows.Forms.Panel;
+using TableLayoutPanel = System.Windows.Forms.TableLayoutPanel;
 
 namespace SmartRoutine.UI.Controls
 {
     public partial class RoutineEditorUC : UserControl
     {
-        // Für Tests: Wenn true, werden MessageBoxen automatisch mit "Ja" beantwortet
+        // For tests: when true, message boxes are answered with "Yes" automatically
         public bool AutoConfirmDialogs { get; set; } = false;
 
         public event EventHandler BackToRoutinesClicked;
@@ -31,8 +36,6 @@ namespace SmartRoutine.UI.Controls
         private RoutineStep _editingStep;
         private RoutineStep _editorSnapshotStep;
         private StepType? _currentEditorStepType;
-        private ToolTip _descriptionTooltip = UIStyles.ToolTips.CreateToolTip();
-        private ToolTip _errorToolTip = UIStyles.ToolTips.CreateToolTip();
         private bool _isRefreshing = false;
         private bool _isLoadingStep = false;
         private bool _suppressStepChangeConfirmation;
@@ -40,28 +43,28 @@ namespace SmartRoutine.UI.Controls
         // UI Controls
         private TableLayoutPanel mainTlp;
 
-        // Inhalt (links + rechts)
+        // Content (left + right)
         private TableLayoutPanel contentTlp;
 
-        // Linke Seite
+        // Left side
         private TableLayoutPanel leftTlp;
-        private StyledPropertyTable routineInfoTable;
-        private TextBox txtRoutineName;
-        private StyledListBoxControl lstSteps;
+        private PropertyTable routineInfoTable;
+        private LockableTextBox txtRoutineName;
+        private TitledListBox lstSteps;
 
-        // Rechte Seite
+        // Right side
         private TableLayoutPanel rightTlp;
         private TableLayoutPanel rightTitleTlp;
         private Button btnExecuteStep;
         private Label lblStepNameTitle;
         private ToggleSwitch tglStepEnabled;
 
-        private StyledPropertyTable editorBaseTable;
+        private PropertyTable editorBaseTable;
         private TextBox txtStepName;
         private TextBox txtStepDescription;
         private ComboBox cmbStepType;
         private ToggleSwitch tglAutoStart;
-        private StyledPropertyTable editorOptionsTable;
+        private PropertyTable editorOptionsTable;
         private ToggleSwitch tglAutoContinue;
 
         private Panel rightFillPanel;
@@ -69,7 +72,7 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel rightBtnsTlp;
         private Button btnSaveStep, btnCancelStep;
 
-        // Ein IStepTypeEditor pro StepType kapselt dessen Controls, Laden/Speichern und Validierung.
+        // One IStepTypeEditor per StepType wraps its controls, loading/saving and validation.
         private readonly Dictionary<StepType, IStepTypeEditor> _stepEditors;
         private IStepTypeEditor _activeStepEditor;
 
@@ -88,7 +91,7 @@ namespace SmartRoutine.UI.Controls
             _stepEditors = CreateStepEditors();
 
             this.Dock = DockStyle.Fill;
-            this.BackColor = UIStyles.Colors.BackgroundDark;
+            UIStyles.Colors.Follow(this, () => BackColor = UIStyles.Colors.BackgroundDark);
             this.DoubleBuffered = true;
 
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
@@ -106,7 +109,6 @@ namespace SmartRoutine.UI.Controls
                 new OpenUrlStepEditor(
                     _urlValidationService,
                     (message, showMessageBox) => ShowValidationMessage(message, showMessageBox),
-                    _errorToolTip,
                     () => UpdateAutoContinueAvailability()),
 
                 new OpenFolderStepEditor(
@@ -123,124 +125,6 @@ namespace SmartRoutine.UI.Controls
             };
 
             return editors.ToDictionary(editor => editor.Type);
-        }
-
-        private void InitializeControl()
-        {
-            InitializeMainLayout();
-            InitializeLeftPanel();
-            InitializeRightPanel();
-            InitializeFooter();
-            BuildMainLayout();
-
-            SetEditorEnabled(false);
-        }
-        private void InitializeMainLayout()
-        {
-            mainTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
-            mainTlp.Dock = DockStyle.Fill;
-
-            mainTlp.RowStyles.Clear();
-            mainTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
-            mainTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-
-            contentTlp = UIStyles.TableLayoutPanels.CreateStandard(2, 1);
-            contentTlp.Dock = DockStyle.Fill;
-
-            contentTlp.ColumnStyles.Clear();
-            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
-            contentTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55));
-        }
-        private void InitializeLeftPanel()
-        {
-            leftTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 2);
-            leftTlp.Dock = DockStyle.Fill;
-
-            leftTlp.RowStyles.Clear();
-            leftTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
-            leftTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-            routineInfoTable = new StyledPropertyTable();
-
-            txtRoutineName = UIStyles.TextBoxes.CreateBorderstyleNone();
-            txtRoutineName.Dock = DockStyle.Fill;
-            txtRoutineName.MaxLength = 40;
-            txtRoutineName.Leave += TxtRoutineName_Leave;
-            
-            routineInfoTable.AddRow("Routinenname", UIColumn.Percent(txtRoutineName, 100));
-
-            lstSteps = new StyledListBoxControl(
-                displayTextMember: "Name",
-                allowReorder: true,
-                showEnumeration: true,
-                headerTitle: "Meine Schritte",
-                headerTextAlign: ContentAlignment.MiddleCenter)
-            {
-                Dock = DockStyle.Fill,
-                ItemHeightCustom = 35,
-                Visible = true
-            };
-
-            lstSteps.IsItemDisabled = item => item is RoutineStep step && !step.Show;
-            lstSteps.SelectedIndexChanged += LstSteps_SelectedIndexChanged;
-            lstSteps.ItemsReordered += LstSteps_ItemsReordered;
-            lstSteps.IconProvider = GetStepIcon;
-
-            leftTlp.Controls.Add(routineInfoTable, 0, 0);
-            leftTlp.Controls.Add(lstSteps, 0, 1);
-        }
-
-        private void InitializeRightPanel()
-        {
-            rightTlp = UIStyles.TableLayoutPanels.CreateStandard(1, 5);
-            rightTlp.Dock = DockStyle.Fill;
-            rightTlp.Margin = new Padding(8, 0, 0, 0);
-            rightTlp.Visible = false;
-
-            rightTlp.RowStyles.Clear();
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            rightTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
-
-            InitializeRightTitlePanel();
-            InitializeEditorControls();
-            InitializeEditorTables();
-            InitializeRightFillPanel();
-            InitializeRightButtons();
-
-            rightTlp.Controls.Add(rightTitleTlp, 0, 0);
-            rightTlp.Controls.Add(editorBaseTable, 0, 1);
-            rightTlp.Controls.Add(editorOptionsTable, 0, 2);
-            rightTlp.Controls.Add(rightFillPanel, 0, 3);
-            rightTlp.Controls.Add(rightBtnsTlp, 0, 4);
-        }
-        private void InitializeRightTitlePanel()
-        {
-            rightTitleTlp = UIStyles.TableLayoutPanels.CreateDark(2, 1);
-            rightTitleTlp.Dock = DockStyle.Fill;
-            rightTitleTlp.BackColor = UIStyles.Colors.BackgroundMedium;
-
-            rightTitleTlp.ColumnStyles.Clear();
-            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            rightTitleTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
-
-            lblStepNameTitle = UIStyles.Labels.CreateTitle();
-            lblStepNameTitle.Dock = DockStyle.Fill;
-            lblStepNameTitle.BackColor = Color.Transparent;
-            lblStepNameTitle.Text = "Schritt bearbeiten";
-
-            tglStepEnabled = UIStyles.ToggleSwitches.CreateStandard(
-                true,
-                "Schritt ist aktiviert",
-                "Schritt ist deaktiviert");
-
-            tglStepEnabled.Anchor = AnchorStyles.None;
-            tglStepEnabled.CheckedChanged += TglStepEnabled_CheckedChanged;
-
-            rightTitleTlp.Controls.Add(lblStepNameTitle, 0, 0);
-            rightTitleTlp.Controls.Add(tglStepEnabled, 1, 0);
         }
 
         private void TglStepEnabled_CheckedChanged(object sender, EventArgs e)
@@ -260,263 +144,6 @@ namespace SmartRoutine.UI.Controls
             _editorSnapshotStep = RoutineStepFactory.CreateCopy(_editingStep);
 
             RefreshStepsList(silent: true);
-        }
-
-        private void InitializeEditorControls()
-        {
-            txtStepName = UIStyles.TextBoxes.CreateBorderstyleNone();
-            txtStepName.Dock = DockStyle.Fill;
-            txtStepName.MaxLength = 70;
-
-            txtStepDescription = UIStyles.TextBoxes.CreateBorderstyleNone();
-            txtStepDescription.Dock = DockStyle.Fill;
-
-            cmbStepType = UIStyles.ComboBoxes.CreateStandard(ComboBoxStyle.DropDownList);
-            cmbStepType.Dock = DockStyle.Fill;
-
-            // Bewusst keine DataSource-Bindung: Ein per DataSource gebundenes ComboBox
-            // erzeugt einen CurrencyManager, dessen Position bei bestimmten WinForms-
-            // internen Ereignissen wieder auf 0 zurückspringen kann, selbst nachdem
-            // SelectedIndex explizit auf -1 gesetzt wurde. Mit einfacher Items-Befüllung
-            // gibt es diesen CurrencyManager gar nicht erst, SelectedIndex = -1 bleibt zuverlässig.
-            cmbStepType.DisplayMember = "DisplayName";
-
-            foreach (StepTypeOption option in StepTypeHelper.GetStepTypeOptions())
-                cmbStepType.Items.Add(option);
-
-            cmbStepType.SelectedIndex = -1;
-            cmbStepType.SelectedIndexChanged += CmbStepType_SelectedIndexChanged;
-
-            tglAutoStart = UIStyles.ToggleSwitches.CreateStandard(
-                true,
-                "Automatisch starten",
-                "Nicht automatisch starten");
-
-            tglAutoStart.Anchor = AnchorStyles.Left;
-
-            tglAutoContinue = UIStyles.ToggleSwitches.CreateStandard(
-                false,
-                "Automatisch zum nächsten Schritt wechseln",
-                "Nach Ausführung anhalten");
-
-            tglAutoContinue.Anchor = AnchorStyles.Left;
-        }
-
-        private void InitializeEditorTables()
-        {
-            editorBaseTable = new StyledPropertyTable
-            {
-                Dock = DockStyle.Fill,
-                AutoSize = true
-            };
-
-            BuildBaseEditorTable();
-
-            editorOptionsTable = new StyledPropertyTable
-            {
-                Dock = DockStyle.Fill,
-                AutoSize = true
-            };
-
-            BuildOptionsEditorTable();
-        }
-        private void InitializeRightFillPanel()
-        {
-            rightFillPanel = UIStyles.Panels.CreateElevated();
-            rightFillPanel.Dock = DockStyle.Fill;
-            rightFillPanel.Margin = new Padding(0);
-        }
-        private void InitializeRightButtons()
-        {
-            rightBtnsTlp = UIStyles.TableLayoutPanels.CreateStandard(4, 1);
-            rightBtnsTlp.Dock = DockStyle.Fill;
-            rightBtnsTlp.Margin = new Padding(5);
-            rightBtnsTlp.Padding = new Padding(0);
-
-            rightBtnsTlp.ColumnStyles.Clear();
-            rightBtnsTlp.RowStyles.Clear();
-
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
-            rightBtnsTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
-
-            rightBtnsTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-            btnSaveStep = UIStyles.Buttons.CreatePrimary("💾", "Speichern", new Size(100, 35), true);
-            btnSaveStep.Dock = DockStyle.Fill;
-            btnSaveStep.Margin = new Padding(5);
-            btnSaveStep.Click += BtnSaveStep_Click;
-
-            btnCancelStep = UIStyles.Buttons.CreatePrimary("✖", "Abbrechen", new Size(100, 35), true);
-            btnCancelStep.Dock = DockStyle.Fill;
-            btnCancelStep.Margin = new Padding(5);
-            btnCancelStep.Click += BtnCancelStep_Click;
-
-            btnExecuteStep = UIStyles.Buttons.CreateGreen("▶", "Schritt ausführen", new Size(100, 35), true);
-            btnExecuteStep.Dock = DockStyle.Fill;
-            btnExecuteStep.Margin = new Padding(5);
-            btnExecuteStep.Click += BtnExecuteStep_Click;
-
-            rightBtnsTlp.Controls.Add(btnSaveStep, 1, 0);
-            rightBtnsTlp.Controls.Add(btnCancelStep, 2, 0);
-            rightBtnsTlp.Controls.Add(btnExecuteStep, 3, 0);
-        }
-        private void InitializeFooter()
-        {
-            var footerPanel = UIStyles.Panels.CreateDark();
-            footerPanel.Dock = DockStyle.Fill;
-
-            var footerTlp = UIStyles.TableLayoutPanels.CreateDark(5, 1);
-            footerTlp.BackColor = UIStyles.Colors.BackgroundDarkElevated;
-            footerTlp.Dock = DockStyle.Fill;
-            footerTlp.Padding = new Padding(0);
-
-            footerTlp.ColumnStyles.Clear();
-            footerTlp.RowStyles.Clear();
-
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12));
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            footerTlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
-
-            footerTlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-            InitializeFooterButtons();
-
-            lblLastExecution = UIStyles.Labels.CreateMuted();
-            lblLastExecution.Dock = DockStyle.Fill;
-            lblLastExecution.Margin = new Padding(15, 0, 10, 0);
-            lblLastExecution.TextAlign = ContentAlignment.MiddleLeft;
-
-            footerTlp.Controls.Add(btnDuplicateStep, 0, 0);
-            footerTlp.Controls.Add(btnAddStep, 1, 0);
-            footerTlp.Controls.Add(btnDeleteStep, 2, 0);
-            footerTlp.Controls.Add(lblLastExecution, 3, 0);
-            footerTlp.Controls.Add(btnBack, 4, 0);
-
-            footerPanel.Controls.Add(footerTlp);
-
-            mainTlp.Controls.Add(footerPanel, 0, 1);
-        }
-        private void InitializeFooterButtons()
-        {
-            btnDuplicateStep = UIStyles.Buttons.CreatePrimary("⧉", "Schritt duplizieren", new Size(155, 35), true);
-            btnDuplicateStep.Dock = DockStyle.Fill;
-            btnDuplicateStep.Margin = new Padding(10, 10, 5, 10);
-            btnDuplicateStep.Enabled = false;
-            btnDuplicateStep.Click += BtnDuplicateStep_Click;
-
-            btnAddStep = UIStyles.Buttons.CreateGreen("+", "Schritt hinzufügen", new Size(155, 35), true);
-            btnAddStep.Dock = DockStyle.Fill;
-            btnAddStep.Margin = new Padding(10, 10, 5, 10);
-            btnAddStep.Click += BtnAddStep_Click;
-
-            btnDeleteStep = UIStyles.Buttons.CreateDanger("🗑", "Schritt löschen", new Size(155, 35), true);
-            btnDeleteStep.Dock = DockStyle.Fill;
-            btnDeleteStep.Margin = new Padding(5, 10, 10, 10);
-            btnDeleteStep.Enabled = false;
-            btnDeleteStep.Click += BtnDeleteStep_Click;
-
-            btnBack = UIStyles.Buttons.CreatePrimary("←", "Zurück zur Hauptansicht", new Size(155, 35), true);
-            btnBack.Dock = DockStyle.Fill;
-            btnBack.Margin = new Padding(10);
-            btnBack.Click += BtnBack_Click;
-        }
-
-        private void BuildMainLayout()
-        {
-            contentTlp.Controls.Add(leftTlp, 0, 0);
-            contentTlp.Controls.Add(rightTlp, 1, 0);
-
-            mainTlp.Controls.Add(contentTlp, 0, 0);
-
-            Controls.Add(mainTlp);
-        }
-
-        private void BuildBaseEditorTable()
-        {
-            if (editorBaseTable == null)
-                return;
-
-            editorBaseTable.ClearRows();
-
-            editorBaseTable.AddSection("Schrittinformationen");
-            editorBaseTable.AddRow("Name", txtStepName);
-            editorBaseTable.AddRow("Beschreibung", txtStepDescription);
-            editorBaseTable.AddRow("Aktion", cmbStepType);
-            
-            FlowLayoutPanel autostartPanel = UIStyles.FlowLayoutPanels.CreateStandard();
-            autostartPanel.Dock = DockStyle.Left;
-            Label lblAutoStart = UIStyles.Labels.CreateNormal("Start");
-            lblAutoStart.Margin = new Padding(0, 4, 5, 0);
-            lblAutoStart.AutoSize = true;
-
-            autostartPanel.Controls.Add(lblAutoStart);
-            autostartPanel.Controls.Add(tglAutoStart);
-
-            FlowLayoutPanel autocontinuePanel = UIStyles.FlowLayoutPanels.CreateStandard();
-            autocontinuePanel.Dock = DockStyle.Left;
-            Label lblAutoContinue = UIStyles.Labels.CreateNormal("Weiter");
-            lblAutoContinue.Margin = new Padding(0, 4, 5, 0);
-            lblAutoContinue.AutoSize = true;
-
-            autocontinuePanel.Controls.Add(lblAutoContinue);
-            autocontinuePanel.Controls.Add(tglAutoContinue);
-
-            editorBaseTable.AddRow(
-                "Automatisierung",
-                UIColumn.Percent(autostartPanel, 50),
-                UIColumn.Percent(autocontinuePanel, 50));
-
-            txtStepDescription.MouseEnter += (s, e) =>
-            {
-                _descriptionTooltip.SetToolTip(
-                    txtStepDescription,
-                    IsTextTruncated(txtStepDescription)
-                        ? txtStepDescription.Text
-                        : string.Empty);
-            };
-        }
-        private bool IsTextTruncated(TextBox textBox)
-        {
-            if (string.IsNullOrEmpty(textBox.Text))
-                return false;
-
-            Size textSize = TextRenderer.MeasureText(
-                textBox.Text,
-                textBox.Font);
-
-            return textSize.Width > textBox.ClientSize.Width;
-        }
-
-        private void BuildOptionsEditorTable()
-        {
-            if (editorOptionsTable == null)
-                return;
-
-            editorOptionsTable.ClearRows();
-
-            StepType selectedType;
-
-            if (!TryGetSelectedStepType(out selectedType))
-            {
-                _activeStepEditor = null;
-                return;
-            }
-
-            editorOptionsTable.AddSection("Optionen");
-
-            _activeStepEditor = _stepEditors[selectedType];
-            _activeStepEditor.BuildControls(editorOptionsTable);
-
-            editorOptionsTable.Visible = true;
-            editorOptionsTable.PerformLayout();
-            editorOptionsTable.Refresh();
-
-            rightTlp.PerformLayout();
-            rightTlp.Refresh();
         }
 
         private bool TryGetSelectedStepType(out StepType selectedType)
@@ -549,7 +176,9 @@ namespace SmartRoutine.UI.Controls
             return null;
         }
 
-        private void TxtRoutineName_Leave(object sender, EventArgs e)
+        // The name is locked against accidental changes: it is saved when the user accepts an edit
+        // (check mark or Enter), not when the box loses the focus.
+        private void TxtRoutineName_EditAccepted(object sender, EventArgs e)
         {
             if (_currentRoutine == null)
                 return;
@@ -560,7 +189,10 @@ namespace SmartRoutine.UI.Controls
                 return;
 
             if (!ValidateRoutineName())
+            {
+                txtRoutineName.BeginEdit();
                 return;
+            }
 
             SaveCurrentRoutine();
             SaveChanges?.Invoke(this, _currentRoutine);
@@ -573,10 +205,14 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine = RoutineCloneService.DeepCopy(routine ?? new Routine());
 
             txtRoutineName.Text = _currentRoutine.Name;
-            lblLastExecution.Text =
-                _currentRoutine.LastExecutionAt.HasValue
-                    ? $"Zuletzt gestartet: {DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt)}"
-                    : "";
+
+            // A new routine opens with the name box unlocked so the name can be typed at once;
+            // an existing one is locked until the user unlocks it.
+            txtRoutineName.IsLocked = !isNewRoutine;
+            if (isNewRoutine)
+                txtRoutineName.BeginEdit();
+
+            UpdateLastExecutionText();
 
             lstSteps.SelectedIndex = -1;
             rightTlp.Visible = false;
@@ -608,13 +244,13 @@ namespace SmartRoutine.UI.Controls
             if (!HasEditorChanges())
                 return true;
 
-            DialogResult result = CustomMessageBox.Show(
-                "Möchten Sie die Änderungen am aktuellen Schritt speichern?",
-                "Änderungen speichern",
-                CustomMessageBoxButtons.YesNoCancel,
-                CustomMessageBoxIcon.Question,
+            DialogResult result = MessageBox.Show(
+                Loc.S("Editor.SaveChanges.Step"),
+                Loc.S("Editor.SaveChanges.Title"),
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question,
                 FindForm(),
-                CustomMessageBoxSize.Medium);
+                FormSize.Medium);
 
             if (result == DialogResult.Cancel)
                 return false;
@@ -632,13 +268,23 @@ namespace SmartRoutine.UI.Controls
 
         private void SaveCurrentStepWithoutReselect()
         {
-            if (!ValidateCurrentStep(false))
+            if (PersistEditorStep() == null)
                 return;
+
+            RefreshStepsList(silent: true);
+        }
+
+        // Validates the editor input, saves it as the step and renews the snapshot used to detect changes.
+        // Returns the saved step, or null when nothing was saved.
+        private RoutineStep PersistEditorStep()
+        {
+            if (!ValidateCurrentStep(false))
+                return null;
 
             RoutineStep step = CreateStepFromEditor();
 
             if (step == null)
-                return;
+                return null;
 
             SaveStep(step);
 
@@ -651,7 +297,7 @@ namespace SmartRoutine.UI.Controls
                 _editorSnapshotStep.Order = _editingStep.Order;
             }
 
-            RefreshStepsList(silent: true);
+            return step;
         }
 
         private void RestoreCurrentEditingStepSelection()
@@ -659,29 +305,80 @@ namespace SmartRoutine.UI.Controls
             _isRefreshing = true;
 
             if (_editingStep != null)
-            {
-                for (int i = 0; i < lstSteps.Items.Count; i++)
-                {
-                    RoutineStep step = lstSteps.Items[i] as RoutineStep;
-
-                    if (step != null && step.Id == _editingStep.Id)
-                    {
-                        lstSteps.SelectedIndex = i;
-                        break;
-                    }
-                }
-            }
+                TrySelectStep(_editingStep.Id);
 
             _isRefreshing = false;
         }
 
+        // Selects the list item of the step with this id; false when the list has none.
+        private bool TrySelectStep(string stepId)
+        {
+            if (stepId == null)
+                return false;
+
+            for (int i = 0; i < lstSteps.Items.Count; i++)
+            {
+                RoutineStep step = lstSteps.Items[i] as RoutineStep;
+
+                if (step != null && step.Id == stepId)
+                {
+                    lstSteps.SelectedIndex = i;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // The key of the text above the step editor ("edit step" / "new step"); the label follows the language.
+        private string _stepTitleKey = "Editor.StepEdit";
+
+        // "Last run: 5 minutes ago" at the bottom of the page; empty for a routine that was never run.
+        private void UpdateLastExecutionText()
+        {
+            if (lblLastExecution == null)
+                return;
+
+            lblLastExecution.Text =
+                _currentRoutine != null && _currentRoutine.LastExecutionAt.HasValue
+                    ? Loc.S("Editor.LastRun", DateTimeHelper.GetRelativeTime(_currentRoutine.LastExecutionAt))
+                    : "";
+        }
+
+        // Fills the list of actions with the texts of the current language and keeps what was selected.
+        // (Without a data source on purpose, see InitializeEditorControls; no event while it is filled.)
+        private void RefreshStepTypeTexts()
+        {
+            StepType selectedType;
+            bool hadSelection = TryGetSelectedStepType(out selectedType);
+            bool wasLoading = _isLoadingStep;
+
+            _isLoadingStep = true;
+
+            try
+            {
+                cmbStepType.Items.Clear();
+
+                foreach (StepTypeOption option in StepTypeHelper.GetStepTypeOptions())
+                    cmbStepType.Items.Add(option);
+
+                if (hadSelection)
+                    SetSelectedStepType(selectedType);
+                else
+                    cmbStepType.SelectedIndex = -1;
+            }
+            finally
+            {
+                _isLoadingStep = wasLoading;
+            }
+        }
 
         private void OpenEditorForStep(RoutineStep step = null)
         {
             rightTlp.Visible = true;
-            lblStepNameTitle.Text = step != null
-                ? "Schritt bearbeiten"
-                : "Neuen Schritt erstellen";
+
+            _stepTitleKey = step != null ? "Editor.StepEdit" : "Editor.StepNew";
+            lblStepNameTitle.Text = Loc.S(_stepTitleKey);
 
             if (step != null)
             {
@@ -699,10 +396,7 @@ namespace SmartRoutine.UI.Controls
             lstSteps.SelectedIndex = -1;
             _isRefreshing = false;
 
-            rightTlp.Visible = false;
-            ClearEditor();
-            btnDuplicateStep.Enabled = false;
-            btnDeleteStep.Enabled = false;
+            HideStepEditor();
         }
         private void ClearEditor()
         {
@@ -726,9 +420,9 @@ namespace SmartRoutine.UI.Controls
 
             SetEditorEnabled(false);
 
-            // Ohne diesen erzwungenen Repaint bleibt z.B. die zuvor im ComboBox
-            // angezeigte Auswahl und die alten Options-Controls optisch stehen,
-            // obwohl der Zustand darunter bereits korrekt zurückgesetzt ist.
+            // Without this forced repaint, for example the selection that was shown in the combo box before
+            // and the old option controls would stay on the screen,
+            // although the state underneath has been reset correctly.
             cmbStepType.Refresh();
             editorOptionsTable.PerformLayout();
             editorOptionsTable.Refresh();
@@ -844,22 +538,11 @@ namespace SmartRoutine.UI.Controls
 
             if (selectedStep == null)
             {
-                if (_editingStep != null && HasEditorChanges())
-                {
-                    if (!ConfirmSaveStepChangesIfNeeded())
-                    {
-                        RestoreCurrentEditingStepSelection();
-                        return;
-                    }
-                }
+                if (!ConfirmLeavingEditedStep())
+                    return;
 
                 _isRefreshing = true;
-
-                rightTlp.Visible = false;
-                ClearEditor();
-                btnDuplicateStep.Enabled = false;
-                btnDeleteStep.Enabled = false;
-
+                HideStepEditor();
                 _isRefreshing = false;
 
                 return;
@@ -868,17 +551,31 @@ namespace SmartRoutine.UI.Controls
             if (_editingStep != null && selectedStep.Id == _editingStep.Id)
                 return;
 
-            if (_editingStep != null && HasEditorChanges())
-            {
-                if (!ConfirmSaveStepChangesIfNeeded())
-                {
-                    RestoreCurrentEditingStepSelection();
-                    return;
-                }
-            }
+            if (!ConfirmLeavingEditedStep())
+                return;
+
             OpenEditorForStep(selectedStep);
             btnDuplicateStep.Enabled = true;
             btnDeleteStep.Enabled = true;
+        }
+
+        // Asks about unsaved changes of the step in the editor before the editor is left.
+        // False when the user cancels; the selection of the editing step is restored then.
+        private bool ConfirmLeavingEditedStep()
+        {
+            if (_editingStep == null || ConfirmSaveStepChangesIfNeeded())
+                return true;
+
+            RestoreCurrentEditingStepSelection();
+
+            return false;
+        }
+
+        // Hides the step editor and empties it (this also disables the duplicate and delete buttons).
+        private void HideStepEditor()
+        {
+            rightTlp.Visible = false;
+            ClearEditor();
         }
 
         private void LstSteps_ItemsReordered(object sender, EventArgs e)
@@ -887,14 +584,41 @@ namespace SmartRoutine.UI.Controls
 
             var reorderedSteps = lstSteps.Items.Cast<RoutineStep>().ToList();
 
-            for (int i = 0; i < reorderedSteps.Count; i++)
-            {
-                reorderedSteps[i].Order = i;
-            }
+            RenumberSteps(reorderedSteps);
             _currentRoutine.Steps = reorderedSteps;
             _routineService.SaveRoutine(_currentRoutine);
             lstSteps.Invalidate();
             lstSteps.Update();
+        }
+
+        // The order of a step is its position in the list.
+        private static void RenumberSteps(List<RoutineStep> steps)
+        {
+            for (int i = 0; i < steps.Count; i++)
+                steps[i].Order = i;
+        }
+
+        // Puts a copy of the step right behind it (new id, name + the copy suffix) and renumbers the list.
+        // Returns the copy, or null when the step is not in the list.
+        private static RoutineStep InsertDuplicateAfter(List<RoutineStep> orderedSteps, RoutineStep original)
+        {
+            int originalIndex = orderedSteps.FindIndex(s => s.Id == original.Id);
+
+            if (originalIndex < 0)
+                return null;
+
+            RoutineStep duplicate = RoutineStepFactory.CreateCopy(original);
+
+            if (duplicate == null)
+                return null;
+
+            duplicate.Id = Guid.NewGuid().ToString();
+            duplicate.Name = original.Name + Loc.S("Editor.CopySuffix");
+
+            orderedSteps.Insert(originalIndex + 1, duplicate);
+            RenumberSteps(orderedSteps);
+
+            return duplicate;
         }
 
         private void BtnDuplicateStep_Click(object sender, EventArgs e)
@@ -917,27 +641,14 @@ namespace SmartRoutine.UI.Controls
             if (selectedStep == null)
                 return;
 
-            RoutineStep duplicatedStep = RoutineStepFactory.CreateCopy(selectedStep);
-
-            if (duplicatedStep == null)
-                return;
-
-            duplicatedStep.Id = Guid.NewGuid().ToString();
-            duplicatedStep.Name = selectedStep.Name + " Kopie";
-
             List<RoutineStep> orderedSteps = _currentRoutine.Steps
                 .OrderBy(s => s.Order)
                 .ToList();
 
-            int originalIndex = orderedSteps.FindIndex(s => s.Id == selectedStep.Id);
+            RoutineStep duplicatedStep = InsertDuplicateAfter(orderedSteps, selectedStep);
 
-            if (originalIndex < 0)
+            if (duplicatedStep == null)
                 return;
-
-            orderedSteps.Insert(originalIndex + 1, duplicatedStep);
-
-            for (int i = 0; i < orderedSteps.Count; i++)
-                orderedSteps[i].Order = i;
 
             _currentRoutine.Steps = orderedSteps;
 
@@ -945,24 +656,11 @@ namespace SmartRoutine.UI.Controls
             _currentRoutine = _routineService.GetRoutine(_currentRoutine.Id);
 
             RefreshStepsList(silent: true);
-            SelectStepById(duplicatedStep.Id);
+            TrySelectStep(duplicatedStep.Id);
 
-            ToastForm.ShowToast($"✓ Schritt '{duplicatedStep.Name}' dupliziert", FindForm());
+            ToastForm.ShowToast(Loc.S("Editor.Toast.Duplicated", duplicatedStep.Name), FindForm());
         }
 
-        private void SelectStepById(string stepId)
-        {
-            for (int i = 0; i < lstSteps.Items.Count; i++)
-            {
-                RoutineStep step = lstSteps.Items[i] as RoutineStep;
-
-                if (step != null && step.Id == stepId)
-                {
-                    lstSteps.SelectedIndex = i;
-                    return;
-                }
-            }
-        }
         private void BtnAddStep_Click(object sender, EventArgs e)
         {
             if (!ConfirmSaveStepChangesIfNeeded())
@@ -993,13 +691,13 @@ namespace SmartRoutine.UI.Controls
 
             if (!shouldDelete)
             {
-                shouldDelete = CustomMessageBox.Show(
-                    $"Schritt '{stepToDelete.Name}' wirklich löschen?",
-                    "Bestätigen",
-                    CustomMessageBoxButtons.YesNo,
-                    CustomMessageBoxIcon.Question,
+                shouldDelete = MessageBox.Show(
+                    Loc.S("Editor.DeleteStep.Text", stepToDelete.Name),
+                    Loc.S("Common.Confirm"),
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question,
                     FindForm(),
-                    CustomMessageBoxSize.Small) == DialogResult.Yes;
+                    FormSize.Small) == DialogResult.Yes;
             }
 
             if (!shouldDelete)
@@ -1011,20 +709,16 @@ namespace SmartRoutine.UI.Controls
 
             _isRefreshing = true;
 
-            rightTlp.Visible = false;
-            ClearEditor();
+            HideStepEditor();
 
             RefreshStepsList(silent: true, keepSelection: false);
-
-            btnDeleteStep.Enabled = false;
-            btnDuplicateStep.Enabled = false;
 
             _isRefreshing = false;
 
             SaveChanges?.Invoke(this, _currentRoutine);
 
             ToastForm.ShowToast(
-                $"✓ Schritt '{stepToDelete.Name}' gelöscht",
+                Loc.S("Editor.Toast.Deleted", stepToDelete.Name),
                 FindForm());
         }
         // ========== STEP LIST METHODS ==========
@@ -1051,16 +745,7 @@ namespace SmartRoutine.UI.Controls
 
             if (keepSelection && selectedStep != null)
             {
-                for (int i = 0; i < lstSteps.Items.Count; i++)
-                {
-                    RoutineStep step = lstSteps.Items[i] as RoutineStep;
-
-                    if (step != null && step.Id == selectedStep.Id)
-                    {
-                        lstSteps.SelectedIndex = i;
-                        break;
-                    }
-                }
+                TrySelectStep(selectedStep.Id);
             }
             else
             {
@@ -1079,165 +764,6 @@ namespace SmartRoutine.UI.Controls
         {
             CloseStepEditor();
         }
-        private void BtnExecuteStep_Click(object sender, EventArgs e)
-        {
-            if (!PrepareStepForExecution())
-                return;
-
-            if (!ValidateStepForExecution())
-                return;
-
-            ExecuteEditingStep();
-        }
-        private bool PrepareStepForExecution()
-        {
-            if (_editingStep == null)
-            {
-                return HandleNewStepExecution();
-            }
-
-            if (HasEditorChanges())
-            {
-                return HandleUnsavedStepChanges();
-            }
-
-            return true;
-        }
-        private bool HandleNewStepExecution()
-        {
-            var result = AskToSaveChanges();
-
-            if (result != DialogResult.Yes)
-                return false;
-
-            if (!ValidateCurrentStep(true))
-                return false;
-
-            SaveCurrentStep(true);
-
-            return _editingStep != null;
-        }
-        private bool HandleUnsavedStepChanges()
-        {
-            var result = AskToSaveChanges();
-
-            switch (result)
-            {
-                case DialogResult.Yes:
-
-                    if (!ValidateCurrentStep(true))
-                        return false;
-
-                    SaveCurrentStep(false);
-                    return true;
-
-                case DialogResult.No:
-                    return true;
-
-                case DialogResult.Cancel:
-                    return false;
-
-                default:
-                    return false;
-            }
-        }
-        private bool ValidateStepForExecution()
-        {
-            if (!ValidateCurrentStep(true))
-                return false;
-
-            if (_routineService.ValidateStep(
-                _editingStep,
-                out string validationError))
-            {
-                return true;
-            }
-
-            CustomMessageBox.Show(
-                validationError,
-                "Ausführung nicht möglich",
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Warning,
-                FindForm(),
-                CustomMessageBoxSize.Small);
-
-            return false;
-        }
-        private void ExecuteEditingStep()
-        {
-            RoutineStep executionStep =
-                RoutineStepFactory.CreateCopy(_editingStep);
-
-            if (executionStep == null)
-                return;
-
-            executionStep.Show = true;
-
-            bool requiresExecutionForm =
-                !executionStep.AutoStart ||
-                executionStep is OpenUrlStep &&
-                !((OpenUrlStep)executionStep).OpenInExternalBrowser;
-
-            if (requiresExecutionForm)
-            {
-                OpenExecutionForm(executionStep);
-                return;
-            }
-
-            OpenAutoRunForm(executionStep);
-        }
-
-        private void OpenExecutionForm(RoutineStep executionStep)
-        {
-            ExecutionForm form = new ExecutionForm(
-                _currentRoutine,
-                executionStep,
-                step =>
-                {
-                    return _routineService.ExecuteStep(step);
-                });
-
-            try
-            {
-                form.ShowDialog(this);
-            }
-            finally
-            {
-                form.Dispose();
-            }
-        }
-
-        private void OpenAutoRunForm(RoutineStep executionStep)
-        {
-            executionStep.Show = true;
-
-            Routine routine = new Routine
-            {
-                Name = executionStep.Name,
-                Steps = new List<RoutineStep>
-                {
-                    executionStep
-                }
-            };
-
-            AutoRunForm form = new AutoRunForm(
-                routine,
-                step =>
-                {
-                    return _routineService.ExecuteStep(step);
-                },
-                null);
-
-            try
-            {
-                form.ShowDialog(this);
-            }
-            finally
-            {
-                form.Dispose();
-            }
-        }
-
         private bool HasEditorChanges()
         {
             if (_editorSnapshotStep == null)
@@ -1269,13 +795,13 @@ namespace SmartRoutine.UI.Controls
         }
         private DialogResult AskToSaveChanges()
         {
-            return CustomMessageBox.Show(
-                "Möchten Sie die Änderungen vor der Ausführung speichern?",
-                "Änderungen speichern",
-                CustomMessageBoxButtons.YesNoCancel,
-                CustomMessageBoxIcon.Question,
+            return MessageBox.Show(
+                Loc.S("Editor.SaveChanges.BeforeRun"),
+                Loc.S("Editor.SaveChanges.Title"),
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question,
                 FindForm(),
-                CustomMessageBoxSize.Medium);
+                FormSize.Medium);
         }
 
         private void CmbStepType_SelectedIndexChanged(object sender, EventArgs e)
@@ -1316,129 +842,16 @@ namespace SmartRoutine.UI.Controls
 
             BackToRoutinesClicked?.Invoke(this, EventArgs.Empty);
         }
-        private bool ValidateRoutineName()
-        {
-            string routineName = txtRoutineName.Text.Trim();
-
-            // Prüfen ob Name leer ist
-            if (string.IsNullOrWhiteSpace(routineName))
-            {
-                if (!AutoConfirmDialogs)
-                {
-                    CustomMessageBox.Show(
-                        "Bitte geben Sie einen Namen für die Routine ein.",
-                        "Validierung",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Warning,
-                        FindForm(),
-                        CustomMessageBoxSize.Small);
-                }
-
-                txtRoutineName.Focus();
-                return false;
-            }
-
-            // Prüfen ob Name bereits existiert
-            var existingRoutines = _routineService.GetAllRoutines();
-            bool nameExists = existingRoutines.Any(r =>
-                r.Name.Equals(routineName, StringComparison.OrdinalIgnoreCase) &&
-                r.Id != _currentRoutine.Id);
-
-            if (nameExists)
-            {
-                if (!AutoConfirmDialogs)
-                {
-                    CustomMessageBox.Show(
-                        $"Eine Routine mit dem Namen '{routineName}' existiert bereits.\nBitte wählen Sie einen anderen Namen.",
-                        "Validierung",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Warning,
-                        FindForm(),
-                        CustomMessageBoxSize.Medium);
-                }
-
-                txtRoutineName.Focus();
-                txtRoutineName.SelectAll();
-                return false;
-            }
-
-            return true;
-        }
-        private bool ValidateCurrentStep(bool showMessageBox = true)
-        {
-            if (!ValidateStepName(showMessageBox))
-                return false;
-
-            if (!ValidateStepType(showMessageBox))
-                return false;
-
-            return _activeStepEditor != null && _activeStepEditor.Validate(showMessageBox);
-        }
-        private bool ValidateStepName(bool showMessageBox)
-        {
-            if (!string.IsNullOrWhiteSpace(txtStepName.Text))
-                return true;
-
-            ShowValidationMessage(
-                "Bitte geben Sie einen Namen für den Schritt ein.",
-                showMessageBox);
-
-            txtStepName.Focus();
-            return false;
-        }
-        private bool ValidateStepType(bool showMessageBox)
-        {
-            if (cmbStepType.SelectedIndex != -1)
-                return true;
-
-            ShowValidationMessage(
-                "Bitte wählen Sie einen Aktionstyp aus.",
-                showMessageBox);
-
-            cmbStepType.Focus();
-            return false;
-        }
-        private void ShowValidationMessage(
-            string message,
-            bool showMessageBox,
-            string title = "Fehler bei Validierung")
-        {
-            if (!showMessageBox || AutoConfirmDialogs)
-                return;
-
-            CustomMessageBox.Show(
-                message,
-                title,
-                CustomMessageBoxButtons.OK,
-                CustomMessageBoxIcon.Warning,
-                FindForm(),
-                CustomMessageBoxSize.Medium);
-        }
-
         private void SaveCurrentStep(bool showSavedToast = true)
         {
-            if (!ValidateCurrentStep(false))
-                return;
-
-            var step = CreateStepFromEditor();
+            RoutineStep step = PersistEditorStep();
 
             if (step == null)
                 return;
 
-            SaveStep(step);
-
-            _editorSnapshotStep = RoutineStepFactory.CreateCopy(step);
-            NormalizeStepForComparison(_editorSnapshotStep);
-
-            if (_editingStep != null && _editorSnapshotStep != null)
-            {
-                _editorSnapshotStep.Id = _editingStep.Id;
-                _editorSnapshotStep.Order = _editingStep.Order;
-            }
-
-            // Liste (inkl. Icon/Name) muss immer aktualisiert werden, auch wenn direkt
-            // im Anschluss ausgeführt wird (showSavedToast = false) und daher keine
-            // "gespeichert"-Meldung angezeigt werden soll.
+            // The list (with icon/name) must always be updated, even when the step is run
+            // right afterwards (showSavedToast = false) and therefore no
+            // "saved" message is to be shown.
             RoutineStep selectedStep = _editingStep;
 
             _isRefreshing = true;
@@ -1446,27 +859,14 @@ namespace SmartRoutine.UI.Controls
             RefreshStepsList(false);
 
             if (selectedStep != null)
-            {
-                for (int i = 0; i < lstSteps.Items.Count; i++)
-                {
-                    RoutineStep item =
-                        lstSteps.Items[i] as RoutineStep;
-
-                    if (item != null &&
-                        item.Id == selectedStep.Id)
-                    {
-                        lstSteps.SelectedIndex = i;
-                        break;
-                    }
-                }
-            }
+                TrySelectStep(selectedStep.Id);
 
             _isRefreshing = false;
 
             if (showSavedToast)
             {
                 ToastForm.ShowToast(
-                    $"✓ Schritt '{step.Name}' gespeichert",
+                    Loc.S("Editor.Toast.Saved", step.Name),
                     FindForm());
             }
         }

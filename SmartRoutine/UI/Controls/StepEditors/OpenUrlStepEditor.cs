@@ -1,7 +1,9 @@
-using CustomWFUI;
-using CustomWFUI.Controls;
-using CustomWFUI.Helpers;
+using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
+using ErikwnkWFUI.Helpers;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
+using SmartRoutine.UI.Helpers;
 using SmartRoutine.Logic.Interfaces;
 using System;
 using System.Windows.Forms;
@@ -12,7 +14,6 @@ namespace SmartRoutine.UI.Controls.StepEditors
     {
         private readonly IUrlValidationService _urlValidationService;
         private readonly Action<string, bool> _showValidationMessage;
-        private readonly ToolTip _errorToolTip;
         private readonly Action _onAutoContinueAvailabilityMightChange;
 
         private TextBox _txtUrl;
@@ -23,18 +24,16 @@ namespace SmartRoutine.UI.Controls.StepEditors
         public OpenUrlStepEditor(
             IUrlValidationService urlValidationService,
             Action<string, bool> showValidationMessage,
-            ToolTip errorToolTip,
             Action onAutoContinueAvailabilityMightChange)
         {
             _urlValidationService = urlValidationService;
             _showValidationMessage = showValidationMessage;
-            _errorToolTip = errorToolTip;
             _onAutoContinueAvailabilityMightChange = onAutoContinueAvailabilityMightChange;
         }
 
-        public void BuildControls(StyledPropertyTable optionsTable)
+        public void BuildControls(PropertyTable optionsTable)
         {
-            _txtUrl = UIStyles.TextBoxes.CreateBorderstyleNone();
+            _txtUrl = UIStyles.TextBoxes.CreateBorderless();
             _txtUrl.Name = "txtUrl";
 
             _txtUrl.TextChanged += TxtUrl_TextChanged;
@@ -49,10 +48,10 @@ namespace SmartRoutine.UI.Controls.StepEditors
                 _txtUrl.SelectionStart = _txtUrl.Text.Length;
             });
 
-            _tglOpenInExternBrowser = UIStyles.ToggleSwitches.CreateStandard(
+            _tglOpenInExternBrowser = LocalizedControls.CreateToggle(
                 true,
-                "Externer Browser",
-                "In App öffnen");
+                "StepEditor.Url.Toggle.External",
+                "StepEditor.Url.Toggle.InApp");
 
             _tglOpenInExternBrowser.CheckedChanged += (s, e) =>
                 _onAutoContinueAvailabilityMightChange?.Invoke();
@@ -60,8 +59,8 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _tglOpenInExternBrowser.Name = "tglOpenInternally";
             _tglOpenInExternBrowser.Anchor = AnchorStyles.Left;
 
-            optionsTable.AddRow("URL", _txtUrl);
-            optionsTable.AddRow("Öffnen in", _tglOpenInExternBrowser);
+            optionsTable.AddRow(Loc.F("StepEditor.Url.Row.Url"), _txtUrl);
+            optionsTable.AddRow(Loc.F("StepEditor.Url.Row.OpenIn"), _tglOpenInExternBrowser);
         }
 
         public void LoadFrom(RoutineStep step)
@@ -119,7 +118,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
         {
             if (string.IsNullOrWhiteSpace(_txtUrl?.Text))
             {
-                _showValidationMessage("Bitte geben Sie eine URL ein.", showMessageBox);
+                _showValidationMessage(Loc.S("StepEditor.Url.Validation.Empty"), showMessageBox);
 
                 _txtUrl?.Focus();
                 return false;
@@ -146,6 +145,16 @@ namespace SmartRoutine.UI.Controls.StepEditors
                 autoContinueToggle.Checked = false;
         }
 
+        // The message for a wrong URL is the ErrorText of the library text field (tooltip and screen
+        // reader description; it also goes by itself when the text changes).
+        private void SetUrlError(string message)
+        {
+            TextField field = _txtUrl as TextField;
+
+            if (field != null)
+                field.ErrorText = string.IsNullOrEmpty(message) ? null : message;
+        }
+
         private void TxtUrl_TextChanged(object sender, EventArgs e)
         {
             string url = _txtUrl.Text.Trim();
@@ -153,7 +162,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
             if (string.IsNullOrWhiteSpace(url))
             {
                 _txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
-                _errorToolTip.SetToolTip(_txtUrl, "");
+                SetUrlError(null);
                 return;
             }
 
@@ -162,7 +171,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
             if (result.IsValid)
             {
                 _txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
-                _errorToolTip.SetToolTip(_txtUrl, "");
+                SetUrlError(null);
 
                 if (result.RepairedUrl != url && result.RepairedUrl != _txtUrl.Tag as string)
                 {
@@ -172,7 +181,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
             else
             {
                 _txtUrl.ForeColor = UIStyles.Colors.Red;
-                _errorToolTip.SetToolTip(_txtUrl, result.ErrorMessage);
+                SetUrlError(result.ErrorMessage);
             }
         }
 
@@ -191,12 +200,12 @@ namespace SmartRoutine.UI.Controls.StepEditors
                 }
 
                 _txtUrl.ForeColor = UIStyles.Colors.TextPrimary;
-                _errorToolTip.SetToolTip(_txtUrl, "");
+                SetUrlError(null);
             }
             else
             {
                 _txtUrl.ForeColor = UIStyles.Colors.Red;
-                _errorToolTip.SetToolTip(_txtUrl, result.ErrorMessage);
+                SetUrlError(result.ErrorMessage);
             }
         }
     }

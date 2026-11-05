@@ -1,14 +1,18 @@
-﻿using CustomWFUI;
-using CustomWFUI.Controls;
-using CustomWFUI.Forms;
+﻿using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
+using ErikwnkWFUI.Forms;
+using ErikwnkWFUI.Styles;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
 using SmartRoutine.Logic.Interfaces;
 using SmartRoutine.UI.Helpers;
+using ErikwnkCore;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using TableLayoutPanel = System.Windows.Forms.TableLayoutPanel;
 
 namespace SmartRoutine.UI.Controls
 {
@@ -27,24 +31,26 @@ namespace SmartRoutine.UI.Controls
         private TableLayoutPanel mainLayout;
         private TableLayoutPanel buttonPanel;
 
-        private StyledListBoxControl lstRoutines;
+        private TitledListBox lstRoutines;
         private Button btnNewRoutine, btnEditRoutine, btnDeleteRoutine, btnStartRoutine, btnStartRoutineAuto;
 
-        private InfoPopupForm _routineInfoPopup = new InfoPopupForm("Routine-Details:");
+        private InfoPopupForm _routineInfoPopup = UIStyles.InfoPopups.CreatePrimary();
         private int _lastHoveredRoutineIndex = -1;
 
-        private const string DefaultRoutineNamePrefix = "Meine Routine ";
 
         public RoutinesViewUC()
         {
             DoubleBuffered = true;
+
+            // The popup also shows while another program is in front.
+            _routineInfoPopup.ShowAlways = true;
         }
         public RoutinesViewUC(IRoutineService routineService) : this()
         {
             _routineService = routineService;
 
             this.Dock = DockStyle.Fill;
-            this.BackColor = UIStyles.Colors.BackgroundLight;
+            UIStyles.Colors.Follow(this, () => BackColor = UIStyles.Colors.BackgroundLight);
 
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
               ControlStyles.AllPaintingInWmPaint |
@@ -83,27 +89,25 @@ namespace SmartRoutine.UI.Controls
 
         private void InitializeRoutineList()
         {
-            lstRoutines = new StyledListBoxControl(
-                displayTextMember: "Name",
+            lstRoutines = UIStyles.TitledListBoxes.CreatePrimary(
+                headerTitle: Loc.S("Routines.Title"),
+                displayMember: "Name",
                 allowReorder: true,
                 showEnumeration: false,
-                headerTitle: "Meine Routinen",
-                headerTextAlign: ContentAlignment.MiddleCenter)
-            {
-                Dock = DockStyle.Fill,
-                ItemHeightCustom = 35,
-                Visible = true
-            };
+                headerTextAlign: ContentAlignment.MiddleCenter);
+            lstRoutines.Dock = DockStyle.Fill;
+            UIStyles.Localize(lstRoutines, list => list.Title = Loc.S("Routines.Title"));
 
             lstRoutines.SelectedIndexChanged += LstRoutines_SelectedIndexChanged;
             lstRoutines.ItemsReordered += LstRoutines_ItemsReordered;
             lstRoutines.MouseMove += LstRoutines_MouseMove;
             lstRoutines.MouseLeave += LstRoutines_MouseLeave;
+            lstRoutines.MouseDoubleClick += LstRoutines_MouseDoubleClick;
         }
         private void InitializeButtonPanel()
         {
             buttonPanel = UIStyles.TableLayoutPanels.CreateDark(6, 1);
-            buttonPanel.BackColor = UIStyles.Colors.BackgroundDarkElevated;
+            UIStyles.Colors.Follow(buttonPanel, () => buttonPanel.BackColor = UIStyles.Colors.BackgroundDarkElevated);
             buttonPanel.Dock = DockStyle.Fill;
             buttonPanel.Padding = new Padding(0);
 
@@ -119,30 +123,11 @@ namespace SmartRoutine.UI.Controls
 
             buttonPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            btnNewRoutine = UIStyles.Buttons.CreateGreen("+", "Neue Routine erstellen", new Size(30, 30), true);
-            btnNewRoutine.Dock = DockStyle.Fill;
-            btnNewRoutine.Margin = new Padding(5);
-            btnNewRoutine.Click += BtnNewRoutine_Click;
-
-            btnEditRoutine = UIStyles.Buttons.CreatePrimary("✎", "Routine bearbeiten", new Size(30, 30), true);
-            btnEditRoutine.Dock = DockStyle.Fill;
-            btnEditRoutine.Margin = new Padding(5);
-            btnEditRoutine.Click += BtnEditRoutine_Click;
-
-            btnDeleteRoutine = UIStyles.Buttons.CreateDanger("🗑", "Routine löschen", new Size(30, 30), true);
-            btnDeleteRoutine.Dock = DockStyle.Fill;
-            btnDeleteRoutine.Margin = new Padding(5);
-            btnDeleteRoutine.Click += BtnDeleteRoutine_Click;
-
-            btnStartRoutine = UIStyles.Buttons.CreateGreen("▶", "Routine starten", new Size(30, 30), true);
-            btnStartRoutine.Dock = DockStyle.Fill;
-            btnStartRoutine.Margin = new Padding(5, 5, 0, 5);
-            btnStartRoutine.Click += BtnStartRoutine_Click;
-
-            btnStartRoutineAuto = UIStyles.Buttons.CreateGreen("⚡", "Routine mit Auto-Ausführung starten", new Size(30, 30), true);
-            btnStartRoutineAuto.Dock = DockStyle.Fill;
-            btnStartRoutineAuto.Margin = new Padding(0, 5, 5, 5);
-            btnStartRoutineAuto.Click += BtnStartRoutineAuto_Click;
+            btnNewRoutine = CreateRoutineButton(UIStyles.Buttons.Presets.Add, "Routines.Button.New", new Padding(5), BtnNewRoutine_Click);
+            btnEditRoutine = CreateRoutineButton(UIStyles.Buttons.Presets.Edit, "Routines.Button.Edit", new Padding(5), BtnEditRoutine_Click);
+            btnDeleteRoutine = CreateRoutineButton(UIStyles.Buttons.Presets.Delete, "Routines.Button.Delete", new Padding(5), BtnDeleteRoutine_Click);
+            btnStartRoutine = CreateRoutineButton(UIStyles.Buttons.Presets.Play, "Routines.Button.Start", new Padding(5, 5, 0, 5), BtnStartRoutine_Click);
+            btnStartRoutineAuto = CreateRoutineButton(UIStyles.Buttons.Presets.Lightning, "Routines.Button.StartAuto", new Padding(0, 5, 5, 5), BtnStartRoutineAuto_Click);
 
             buttonPanel.Controls.Add(btnNewRoutine, 0, 0);
             buttonPanel.Controls.Add(btnEditRoutine, 1, 0);
@@ -151,10 +136,21 @@ namespace SmartRoutine.UI.Controls
             buttonPanel.Controls.Add(btnStartRoutineAuto, 5, 0);
         }
 
+        private static Button CreateRoutineButton(UIButtonPreset preset, string tooltipKey, Padding margin, EventHandler onClick)
+        {
+            Button button = UIStyles.Buttons.CreateSymbol(preset, Loc.S(tooltipKey));
+            UIStyles.Localize(button, b => UIStyles.Buttons.UpdateTooltip(b, Loc.S(tooltipKey)));
+            button.Dock = DockStyle.Fill;
+            button.Margin = margin;
+            button.Click += onClick;
+
+            return button;
+        }
+
         private void BtnNewRoutine_Click(object sender, EventArgs e)
         {
-            int nextNumber = GetNextRoutineNumber();
-            string newRoutineName = $"Meine Routine {nextNumber}";
+            int nextNumber = GetNextRoutineNumber(_routineService.GetAllRoutines());
+            string newRoutineName = Loc.S("Routines.DefaultName", nextNumber);
 
             var newRoutine = _routineService.CreateRoutine(newRoutineName);
 
@@ -172,6 +168,22 @@ namespace SmartRoutine.UI.Controls
             EditRoutineClicked?.Invoke(this, _selectedRoutine);
         }
 
+        // A double click on a routine opens it in the editor, like the edit button. Only a click on
+        // an item counts (not on the empty room below the items); the first click has selected it.
+        private void LstRoutines_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left)
+                return;
+
+            int index = lstRoutines.IndexFromPoint(e.Location);
+
+            if (index < 0 || index >= lstRoutines.Items.Count)
+                return;
+
+            lstRoutines.SelectedIndex = index;
+            BtnEditRoutine_Click(sender, e);
+        }
+
         private void BtnDeleteRoutine_Click(object sender, EventArgs e)
         {
             if (_selectedRoutine == null)
@@ -182,16 +194,16 @@ namespace SmartRoutine.UI.Controls
 
         private void BtnStartRoutine_Click(object sender, EventArgs e)
         {
-            if (_selectedRoutine == null)
-                return;
-
-            Routine routineToStart = _selectedRoutine;
-
-            ClearRoutineSelection();
-
-            StartRoutineClicked?.Invoke(this, routineToStart);
+            StartSelectedRoutine(StartRoutineClicked);
         }
+
         private void BtnStartRoutineAuto_Click(object sender, EventArgs e)
+        {
+            StartSelectedRoutine(StartRoutineAutoClicked);
+        }
+
+        // Clears the selection and raises the given start event for the routine that was selected.
+        private void StartSelectedRoutine(EventHandler<Routine> startEvent)
         {
             if (_selectedRoutine == null)
                 return;
@@ -200,7 +212,7 @@ namespace SmartRoutine.UI.Controls
 
             ClearRoutineSelection();
 
-            StartRoutineAutoClicked?.Invoke(this, routineToStart);
+            startEvent?.Invoke(this, routineToStart);
         }
 
         private void ClearRoutineSelection()
@@ -222,6 +234,7 @@ namespace SmartRoutine.UI.Controls
             mainLayout.Controls.Add(buttonPanel, 0, 1);
 
             Controls.Add(mainLayout);
+            Controls.Add(CreateBottomBar());
 
             Resize += (s, e) => CenterControls(mainLayout);
 
@@ -229,35 +242,56 @@ namespace SmartRoutine.UI.Controls
         }
 
 
-        private int GetNextRoutineNumber()
+        // The number for the next default name: one more than the highest "<name> <n>" in use. The names
+        // of every language count ("Meine Routine 3", "My routine 4"): a routine keeps the name it was
+        // made with when the language is switched.
+        private static int GetNextRoutineNumber(IEnumerable<Routine> routines)
         {
-            var routines = _routineService.GetAllRoutines();
+            string[] prefixes = DefaultNamePrefixes();
 
             int maxNumber = routines
-                .Where(r => r.Name.StartsWith(DefaultRoutineNamePrefix))
-                .Select(r =>
-                {
-                    string numberPart = r.Name.Substring("Meine Routine ".Length);
-                    return int.TryParse(numberPart, out int num) ? num : 0;
-                })
+                .Where(r => r.Name != null)
+                .Select(r => NumberOfDefaultName(r.Name, prefixes))
                 .DefaultIfEmpty(0)
                 .Max();
 
             return maxNumber + 1;
         }
 
+        // The part of the default name in front of the number, in German and in English.
+        private static string[] DefaultNamePrefixes()
+        {
+            return new[] { AppLanguage.German, AppLanguage.English }
+                .Select(language => Loc.Table(language)["Routines.DefaultName"])
+                .Select(template => template.Substring(0, template.IndexOf("{0}", StringComparison.Ordinal)))
+                .Distinct()
+                .ToArray();
+        }
 
+        private static int NumberOfDefaultName(string name, string[] prefixes)
+        {
+            foreach (string prefix in prefixes)
+            {
+                if (name.StartsWith(prefix, StringComparison.Ordinal) &&
+                    int.TryParse(name.Substring(prefix.Length), out int number))
+                {
+                    return number;
+                }
+            }
+
+            return 0;
+        }
 
         private void CenterControls(TableLayoutPanel layout)
         {
             int newWidth = Math.Max(300, Width - 160);
-            int newHeight = Math.Max(300, Height - 160);
+            int newHeight = Math.Max(300, Height - BottomBarHeight - 160);
 
             layout.Size = new Size(newWidth, newHeight);
 
             layout.Location = new Point(
                 (Width - layout.Width) / 2,
-                (Height - layout.Height) / 2);
+                (Height - BottomBarHeight - layout.Height) / 2);
         }
 
         public void LoadRoutines()
@@ -356,10 +390,10 @@ namespace SmartRoutine.UI.Controls
             _routineInfoPopup.Hide();
         }
 
-        private string BuildStepListText(List<RoutineStep> steps)
+        private static string BuildStepListText(List<RoutineStep> steps)
         {
             if (steps == null || steps.Count == 0)
-                return "Keine";
+                return Loc.S("Routines.Popup.None");
 
             return string.Join(
                 Environment.NewLine,
@@ -404,17 +438,17 @@ namespace SmartRoutine.UI.Controls
                 .OrderBy(s => s.Order)
                 .ToList();
 
-            _routineInfoPopup.ShowSectionsAtMouseDelayed(
-                lstRoutines.InnerListBox,
+            _routineInfoPopup.ShowAtMouseDelayed(
+                lstRoutines,
                 Control.MousePosition,
                 new InfoPopupSection(
-                    "Letzte Ausführung",
+                    Loc.S("Routines.Popup.LastRun"),
                     DateTimeHelper.GetRelativeTime(routine.LastExecutionAt)),
                 new InfoPopupSection(
-                    $"Schritte ({visibleSteps.Count})",
+                    Loc.S("Routines.Popup.Steps", visibleSteps.Count),
                     BuildStepListText(visibleSteps)),
                 new InfoPopupSection(
-                    $"Ausgeblendete Schritte ({hiddenSteps.Count})",
+                    Loc.S("Routines.Popup.DisabledSteps", hiddenSteps.Count),
                     BuildStepListText(hiddenSteps)));
         }
         private void LstRoutines_MouseLeave(object sender, EventArgs e)

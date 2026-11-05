@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartRoutine", "SmartRoutin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartRoutine.Tests", "SmartRoutine.Tests\SmartRoutine.Tests.csproj", "{C988242D-DDEE-46C4-AF06-EFE899FBD285}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomWFUI", "..\CustomWFUI\CustomWFUI\CustomWFUI.csproj", "{67BEB9A5-DD73-4C4A-910B-D9848640924A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ErikwnkWFUI", "..\ErikwnkWFUI\ErikwnkWFUI\ErikwnkWFUI.csproj", "{67BEB9A5-DD73-4C4A-910B-D9848640924A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

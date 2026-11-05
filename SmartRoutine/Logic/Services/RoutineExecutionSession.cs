@@ -47,14 +47,6 @@ namespace SmartRoutine.Logic.Services
             }
         }
 
-        public void GoToStep(int index)
-        {
-            if (index < 0 || index >= _steps.Count)
-                return;
-
-            CurrentIndex = index;
-        }
-
         public void GoNext()
         {
             if (CanGoNext)
@@ -69,7 +61,8 @@ namespace SmartRoutine.Logic.Services
 
         public void MarkCurrentStepExecuted()
         {
-            _executedStepIds.Add(CurrentStep.Id);
+            if (CurrentStep != null)
+                _executedStepIds.Add(CurrentStep.Id);
         }
     }
 }

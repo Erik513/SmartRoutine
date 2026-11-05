@@ -10,6 +10,7 @@ namespace SmartRoutine.Data
     public class RoutineRepository : IRoutineRepository
     {
         private const string DatabaseFileName = "SmartRoutine.db";
+        private const string RoutinesCollectionName = "routines";
 
         private readonly string _dbPath;
 
@@ -30,91 +31,40 @@ namespace SmartRoutine.Data
 
         public List<Routine> LoadRoutines()
         {
-            LiteDatabase db = OpenDatabase();
-
-            try
-            {
-                return db.GetCollection<Routine>("routines")
-                         .Query()
-                         .OrderBy(r => r.Order)
-                         .ToList();
-            }
-            finally
-            {
-                db.Dispose();
-            }
+            return WithRoutines(routines => routines
+                .Query()
+                .OrderBy(r => r.Order)
+                .ToList());
         }
 
         public void AddRoutine(Routine routine)
         {
-            LiteDatabase db = OpenDatabase();
-
-            try
-            {
-                ILiteCollection<Routine> collection =
-                    db.GetCollection<Routine>("routines");
-
-                collection.Insert(routine);
-            }
-            finally
-            {
-                db.Dispose();
-            }
+            WithRoutines(routines => routines.Insert(routine));
         }
 
         public void UpdateRoutine(Routine routine)
         {
-            LiteDatabase db = OpenDatabase();
-
-            try
-            {
-                ILiteCollection<Routine> collection =
-                    db.GetCollection<Routine>("routines");
-
-                collection.Update(routine);
-            }
-            finally
-            {
-                db.Dispose();
-            }
+            WithRoutines(routines => routines.Update(routine));
         }
 
         public void DeleteRoutine(string routineId)
         {
-            LiteDatabase db = OpenDatabase();
-
-            try
-            {
-                ILiteCollection<Routine> collection =
-                    db.GetCollection<Routine>("routines");
-
-                collection.Delete(routineId);
-            }
-            finally
-            {
-                db.Dispose();
-            }
+            WithRoutines(routines => routines.Delete(routineId));
         }
 
         public Routine GetRoutine(string routineId)
         {
-            LiteDatabase db = OpenDatabase();
-
-            try
-            {
-                return db.GetCollection<Routine>("routines")
-                         .FindById(routineId);
-            }
-            finally
-            {
-                db.Dispose();
-            }
+            return WithRoutines(routines => routines.FindById(routineId));
         }
 
-        private LiteDatabase OpenDatabase()
+        // Opens the database for one operation and closes it again (other programs and the tests
+        // can use the file in between: the connection is shared).
+        private T WithRoutines<T>(Func<ILiteCollection<Routine>, T> operation)
         {
-            return new LiteDatabase(
-                $"Filename={_dbPath}; connection=shared");
+            using (LiteDatabase db = new LiteDatabase($"Filename={_dbPath}; connection=shared"))
+            {
+                return operation(db.GetCollection<Routine>(RoutinesCollectionName));
+            }
         }
 
         private static string GetDefaultDatabasePath()

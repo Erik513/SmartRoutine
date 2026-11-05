@@ -18,7 +18,6 @@ namespace SmartRoutine.Logic.Interfaces
         void AddStep(string routineId, RoutineStep step);
         void UpdateStep(string routineId, RoutineStep step);
         void RemoveStep(string routineId, string stepId);
-        void ReorderSteps(string routineId, int oldIndex, int newIndex);
 
         // Execution
         StepExecutionResult ExecuteStep(RoutineStep step);

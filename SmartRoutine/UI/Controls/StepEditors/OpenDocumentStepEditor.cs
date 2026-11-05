@@ -1,6 +1,8 @@
-using CustomWFUI;
-using CustomWFUI.Controls;
+using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
+using SmartRoutine.UI.Helpers;
 using SmartRoutine.Logic.Interfaces;
 using System;
 using System.Drawing;
@@ -25,19 +27,20 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _showValidationMessage = showValidationMessage;
         }
 
-        public void BuildControls(StyledPropertyTable optionsTable)
+        public void BuildControls(PropertyTable optionsTable)
         {
-            _txtDocumentPath = UIStyles.TextBoxes.CreateBorderstyleNone();
+            _txtDocumentPath = UIStyles.TextBoxes.CreateBorderless();
             _txtDocumentPath.Name = "txtDocumentPath";
 
-            var btnBrowseDocument = UIStyles.Buttons.CreateBrowseInFolder("Dokument auswählen", new Size(50, 30));
+            var btnBrowseDocument = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Browse, "StepEditor.Document.Browse", new Size(50, 30));
 
             btnBrowseDocument.Click += (s, e) =>
             {
                 using (var dialog = new OpenFileDialog())
                 {
-                    dialog.Filter = "Alle Dateien (*.*)|*.*";
-                    dialog.Title = "Dokument auswählen";
+                    dialog.Filter = Loc.S("StepEditor.Document.Filter");
+                    dialog.Title = Loc.S("StepEditor.Document.Browse");
+                    BrowsePath.Prepare(dialog, _txtDocumentPath.Text);
 
                     if (dialog.ShowDialog() == DialogResult.OK)
                         _txtDocumentPath.Text = dialog.FileName;
@@ -45,9 +48,9 @@ namespace SmartRoutine.UI.Controls.StepEditors
             };
 
             optionsTable.AddRow(
-                "Dateipfad",
-                UIColumn.Percent(_txtDocumentPath, 100),
-                UIColumn.Absolute(btnBrowseDocument, 50));
+                Loc.F("StepEditor.Document.Row.Path"),
+                PropertyColumn.Percent(_txtDocumentPath, 100),
+                PropertyColumn.Absolute(btnBrowseDocument, 50));
         }
 
         public void LoadFrom(RoutineStep step)
@@ -83,7 +86,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
         {
             if (string.IsNullOrWhiteSpace(_txtDocumentPath?.Text))
             {
-                _showValidationMessage("Bitte wählen Sie eine Datei aus.", showMessageBox);
+                _showValidationMessage(Loc.S("StepEditor.Document.Validation.Empty"), showMessageBox);
 
                 _txtDocumentPath?.Focus();
                 return false;

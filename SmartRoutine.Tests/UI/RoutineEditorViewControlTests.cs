@@ -1,4 +1,4 @@
-﻿using CustomWFUI.Controls;
+﻿using ErikwnkWFUI.Controls;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SmartRoutine.Data.Models;
@@ -7,6 +7,8 @@ using SmartRoutine.UI.Controls;
 using System;
 using System.Reflection;
 using System.Windows.Forms;
+using ComboBox = System.Windows.Forms.ComboBox;
+using TableLayoutPanel = System.Windows.Forms.TableLayoutPanel;
 
 namespace SmartRoutine.Tests.UI
 {
@@ -35,6 +37,21 @@ namespace SmartRoutine.Tests.UI
             _editor = new RoutineEditorUC(_mockService.Object, _mockUrlValidation.Object);
         }
 
+        [TestCleanup]
+        public void TearDown()
+        {
+            // RoutineEditorUC creates a TitledListBox (lstSteps) with
+            // AllowDrop=true for its drag-to-reorder support, which registers
+            // a real OLE drop target (RegisterDragDrop) on the underlying
+            // window handle. That's only revoked when the control's handle is
+            // destroyed, which happens via Dispose() - without this, every
+            // test in this class leaked one undisposed editor (and its OLE
+            // registration) for the lifetime of the whole test run, which
+            // could crash the test host after enough of them accumulate.
+            _editor?.Dispose();
+            _editor = null;
+        }
+
 
         // LoadRoutine
 
@@ -43,7 +60,7 @@ namespace SmartRoutine.Tests.UI
         {
             _editor.LoadRoutine(_testRoutine);
 
-            // Überprüfung über Reflection (da txtRoutineName private ist)
+            // Checked through reflection (txtRoutineName is private)
             var txtRoutineName = GetPrivateField<TextBox>(_editor, "txtRoutineName");
             Assert.AreEqual("Test Routine", txtRoutineName.Text);
         }
@@ -77,7 +94,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<StyledListBoxControl>(
+                GetPrivateField<TitledListBox>(
                     _editor,
                     "lstSteps");
 
@@ -142,7 +159,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<StyledListBoxControl>(
+                GetPrivateField<TitledListBox>(
                     _editor,
                     "lstSteps");
 
@@ -189,7 +206,7 @@ namespace SmartRoutine.Tests.UI
             btnAddStep.PerformClick();
 
             var rightTlp = GetPrivateField<TableLayoutPanel>(_editor, "rightTlp");
-            Assert.IsTrue(rightTlp.Visible); // Editor ist sichtbar
+            Assert.IsTrue(rightTlp.Visible); // the editor is visible
 
             var btnCancelStep = GetPrivateField<Button>(_editor, "btnCancelStep");
 
@@ -226,15 +243,14 @@ namespace SmartRoutine.Tests.UI
             var txtStepName = GetPrivateField<TextBox>(_editor, "txtStepName");
             txtStepName.Text = ""; // Empty name
 
-            try
-            {
-                var btnSaveStep = GetPrivateField<Button>(_editor, "btnSaveStep");
-                btnSaveStep.PerformClick();
-            }
-            catch
-            {
-                Assert.IsTrue(true);
-            }
+            var btnSaveStep = GetPrivateField<Button>(_editor, "btnSaveStep");
+            btnSaveStep.PerformClick();
+
+            // The step is not saved, and the editor stays open for the correction.
+            _mockService.Verify(
+                s => s.AddStep(It.IsAny<string>(), It.IsAny<RoutineStep>()),
+                Times.Never);
+            Assert.IsTrue(GetPrivateField<TableLayoutPanel>(_editor, "rightTlp").Visible);
         }
 
 
@@ -253,10 +269,10 @@ namespace SmartRoutine.Tests.UI
             cmbStepType.SelectedIndex = 0;
 
             var editorOptionsTable =
-                GetPrivateField<StyledPropertyTable>(_editor, "editorOptionsTable");
+                GetPrivateField<PropertyTable>(_editor, "editorOptionsTable");
 
-            // txtUrl gehört jetzt zum OpenUrlStepEditor (nicht mehr direktes Feld von
-            // RoutineEditorUC), daher Suche über den Control-Baum statt Reflection auf das Feld.
+            // txtUrl belongs to the OpenUrlStepEditor now (no longer a direct field of
+            // RoutineEditorUC), so it is searched in the control tree instead of by reflection on the field.
             var txtUrl = FindControlByName(editorOptionsTable, "txtUrl");
 
             Assert.IsTrue(editorOptionsTable.Visible);
@@ -266,10 +282,10 @@ namespace SmartRoutine.Tests.UI
         [TestMethod]
         public void AddStep_AfterSelectingNonUrlStep_ClearsStepTypeSelection()
         {
-            // Regressionstest: cmbStepType ist NICHT mehr per DataSource gebunden.
-            // Vorher sprang die Auswahl beim Klick auf "Schritt hinzufügen" wieder auf
-            // "Webseite öffnen" (Index 0) zurück, aber nur wenn zuvor ein Schritt eines
-            // ANDEREN Typs (z.B. Ordner öffnen) ausgewählt war.
+            // Regression test: cmbStepType is no longer bound by DataSource.
+            // Before, the selection jumped back to
+            // "Open website" (index 0) when "Add step" was clicked, but only if a step of
+            // ANOTHER type (for example open folder) had been selected.
             _testRoutine.Steps.Add(new OpenFolderStep
             {
                 Id = "folder-step",
@@ -279,11 +295,11 @@ namespace SmartRoutine.Tests.UI
 
             _editor.LoadRoutine(_testRoutine);
 
-            var lstSteps = GetPrivateField<StyledListBoxControl>(_editor, "lstSteps");
+            var lstSteps = GetPrivateField<TitledListBox>(_editor, "lstSteps");
             lstSteps.SelectedIndex = 0;
 
             var cmbStepType = GetPrivateField<ComboBox>(_editor, "cmbStepType");
-            Assert.AreNotEqual(-1, cmbStepType.SelectedIndex, "Vorbedingung: Ordner-Step sollte einen Typ auswählen.");
+            Assert.AreNotEqual(-1, cmbStepType.SelectedIndex, "Precondition: the folder step should select a type.");
 
             var btnAddStep = GetPrivateField<Button>(_editor, "btnAddStep");
             btnAddStep.PerformClick();
@@ -307,6 +323,76 @@ namespace SmartRoutine.Tests.UI
             return null;
         }
 
+
+        // Routine name lock
+
+        [TestMethod]
+        public void LoadRoutine_NewRoutine_NameBoxIsUnlocked()
+        {
+            _editor.LoadRoutine(_testRoutine, true);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            Assert.IsFalse(txtRoutineName.IsLocked);
+        }
+
+        [TestMethod]
+        public void LoadRoutine_ExistingRoutine_NameBoxIsLocked()
+        {
+            _editor.LoadRoutine(_testRoutine, false);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            Assert.IsTrue(txtRoutineName.IsLocked);
+        }
+
+        [TestMethod]
+        public void AcceptingChangedName_SavesRoutineAndLocksBox()
+        {
+            _editor.AutoConfirmDialogs = true;
+            _mockService.Setup(s => s.GetAllRoutines()).Returns(new System.Collections.Generic.List<Routine>());
+            _editor.LoadRoutine(_testRoutine, false);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            txtRoutineName.BeginEdit();
+            txtRoutineName.Text = "Neuer Name";
+            txtRoutineName.AcceptEdit();
+
+            _mockService.Verify(s => s.SaveRoutine(It.Is<Routine>(r => r.Name == "Neuer Name")), Times.Once);
+            Assert.IsTrue(txtRoutineName.IsLocked);
+        }
+
+        [TestMethod]
+        public void AcceptingEmptyName_DoesNotSaveAndKeepsBoxUnlocked()
+        {
+            _editor.AutoConfirmDialogs = true;
+            _mockService.Setup(s => s.GetAllRoutines()).Returns(new System.Collections.Generic.List<Routine>());
+            _editor.LoadRoutine(_testRoutine, false);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            txtRoutineName.BeginEdit();
+            txtRoutineName.Text = "   ";
+            txtRoutineName.AcceptEdit();
+
+            _mockService.Verify(s => s.SaveRoutine(It.IsAny<Routine>()), Times.Never);
+            Assert.IsFalse(txtRoutineName.IsLocked);
+        }
+
+        [TestMethod]
+        public void AcceptingDuplicateName_DoesNotSave()
+        {
+            _editor.AutoConfirmDialogs = true;
+            _mockService.Setup(s => s.GetAllRoutines()).Returns(new System.Collections.Generic.List<Routine>
+            {
+                new Routine { Id = "other", Name = "Doppelt" }
+            });
+            _editor.LoadRoutine(_testRoutine, false);
+
+            var txtRoutineName = GetPrivateField<LockableTextBox>(_editor, "txtRoutineName");
+            txtRoutineName.BeginEdit();
+            txtRoutineName.Text = "doppelt";
+            txtRoutineName.AcceptEdit();
+
+            _mockService.Verify(s => s.SaveRoutine(It.IsAny<Routine>()), Times.Never);
+        }
 
         // ReorderSteps Tests
 
@@ -332,7 +418,7 @@ namespace SmartRoutine.Tests.UI
             _editor.LoadRoutine(_testRoutine);
 
             var lstSteps =
-                GetPrivateField<StyledListBoxControl>(
+                GetPrivateField<TitledListBox>(
                     _editor,
                     "lstSteps");
 
@@ -352,18 +438,123 @@ namespace SmartRoutine.Tests.UI
             EventArgs.Empty
                 });
 
+            // The order of a step is its position in the list, whatever its Order said before.
             _mockService.Verify(
                 s => s.SaveRoutine(
                     It.Is<Routine>(
-                        r => r.Steps.Count == 2)),
+                        r => r.Steps.Count == 2 &&
+                             r.Steps[0].Id == "1" && r.Steps[0].Order == 0 &&
+                             r.Steps[1].Id == "2" && r.Steps[1].Order == 1)),
                 Times.Once);
         }
 
 
+        // Duplicate / Renumber Tests
+
+        private static object InvokeStatic(string name, params object[] args)
+        {
+            MethodInfo method = typeof(RoutineEditorUC).GetMethod(
+                name,
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            return method.Invoke(null, args);
+        }
+
+        private static OpenUrlStep Step(string id, int order)
+        {
+            return new OpenUrlStep { Id = id, Name = "Step " + id, Order = order, Url = "https://example.com" };
+        }
+
+        [TestMethod]
+        public void RenumberSteps_SetsOrderToListPosition()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep> { Step("a", 7), Step("b", 3), Step("c", 3) };
+
+            InvokeStatic("RenumberSteps", steps);
+
+            Assert.AreEqual(0, steps[0].Order);
+            Assert.AreEqual(1, steps[1].Order);
+            Assert.AreEqual(2, steps[2].Order);
+        }
+
+        [TestMethod]
+        public void RenumberSteps_EmptyList_DoesNotThrow()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep>();
+
+            InvokeStatic("RenumberSteps", steps);
+
+            Assert.AreEqual(0, steps.Count);
+        }
+
+        [TestMethod]
+        public void InsertDuplicateAfter_PutsCopyBehindOriginalWithNewIdAndName()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep> { Step("a", 0), Step("b", 1), Step("c", 2) };
+
+            var copy = (RoutineStep)InvokeStatic("InsertDuplicateAfter", steps, steps[1]);
+
+            Assert.IsNotNull(copy);
+            Assert.AreEqual(4, steps.Count);
+            Assert.AreSame(copy, steps[2]);
+            Assert.AreNotEqual("b", copy.Id);
+            Assert.AreEqual("Step b Kopie", copy.Name);
+            Assert.AreEqual("https://example.com", ((OpenUrlStep)copy).Url);
+
+            for (int i = 0; i < steps.Count; i++)
+                Assert.AreEqual(i, steps[i].Order);
+        }
+
+        [TestMethod]
+        public void InsertDuplicateAfter_LastStep_AppendsCopy()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep> { Step("a", 0), Step("b", 1) };
+
+            var copy = (RoutineStep)InvokeStatic("InsertDuplicateAfter", steps, steps[1]);
+
+            Assert.AreSame(copy, steps[2]);
+            Assert.AreEqual(2, copy.Order);
+        }
+
+        [TestMethod]
+        public void InsertDuplicateAfter_StepNotInList_ReturnsNullAndKeepsList()
+        {
+            var steps = new System.Collections.Generic.List<RoutineStep> { Step("a", 0) };
+
+            var copy = InvokeStatic("InsertDuplicateAfter", steps, Step("x", 5));
+
+            Assert.IsNull(copy);
+            Assert.AreEqual(1, steps.Count);
+        }
+
+        [TestMethod]
+        public void DuplicateButton_SavesRoutineWithCopyBehindSelectedStep()
+        {
+            _testRoutine.Steps.Add(Step("1", 0));
+            _testRoutine.Steps.Add(Step("2", 1));
+            _mockService.Setup(s => s.GetRoutine("test-id")).Returns(_testRoutine);
+
+            _editor.LoadRoutine(_testRoutine);
+
+            var lstSteps = GetPrivateField<TitledListBox>(_editor, "lstSteps");
+            lstSteps.SelectedIndex = 0;
+
+            GetPrivateField<Button>(_editor, "btnDuplicateStep").PerformClick();
+
+            _mockService.Verify(
+                s => s.SaveRoutine(It.Is<Routine>(r =>
+                    r.Steps.Count == 3 &&
+                    r.Steps[0].Id == "1" &&
+                    r.Steps[1].Name == "Step 1 Kopie" &&
+                    r.Steps[2].Id == "2" &&
+                    r.Steps[2].Order == 2)),
+                Times.Once);
+        }
+
         // BackButton Tests
 
 
-        // Hilfsmethode für Reflection
+        // Helper methods for reflection
 
         private T GetPrivateField<T>(object obj, string fieldName)
         {

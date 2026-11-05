@@ -1,6 +1,8 @@
-using CustomWFUI;
-using CustomWFUI.Controls;
+using ErikwnkWFUI;
+using ErikwnkWFUI.Controls;
 using SmartRoutine.Data.Models;
+using SmartRoutine.Localization;
+using SmartRoutine.UI.Helpers;
 using SmartRoutine.Logic.Interfaces;
 using System;
 using System.Drawing;
@@ -27,18 +29,19 @@ namespace SmartRoutine.UI.Controls.StepEditors
             _showValidationMessage = showValidationMessage;
         }
 
-        public void BuildControls(StyledPropertyTable optionsTable)
+        public void BuildControls(PropertyTable optionsTable)
         {
-            _txtAppPath = UIStyles.TextBoxes.CreateBorderstyleNone();
+            _txtAppPath = UIStyles.TextBoxes.CreateBorderless();
             _txtAppPath.Name = "txtAppPath";
 
-            var btnBrowse = UIStyles.Buttons.CreateBrowseInFolder("Programm auswählen", new Size(50, 30));
+            var btnBrowse = LocalizedControls.CreateSymbolButton(UIStyles.Buttons.Presets.Browse, "StepEditor.App.Browse", new Size(50, 30));
 
             btnBrowse.Click += (s, e) =>
             {
                 using (var dialog = new OpenFileDialog())
                 {
-                    dialog.Filter = "Anwendungen (*.exe)|*.exe|Alle Dateien (*.*)|*.*";
+                    dialog.Filter = Loc.S("StepEditor.App.Filter");
+                    BrowsePath.Prepare(dialog, _txtAppPath.Text);
 
                     if (dialog.ShowDialog() == DialogResult.OK)
                         _txtAppPath.Text = dialog.FileName;
@@ -46,19 +49,19 @@ namespace SmartRoutine.UI.Controls.StepEditors
             };
 
             optionsTable.AddRow(
-                "Programmpfad",
-                UIColumn.Percent(_txtAppPath, 100),
-                UIColumn.Absolute(btnBrowse, 50));
+                Loc.F("StepEditor.App.Row.Path"),
+                PropertyColumn.Percent(_txtAppPath, 100),
+                PropertyColumn.Absolute(btnBrowse, 50));
 
-            _txtAppArguments = UIStyles.TextBoxes.CreateBorderstyleNone();
+            _txtAppArguments = UIStyles.TextBoxes.CreateBorderless();
             _txtAppArguments.Name = "txtAppArguments";
 
-            _tglRunAsAdmin = UIStyles.ToggleSwitches.CreateStandard(false, "Ja", "Nein");
+            _tglRunAsAdmin = LocalizedControls.CreateYesNoToggle(false);
             _tglRunAsAdmin.Name = "tglRunAsAdmin";
             _tglRunAsAdmin.Anchor = AnchorStyles.Left;
 
-            optionsTable.AddRow("Argumente", _txtAppArguments);
-            optionsTable.AddRow("Als Admin", _tglRunAsAdmin);
+            optionsTable.AddRow(Loc.F("StepEditor.App.Row.Arguments"), _txtAppArguments);
+            optionsTable.AddRow(Loc.F("StepEditor.App.Row.RunAsAdmin"), _tglRunAsAdmin);
         }
 
         public void LoadFrom(RoutineStep step)
@@ -100,7 +103,7 @@ namespace SmartRoutine.UI.Controls.StepEditors
         {
             if (string.IsNullOrWhiteSpace(_txtAppPath?.Text))
             {
-                _showValidationMessage("Bitte geben Sie einen Programmpfad ein.", showMessageBox);
+                _showValidationMessage(Loc.S("StepEditor.App.Validation.Empty"), showMessageBox);
 
                 _txtAppPath?.Focus();
                 return false;

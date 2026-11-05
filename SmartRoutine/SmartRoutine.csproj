@@ -8,12 +8,22 @@
     <AssemblyName>SmartRoutine</AssemblyName>
     <StartupObject>SmartRoutine.Program</StartupObject>
     <ApplicationIcon>Properties\Resources\AppIcon.ico</ApplicationIcon>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>SmartRoutine</Product>
     <AssemblyTitle>SmartRoutine</AssemblyTitle>
-    <Description>Automatisierung wiederkehrender Arbeitsabläufe</Description>
+    <Description>Automation of recurring workflows</Description>
     <Copyright>© 2026 Erik Wink</Copyright>
-    <NeutralLanguage>de-DE</NeutralLanguage>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <!-- The WebView2 package brings WPF assemblies (WindowsBase) of an older target that the .NET 8 reference pack also has;
+         the conflict is harmless because the program uses only the WinForms control. -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- The symbols are inside the program (the log of errors then has line numbers); the XML documentation of the
+         libraries is not copied next to the exe on publish. -->
+    <DebugType>embedded</DebugType>
+    <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,18 +32,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="CustomWFUI">
-      <HintPath>..\lib\CustomWFUI\CustomWFUI.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- CustomWFUI.Forms.AppUpdater needs GitHubSelfUpdater + its polyfills at runtime;
-         nothing here references those types directly, so a loose copy is enough -
-         GitHubSelfUpdater registers its own AssemblyResolve fallback for the BCL-facade
-         assemblies (System.Text.Json etc.) that a net8.0 host ships at a different exact
-         version than its net48 build hard-requires, so no special-casing is needed here. -->
-    <None Include="..\lib\GitHubSelfUpdater\*.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <!-- ErikwnkWFUI multi-targets net48;net8.0-windows itself, so this picks up
+         its net8.0-windows leg directly - no more vendored DLL, and no more manual
+         ErikwnkCore copy either, since ErikwnkWFUI's net8.0-windows build
+         already references ErikwnkCore via its own ProjectReference and pulls
+         its dependencies (System.Text.Json etc.) through normal NuGet/deps.json
+         resolution. -->
+    <ProjectReference Include="..\..\ErikwnkWFUI\ErikwnkWFUI\ErikwnkWFUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

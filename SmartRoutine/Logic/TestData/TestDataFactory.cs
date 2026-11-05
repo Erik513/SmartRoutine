@@ -18,7 +18,7 @@ namespace SmartRoutine.Logic.TestData
             var logicTestRoutine = new Routine
             {
                 Id = "test_logic_all_step_types",
-                Name = "Logiktest: Alle Step-Typen",
+                Name = "Logic test: all step types",
                 Order = 0,
                 CreatedAt = now.AddDays(-10),
                 UpdatedAt = now.AddDays(-2),
@@ -29,8 +29,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_1",
                         Order = 0,
-                        Name = "URL intern - manuell sichtbar",
-                        Description = "Soll sichtbar sein, nicht automatisch starten, WebView erst nach Klick anzeigen.",
+                        Name = "URL internal - visible, manual",
+                        Description = "Must be visible, must not start automatically, shows the web view only after a click.",
                         Show = true,
                         AutoStart = false,
                         AutoContinue = false,
@@ -41,8 +41,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_2",
                         Order = 1,
-                        Name = "URL intern - Autostart sichtbar",
-                        Description = "Soll sichtbar sein und beim ersten Betreten automatisch in der WebView starten.",
+                        Name = "URL internal - visible, autostart",
+                        Description = "Must be visible and start automatically in the web view when it is entered the first time.",
                         Show = true,
                         AutoStart = true,
                         AutoContinue = false,
@@ -53,8 +53,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_3",
                         Order = 2,
-                        Name = "URL extern - Autostart + AutoContinue",
-                        Description = "Soll sichtbar sein, automatisch extern starten und danach automatisch weitergehen.",
+                        Name = "URL external - autostart + auto-continue",
+                        Description = "Must be visible, start externally by itself and then move on by itself.",
                         Show = true,
                         AutoStart = true,
                         AutoContinue = true,
@@ -65,8 +65,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_4",
                         Order = 3,
-                        Name = "URL ausgeblendet",
-                        Description = "Darf in ExecutionForm nicht auftauchen.",
+                        Name = "URL hidden",
+                        Description = "Must not appear in the execution form.",
                         Show = false,
                         AutoStart = true,
                         AutoContinue = true,
@@ -77,8 +77,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_5",
                         Order = 4,
-                        Name = "Ordner - manuell sichtbar",
-                        Description = "Soll sichtbar sein, aber erst per Button ausgeführt werden.",
+                        Name = "Folder - visible, manual",
+                        Description = "Must be visible, but only run by a button.",
                         Show = true,
                         AutoStart = false,
                         AutoContinue = true,
@@ -89,8 +89,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_6",
                         Order = 5,
-                        Name = "Ordner - Autostart + AutoContinue",
-                        Description = "Soll sichtbar sein, automatisch öffnen und danach automatisch weitergehen.",
+                        Name = "Folder - autostart + auto-continue",
+                        Description = "Must be visible, open by itself and then move on by itself.",
                         Show = true,
                         AutoStart = true,
                         AutoContinue = true,
@@ -101,8 +101,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_7",
                         Order = 6,
-                        Name = "Ordner ausgeblendet",
-                        Description = "Darf in ExecutionForm nicht auftauchen.",
+                        Name = "Folder hidden",
+                        Description = "Must not appear in the execution form.",
                         Show = false,
                         AutoStart = true,
                         AutoContinue = true,
@@ -113,8 +113,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_8",
                         Order = 7,
-                        Name = "App - manuell sichtbar",
-                        Description = "Soll sichtbar sein und Notepad erst per Button starten.",
+                        Name = "App - visible, manual",
+                        Description = "Must be visible and start Notepad only by a button.",
                         Show = true,
                         AutoStart = false,
                         AutoContinue = false,
@@ -127,8 +127,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_9",
                         Order = 8,
-                        Name = "App - Autostart + AutoContinue",
-                        Description = "Soll sichtbar sein, Calculator automatisch starten und danach weitergehen.",
+                        Name = "App - autostart + auto-continue",
+                        Description = "Must be visible, start Calculator by itself and then move on.",
                         Show = true,
                         AutoStart = true,
                         AutoContinue = true,
@@ -141,8 +141,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_10",
                         Order = 9,
-                        Name = "App ausgeblendet",
-                        Description = "Darf in ExecutionForm nicht auftauchen.",
+                        Name = "App hidden",
+                        Description = "Must not appear in the execution form.",
                         Show = false,
                         AutoStart = true,
                         AutoContinue = true,
@@ -155,8 +155,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_11",
                         Order = 10,
-                        Name = "Dokument - manuell sichtbar",
-                        Description = "Soll sichtbar sein und erst per Button geöffnet werden.",
+                        Name = "Document - visible, manual",
+                        Description = "Must be visible and be opened only by a button.",
                         Show = true,
                         AutoStart = false,
                         AutoContinue = false,
@@ -170,8 +170,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_12",
                         Order = 11,
-                        Name = "Dokument - Autostart + AutoContinue",
-                        Description = "Soll sichtbar sein, automatisch geöffnet werden und danach weitergehen.",
+                        Name = "Document - autostart + auto-continue",
+                        Description = "Must be visible, be opened by itself and then move on.",
                         Show = true,
                         AutoStart = true,
                         AutoContinue = true,
@@ -185,8 +185,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "logic_step_13",
                         Order = 12,
-                        Name = "Dokument ausgeblendet",
-                        Description = "Darf in ExecutionForm nicht auftauchen.",
+                        Name = "Document hidden",
+                        Description = "Must not appear in the execution form.",
                         Show = false,
                         AutoStart = true,
                         AutoContinue = true,
@@ -203,7 +203,7 @@ namespace SmartRoutine.Logic.TestData
             var TestRoutineWithDisabledStep = new Routine
             {
                 Id = "test_routine_with_disabled_step",
-                Name = "Routine mit ausgeschaltetem Schritt",
+                Name = "Routine with a disabled step",
                 Order = 1,
                 CreatedAt = now.AddDays(-5),
                 UpdatedAt = now.AddDays(-1),
@@ -214,8 +214,8 @@ namespace SmartRoutine.Logic.TestData
                     {
                         Id = "step_1",
                         Order = 0,
-                        Name = "URL intern - ausgeblendet manuell",
-                        Description = "Soll nicht sichtbar sein und nicht automatisch starten.",
+                        Name = "URL internal - hidden, manual",
+                        Description = "Must not be visible and must not start automatically.",
                         Show = false,
                         AutoStart = false,
                         AutoContinue = false,
