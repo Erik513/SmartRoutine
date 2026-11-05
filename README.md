@@ -2,9 +2,9 @@
 
 SmartRoutine is a small Windows desktop app for automating recurring workflows: a routine is defined once as a sequence of steps — open a website, open a folder, start a program, open a document — and can then be started with one click.
 
-![Routine list with two sample routines](docs/screenshots/routines-list.png)
+![Routine list with sample routines](docs/screenshots/routines-list.png)
 
-![Routine editor with all four step types, folder step selected](docs/screenshots/routine-editor.png)
+![Routine editor with all four step types, website step selected](docs/screenshots/routine-editor.png)
 
 ## Features
 
